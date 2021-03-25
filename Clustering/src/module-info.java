@@ -1,2 +1,4 @@
-module clustering {
+module clustering
+{
+	requires cplex;
 }

@@ -72,8 +72,16 @@ public class Master
 		// Solve model
 		cplex.solve();
 		cplex.exportModel("modelo.lp");
+
+		System.out.println();
+		System.out.println(cplex.getStatus());
 		
-		if( cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible)
+	    for(int j=0; j<n; ++j)
+	    	System.out.println(variables[j] + " = " + cplex.getValue(variables[j]) + ", RC = " + cplex.getReducedCost(variables[j]));
+	    
+	    System.out.println();
+
+	    if( cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible)
 		{
 			_obj = cplex.getObjValue();
 			_primal = cplex.getValues(variables);

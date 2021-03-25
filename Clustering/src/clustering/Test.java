@@ -38,7 +38,7 @@ public class Test
 			System.out.println();
 			
 			for(int i=0; i<clusters.size(); ++i)
-				System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i));
+				System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
 	
 			System.out.println();
 			for(int i=0; i<instance.getPoints() + 2; ++i)

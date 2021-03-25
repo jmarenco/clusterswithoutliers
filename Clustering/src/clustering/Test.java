@@ -1,6 +1,7 @@
 package clustering;
 
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import ilog.concert.IloException;
 
@@ -18,23 +19,35 @@ public class Test
 		instance.add(Point.fromVector(7, 2.0, 4.0));
 		
 		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
-		clusters.add(Cluster.fromArray(instance, 0, 1, 2, 3, 4, 5, 6));
+//		clusters.add(Cluster.fromArray(instance, 0, 1, 2, 3, 4, 5, 6));
 //		clusters.add(Cluster.fromArray(instance, 3, 4, 5));
 //		clusters.add(Cluster.fromArray(instance, 1, 2, 3, 4));
 //		clusters.add(Cluster.fromArray(instance, 3, 4, 5, 6));
 //		clusters.add(Cluster.fromArray(instance, 1, 2, 4, 5));
 		
-		Master master = new Master(instance, clusters);
-		master.solve();
-
-		System.out.println("Obj = " + master.getObjective());
-		System.out.println();
+		Cluster nuevo = Cluster.fromArray(instance, 0, 1, 2, 3, 4, 5, 6);
 		
-		for(int i=0; i<clusters.size(); ++i)
-			System.out.println("x[" + i + "] = " + master.getPrimal(i));
-
-		System.out.println();
-		for(int i=0; i<instance.getPoints() + 2; ++i)
-			System.out.println("l[" + i + "] = " + master.getDual(i));
+		while( nuevo != null )
+		{
+			clusters.add(nuevo);
+		
+			Master master = new Master(instance, clusters);
+			master.solve();
+	
+			System.out.println("Obj = " + master.getObjective());
+			System.out.println();
+			
+			for(int i=0; i<clusters.size(); ++i)
+				System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i));
+	
+			System.out.println();
+			for(int i=0; i<instance.getPoints() + 2; ++i)
+				System.out.println("l[" + i + "] = " + master.getDual(i));
+			
+			HeuristicGenerator generator = new HeuristicGenerator(instance, master);
+			nuevo = generator.solve();
+			
+			new Scanner(System.in).nextLine();
+		}
 	}
 }

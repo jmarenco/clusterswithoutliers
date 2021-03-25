@@ -78,6 +78,11 @@ public class Point
 		
 		return Math.sqrt(sum);
 	}
+	
+	public Point clone()
+	{
+		return Point.fromVector(_id, _values);
+	}
 
 	@Override
 	public int hashCode()

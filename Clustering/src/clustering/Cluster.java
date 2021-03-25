@@ -58,7 +58,7 @@ public class Cluster
 		for(Point point: _points)
 		{
 			if (ret == null)
-				ret = point;
+				ret = point.clone();
 			else
 				ret.sum(point);
 		}
@@ -67,5 +67,14 @@ public class Cluster
 			ret.divide(_points.size());
 		
 		return ret;
+	}
+	
+	@Override public String toString()
+	{
+		String ret = "";
+		for(Point point: _points)
+			ret += (ret.length() > 0 ? ", " : "") + point.getId();
+		
+		return "{" + ret + "}";
 	}
 }

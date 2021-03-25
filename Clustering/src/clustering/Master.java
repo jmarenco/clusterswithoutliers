@@ -71,6 +71,7 @@ public class Master
 		
 		// Solve model
 		cplex.solve();
+		cplex.exportModel("modelo.lp");
 		
 		if( cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible)
 		{

@@ -1,7 +1,6 @@
 package clustering;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,7 +12,6 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.util.ShapeUtilities;

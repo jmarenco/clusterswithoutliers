@@ -15,7 +15,7 @@ public class Population
 	private int _mutatedPerIteration = 20;
 	private int _recombinedPerIteration = 20;
 	private int _removesPerIteration = 60;
-	private int _maxIterations = 1000;
+	private int _maxIterations = 100;
 	
 	private int _iteration;
 	

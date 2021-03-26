@@ -50,5 +50,7 @@ public class Test
 		
 		for(int i=0; i<clusters.size(); ++i)
 			System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
+		
+		new Viewer(instance, master);
 	}
 }

@@ -111,4 +111,9 @@ public class Master
 	{
 		return _dual[_dual.length-1];
 	}
+	
+	public ArrayList<Cluster> getClusters()
+	{
+		return _clusters;
+	}
 }

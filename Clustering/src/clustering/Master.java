@@ -101,4 +101,14 @@ public class Master
 	{
 		return _dual[i];
 	}
+	
+	public double getClustersDual()
+	{
+		return _dual[_dual.length-2];
+	}
+
+	public double getOutliersDual()
+	{
+		return _dual[_dual.length-1];
+	}
 }

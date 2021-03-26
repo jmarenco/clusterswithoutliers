@@ -26,12 +26,16 @@ public class Test
 			Master master = new Master(instance, clusters);
 			master.solve(false);
 			
-			HeuristicGenerator generator = new HeuristicGenerator(instance, master);
-			nuevo = generator.solve();
+//			HeuristicGenerator generator = new HeuristicGenerator(instance, master);
+//			nuevo = generator.solve();
+			
+			Population population = new Population(instance, master);
+			population.execute();
+			nuevo = population.bestIndividual().fitness() > 0.01 ? population.bestIndividual().asCluster() : null; 
 			
 			System.out.print("It: " + clusters.size() + " | ");
 			System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
-			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", generator.reducedCost(nuevo)) : "      ") + " | ");
+			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", nuevo.reducedCost(instance, master)) : "      ") + " | ");
 			System.out.print("Clus: " + nuevo);
 			System.out.println();
 		}

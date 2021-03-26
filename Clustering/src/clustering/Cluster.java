@@ -22,6 +22,16 @@ public class Cluster
 		return ret;
 	}
 	
+	public static Cluster withAllPoints(Instance instance)
+	{
+		Cluster ret = new Cluster();
+		
+		for(int i=0; i<instance.getPoints(); ++i)
+			ret.add(instance.getPoint(i));
+		
+		return ret;
+	}
+
 	public void add(Point point)
 	{
 		_points.add(point);

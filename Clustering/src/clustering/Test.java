@@ -1,8 +1,6 @@
 package clustering;
 
 import java.util.ArrayList;
-import java.util.Scanner;
-
 import ilog.concert.IloException;
 
 public class Test
@@ -19,35 +17,34 @@ public class Test
 		instance.add(Point.fromVector(7, 2.0, 4.0));
 		
 		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
-//		clusters.add(Cluster.fromArray(instance, 0, 1, 2, 3, 4, 5, 6));
-//		clusters.add(Cluster.fromArray(instance, 3, 4, 5));
-//		clusters.add(Cluster.fromArray(instance, 1, 2, 3, 4));
-//		clusters.add(Cluster.fromArray(instance, 3, 4, 5, 6));
-//		clusters.add(Cluster.fromArray(instance, 1, 2, 4, 5));
-		
-		Cluster nuevo = Cluster.fromArray(instance, 0, 1, 2, 3, 4, 5, 6);
+		Cluster nuevo = Cluster.withAllPoints(instance);
 		
 		while( nuevo != null )
 		{
 			clusters.add(nuevo);
 		
 			Master master = new Master(instance, clusters);
-			master.solve();
-	
-			System.out.println("Obj = " + master.getObjective());
-			System.out.println();
-			
-			for(int i=0; i<clusters.size(); ++i)
-				System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
-	
-			System.out.println();
-			for(int i=0; i<instance.getPoints() + 2; ++i)
-				System.out.println("l[" + i + "] = " + master.getDual(i));
+			master.solve(false);
 			
 			HeuristicGenerator generator = new HeuristicGenerator(instance, master);
 			nuevo = generator.solve();
 			
-			new Scanner(System.in).nextLine();
+			System.out.print("It: " + clusters.size() + " | ");
+			System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
+			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", generator.reducedCost(nuevo)) : "      ") + " | ");
+			System.out.print("Clus: " + nuevo);
+			System.out.println();
 		}
+		
+		System.out.println();
+
+		Master master = new Master(instance, clusters);
+		master.solve(true);
+
+		System.out.println("Obj = " + master.getObjective());
+		System.out.println();
+		
+		for(int i=0; i<clusters.size(); ++i)
+			System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
 	}
 }

@@ -23,7 +23,7 @@ public class Master
 		_clusters = clusters;
 	}
 	
-	public boolean solve() throws IloException
+	public boolean solve(boolean integer) throws IloException
 	{
 		// Model sizes
 		int p = _instance.getPoints();
@@ -36,7 +36,7 @@ public class Master
 	    // Create variables
 		IloNumVar[] variables = new IloNumVar[n];
 	    for(int j=0; j<n; ++j)
-	    	variables[j] = cplex.numVar(0, 1, "x" + j);
+	    	variables[j] = integer ? cplex.boolVar("x" + j) : cplex.numVar(0, 1000, "x" + j);
 
 	    // Create constraints
 	    IloRange[] constraints = new IloRange[m];
@@ -63,32 +63,28 @@ public class Master
 	    constraints[p+1] = cplex.addGe(lhs2, _instance.getPoints() - _instance.getOutliers(), "out");
 	    
 	    // Create objective
-		IloNumExpr fobj = cplex.linearIntExpr();
+		IloNumExpr fobj = cplex.linearNumExpr();
 	    for(int j=0; j<n; ++j)
 			fobj = cplex.sum(fobj, cplex.prod(_clusters.get(j).objective(), variables[j]));
 		
 		cplex.addMinimize(fobj);
 		
 		// Solve model
-		cplex.solve();
-		cplex.exportModel("modelo.lp");
-
-		System.out.println();
-		System.out.println(cplex.getStatus());
+		if( integer == false )
+			cplex.setOut(null);
 		
-	    for(int j=0; j<n; ++j)
-	    	System.out.println(variables[j] + " = " + cplex.getValue(variables[j]) + ", RC = " + cplex.getReducedCost(variables[j]));
-	    
-	    System.out.println();
+		cplex.solve();
 
-	    if( cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible)
+		boolean ret = cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible;
+	    if( ret == true )
 		{
 			_obj = cplex.getObjValue();
 			_primal = cplex.getValues(variables);
-			_dual = cplex.getDuals(constraints);
+			_dual = integer ? null : cplex.getDuals(constraints);
 		}
-		
-		return cplex.getStatus() == Status.Optimal;
+	    
+	    cplex.end();
+	    return ret;
 	}
 	
 	public double getObjective()

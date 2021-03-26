@@ -30,14 +30,10 @@ public class HeuristicGenerator
 				ret = current;
 		}
 		
-		System.out.println();
-		System.out.println(ret + " = " + reducedCost(ret));
-		System.out.println();
-		
 		return reducedCost(ret) < -0.01 ? ret : null;
 	}
 	
-	private double reducedCost(Cluster cluster)
+	public double reducedCost(Cluster cluster)
 	{
 		double ret = cluster.objective() - _dual[_instance.getPoints()] - cluster.size() * _dual[_instance.getPoints()+1];
 		

@@ -1,0 +1,52 @@
+package clustering;
+
+import java.util.ArrayList;
+
+import ilog.concert.IloException;
+
+public class Algorithm
+{
+	private Instance _instance;
+	
+	public Algorithm(Instance instance)
+	{
+		_instance = instance;
+	}
+	
+	public Solution run() throws IloException
+	{
+		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
+		Cluster nuevo = Cluster.withAllPoints(_instance);
+		
+		while( nuevo != null )
+		{
+			clusters.add(nuevo);
+		
+			Master master = new Master(_instance, clusters);
+			master.solve(false);
+			
+			Population population = new Population(_instance, master);
+			population.execute();
+			nuevo = population.bestIndividual().fitness() > 0.01 ? population.bestIndividual().asCluster() : null; 
+			
+			System.out.print("It: " + clusters.size() + " | ");
+			System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
+			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", nuevo.reducedCost(_instance, master)) : "      ") + " | ");
+			System.out.print("Clus: " + nuevo);
+			System.out.println();
+		}
+		
+		System.out.println();
+
+		Master master = new Master(_instance, clusters);
+		master.solve(true);
+		
+		System.out.println("Obj = " + master.getObjective());
+		System.out.println();
+
+		for(int i=0; i<clusters.size(); ++i)
+			System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
+
+		return new Solution(master);
+	}
+}

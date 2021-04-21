@@ -20,9 +20,9 @@ public class Viewer
 {
 	private JFrame _frame;
 	
-	public Viewer(Instance instance, Master master)
+	public Viewer(Instance instance, Solution solution)
 	{
-		XYSeriesCollection dataset = createDataset(instance, master);
+		XYSeriesCollection dataset = createDataset(instance, solution);
 		JFreeChart xylineChart = ChartFactory.createXYLineChart("", "", "", dataset, PlotOrientation.VERTICAL, true, true, false);
 		ChartPanel chartPanel = new ChartPanel(xylineChart);
 		XYPlot plot = xylineChart.getXYPlot();
@@ -46,17 +46,17 @@ public class Viewer
 		_frame.setVisible(true);
 	}
 	
-	private XYSeriesCollection createDataset(Instance instance, Master master)
+	private XYSeriesCollection createDataset(Instance instance, Solution solution)
 	{
 		XYSeriesCollection dataset = new XYSeriesCollection();
 		XYSeries outliers = new XYSeries("Outliers");
 		dataset.addSeries(outliers);
 		
 		Set<Point> clustered = new HashSet<Point>();
-		for(int i=0, j=0; i<master.getClusters().size(); ++i) if( master.getPrimal(i) > 0.9 )
+		for(Cluster cluster: solution.getClusters())
 		{
-			XYSeries series = new XYSeries("Cluster " + (++j));
-			for(Point point: master.getClusters().get(i).asSet())
+			XYSeries series = new XYSeries("Cluster " + (dataset.getSeriesCount() + 1));
+			for(Point point: cluster.asSet())
 			{
 				series.add(point.get(0), point.get(1));
 				clustered.add(point);

@@ -1,6 +1,5 @@
 package clustering;
 
-import java.util.ArrayList;
 import ilog.concert.IloException;
 
 public class Test
@@ -16,41 +15,9 @@ public class Test
 		instance.add(Point.fromVector(6, 5.0, 4.0));
 		instance.add(Point.fromVector(7, 2.0, 4.0));
 		
-		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
-		Cluster nuevo = Cluster.withAllPoints(instance);
-		
-		while( nuevo != null )
-		{
-			clusters.add(nuevo);
-		
-			Master master = new Master(instance, clusters);
-			master.solve(false);
-			
-//			HeuristicGenerator generator = new HeuristicGenerator(instance, master);
-//			nuevo = generator.solve();
-			
-			Population population = new Population(instance, master);
-			population.execute();
-			nuevo = population.bestIndividual().fitness() > 0.01 ? population.bestIndividual().asCluster() : null; 
-			
-			System.out.print("It: " + clusters.size() + " | ");
-			System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
-			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", nuevo.reducedCost(instance, master)) : "      ") + " | ");
-			System.out.print("Clus: " + nuevo);
-			System.out.println();
-		}
-		
-		System.out.println();
+		Algorithm algorithm = new Algorithm(instance);
+		Solution solution = algorithm.run();
 
-		Master master = new Master(instance, clusters);
-		master.solve(true);
-
-		System.out.println("Obj = " + master.getObjective());
-		System.out.println();
-		
-		for(int i=0; i<clusters.size(); ++i)
-			System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
-		
-		new Viewer(instance, master);
+		new Viewer(instance, solution);
 	}
 }

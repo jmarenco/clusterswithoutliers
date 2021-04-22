@@ -53,16 +53,20 @@ public class Viewer
 		dataset.addSeries(outliers);
 		
 		Set<Point> clustered = new HashSet<Point>();
-		for(Cluster cluster: solution.getClusters())
+		
+		if( solution != null )
 		{
-			XYSeries series = new XYSeries("Cluster " + (dataset.getSeriesCount() + 1));
-			for(Point point: cluster.asSet())
+			for(Cluster cluster: solution.getClusters())
 			{
-				series.add(point.get(0), point.get(1));
-				clustered.add(point);
+				XYSeries series = new XYSeries("Cluster " + (dataset.getSeriesCount() + 1));
+				for(Point point: cluster.asSet())
+				{
+					series.add(point.get(0), point.get(1));
+					clustered.add(point);
+				}
+				
+				dataset.addSeries(series);
 			}
-			
-			dataset.addSeries(series);
 		}
 		
 		for(int i=0; i<instance.getPoints(); ++i) if( clustered.contains(instance.getPoint(i)) == false )

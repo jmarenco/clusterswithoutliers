@@ -6,6 +6,16 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
+		Instance instance = RandomInstance.generate(2, 30, 2, 4, 0.4);
+		
+		Algorithm algorithm = new Algorithm(instance);
+		Solution solution = algorithm.run();
+
+		new Viewer(instance, solution);
+	}
+	
+	public static Instance testInstance()
+	{
 		Instance instance = new Instance(2, 1);
 		instance.add(Point.fromVector(1, 1.0, 1.0));
 		instance.add(Point.fromVector(2, 1.0, 2.0));
@@ -15,9 +25,6 @@ public class Test
 		instance.add(Point.fromVector(6, 5.0, 4.0));
 		instance.add(Point.fromVector(7, 2.0, 4.0));
 		
-		Algorithm algorithm = new Algorithm(instance);
-		Solution solution = algorithm.run();
-
-		new Viewer(instance, solution);
+		return instance;
 	}
 }

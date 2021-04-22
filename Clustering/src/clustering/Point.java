@@ -23,6 +23,11 @@ public class Point
 		return ret;
 	}
 	
+	public void setId(int id)
+	{
+		_id = id;
+	}
+	
 	public int getId()
 	{
 		return _id;

@@ -17,6 +17,9 @@ public class Instance
 	
 	public void add(Point p)
 	{
+		if( _points.size() > 0 && _points.get(0).getDimension() != p.getDimension() )
+			throw new RuntimeException("Input points have different dimensions!");
+		
 		_points.add(p);
 	}
 	
@@ -41,5 +44,20 @@ public class Instance
 	public int getOutliers()
 	{
 		return _outliers;
+	}
+	
+	public int getDimension()
+	{
+		return _points.size() == 0 ? 0 : _points.get(0).getDimension();
+	}
+	
+	public double min(int coordinate)
+	{
+		return _points.stream().mapToDouble(p -> p.get(coordinate)).min().orElse(0);
+	}
+	
+	public double max(int coordinate)
+	{
+		return _points.stream().mapToDouble(p -> p.get(coordinate)).max().orElse(0);
 	}
 }

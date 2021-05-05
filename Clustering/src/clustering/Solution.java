@@ -20,6 +20,11 @@ public class Solution
 		}
 	}
 	
+	public Solution(ArrayList<Cluster> clusters)
+	{
+		_clusters = clusters;
+	}
+
 	public ArrayList<Cluster> getClusters()
 	{
 		return _clusters;

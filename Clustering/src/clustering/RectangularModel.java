@@ -19,7 +19,7 @@ public class RectangularModel
 		_instance = instance;
 	}
 	
-	public Solution solve(boolean integer) throws IloException
+	public Solution solve(boolean integer, double maxTime) throws IloException
 	{
 		// Model sizes
 		int p = _instance.getPoints();
@@ -115,7 +115,7 @@ public class RectangularModel
 		cplex.addMinimize(fobj);
 		
 		// Solve model
-		cplex.setParam(IntParam.TimeLimit, 60);
+		cplex.setParam(IntParam.TimeLimit, maxTime);
 		cplex.solve();
 		
 		System.out.println("Status: " + cplex.getStatus());
@@ -125,7 +125,17 @@ public class RectangularModel
     	if( cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible )
 		{
 	    	for(int j=0; j<n; ++j)
-	    		_clusters.add(new Cluster());
+	    	{
+	    		RectangularCluster cluster = new RectangularCluster(d);
+	    		
+				for(int t=0; t<d; ++t)
+				{
+					cluster.setMin(t, cplex.getValue(l[j][t]));
+					cluster.setMax(t, cplex.getValue(r[j][t]));
+				}
+	    		
+	    		_clusters.add(cluster);
+	    	}
 	    		
 			for(int i=0; i<p; ++i)
 		    for(int j=0; j<n; ++j) if( cplex.getValue(z[i][j]) > 0.9 )

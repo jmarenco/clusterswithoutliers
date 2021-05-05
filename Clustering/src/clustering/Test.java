@@ -14,7 +14,7 @@ public class Test
 //		Solution solution = algorithm.run();
 		
 		RectangularModel model = new RectangularModel(instance);
-		Solution solution = model.solve(true);
+		Solution solution = model.solve(true, 60);
 
 		new Viewer(instance, solution);
 	}

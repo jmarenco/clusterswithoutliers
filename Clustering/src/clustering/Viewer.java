@@ -1,6 +1,9 @@
 package clustering;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Shape;
+import java.awt.geom.Rectangle2D;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,6 +12,7 @@ import javax.swing.JFrame;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYShapeAnnotation;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -38,6 +42,18 @@ public class Viewer
 		plot.setRenderer(renderer);
 		plot.setBackgroundPaint(Color.WHITE);
 		xylineChart.removeLegend();
+		
+		if( solution != null )
+		{
+			for(Cluster cluster: solution.getClusters()) if( cluster instanceof RectangularCluster )
+			{
+				RectangularCluster rectCluster = (RectangularCluster)cluster;
+				
+				Shape rectangle = new Rectangle2D.Double(rectCluster.getMin(0), rectCluster.getMin(1), rectCluster.getMax(0) - rectCluster.getMin(0), rectCluster.getMax(1) - rectCluster.getMin(1));
+				XYShapeAnnotation shapeAnnotation = new XYShapeAnnotation(rectangle, new BasicStroke(0.5f), Color.GRAY);
+				plot.addAnnotation(shapeAnnotation);		
+			}
+		}
 		
 		_frame = new JFrame();
 		_frame.setBounds(100, 100, 622, 640);

@@ -22,23 +22,26 @@ public class Algorithm
 		{
 			clusters.add(nuevo);
 		
-			Master master = new Master(_instance, clusters);
+			MasterCovering master = new MasterCovering(_instance, clusters);
 			master.solve(false);
 			
-			Population population = new Population(_instance, master);
-			population.execute();
-			nuevo = population.bestIndividual().fitness() > 0.01 ? population.bestIndividual().asCluster() : null; 
+//			Population population = new Population(_instance, master);
+//			population.execute();
+//			nuevo = population.bestIndividual().fitness() > 0.01 ? population.bestIndividual().asCluster() : null;
+			
+			RectangularGenerator generator = new RectangularGenerator(_instance, master);
+			nuevo = generator.solve();
 			
 			System.out.print("It: " + clusters.size() + " | ");
 			System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
-			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", nuevo.reducedCost(_instance, master)) : "      ") + " | ");
+			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", master.reducedCost(nuevo)) : "      ") + " | ");
 			System.out.print("Clus: " + nuevo);
 			System.out.println();
 		}
 		
 		System.out.println();
 
-		Master master = new Master(_instance, clusters);
+		MasterCovering master = new MasterCovering(_instance, clusters);
 		master.solve(true);
 		
 		System.out.println("Obj = " + master.getObjective());

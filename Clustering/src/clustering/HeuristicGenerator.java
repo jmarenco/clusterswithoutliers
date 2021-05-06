@@ -5,10 +5,10 @@ import java.util.Random;
 public class HeuristicGenerator
 {
 	private Instance _instance;
-	private Master _master;
+	private MasterPacking _master;
 	private Random random = new Random(0);
 
-	public HeuristicGenerator(Instance instance, Master master)
+	public HeuristicGenerator(Instance instance, MasterPacking master)
 	{
 		_instance = instance;
 		_master = master;
@@ -24,10 +24,10 @@ public class HeuristicGenerator
 			for(int i=0; i<_instance.getPoints(); ++i) if( random.nextBoolean() )
 				current.add(_instance.getPoint(i));
 			
-			if( ret == null || ret.reducedCost(_instance, _master) > current.reducedCost(_instance, _master) )
+			if( ret == null || _master.reducedCost(ret) > _master.reducedCost(current) )
 				ret = current;
 		}
 		
-		return ret.reducedCost(_instance, _master) < -0.01 ? ret : null;
+		return _master.reducedCost(ret) < -0.01 ? ret : null;
 	}
 }

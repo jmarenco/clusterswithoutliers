@@ -7,11 +7,11 @@ public class Individual implements Comparable<Individual>
 	private boolean[] _bits;
 
 	private Instance _instance;
-	private Master _master;
+	private MasterPacking _master;
 	
 	private static Random _random = new Random(0);
 	
-	public static Individual random(Instance instance, Master master)
+	public static Individual random(Instance instance, MasterPacking master)
 	{
 		Individual ret = new Individual(instance, master);
 		
@@ -21,7 +21,7 @@ public class Individual implements Comparable<Individual>
 		return ret;
 	}
 
-	private Individual(Instance instance, Master master)
+	private Individual(Instance instance, MasterPacking master)
 	{
 		_instance = instance;
 		_master = master;
@@ -67,7 +67,7 @@ public class Individual implements Comparable<Individual>
 	
 	public double fitness()
 	{
-		return -asCluster().reducedCost(_instance, _master);
+		return -_master.reducedCost(asCluster());
 	}
 	
 	boolean get(int i)

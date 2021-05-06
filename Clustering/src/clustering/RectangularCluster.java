@@ -32,4 +32,14 @@ public class RectangularCluster extends Cluster
 	{
 		return _max[coordinate];
 	}
+	
+	@Override
+	public double objective()
+	{
+		double ret = 0;
+		for(int t=0; t<_max.length; ++t)
+			ret += _max[t] - _min[t];
+		
+		return ret;
+	}
 }

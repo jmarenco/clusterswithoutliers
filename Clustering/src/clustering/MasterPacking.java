@@ -9,7 +9,7 @@ import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.Status;
 
-public class Master
+public class MasterPacking
 {
 	private Instance _instance;
 	private ArrayList<Cluster> _clusters;
@@ -17,7 +17,7 @@ public class Master
 	private double[] _primal;
 	private double[] _dual;
 	
-	public Master(Instance instance, ArrayList<Cluster> clusters)
+	public MasterPacking(Instance instance, ArrayList<Cluster> clusters)
 	{
 		_instance = instance;
 		_clusters = clusters;
@@ -36,7 +36,7 @@ public class Master
 	    // Create variables
 		IloNumVar[] variables = new IloNumVar[n];
 	    for(int j=0; j<n; ++j)
-	    	variables[j] = integer ? cplex.boolVar("x" + j) : cplex.numVar(0, 1000, "x" + j);
+	    	variables[j] = integer ? cplex.boolVar("x" + j) : cplex.numVar(0, 1, "x" + j);
 
 	    // Create constraints
 	    IloRange[] constraints = new IloRange[m];
@@ -115,5 +115,15 @@ public class Master
 	public ArrayList<Cluster> getClusters()
 	{
 		return _clusters;
+	}
+	
+	public double reducedCost(Cluster cluster)
+	{
+		double ret = cluster.objective() - this.getClustersDual() - cluster.size() * this.getOutliersDual();
+		
+		for(int i=0; i<_instance.getPoints(); ++i) if( cluster.contains(_instance.getPoint(i)) )
+			ret -= this.getDual(i);
+
+		return ret;
 	}
 }

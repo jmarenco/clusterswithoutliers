@@ -61,16 +61,6 @@ public class Cluster
 		return _points.stream().mapToDouble(p -> p.distance(c)).sum();
 	}
 	
-	public double reducedCost(Instance instance, Master master)
-	{
-		double ret = this.objective() - master.getClustersDual() - this.size() * master.getOutliersDual();
-		
-		for(int i=0; i<instance.getPoints(); ++i) if( this.contains(instance.getPoint(i)) )
-			ret -= master.getDual(i);
-
-		return ret;
-	}
-	
 	private Point centroid()
 	{
 		Point ret = null;

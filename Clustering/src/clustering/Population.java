@@ -9,7 +9,7 @@ public class Population
 	private ArrayList<Individual> _individuals;
 	
 	private Instance _instance;
-	private Master _master;
+	private MasterPacking _master;
 	
 	private int _size = 100;
 	private int _mutatedPerIteration = 20;
@@ -21,7 +21,7 @@ public class Population
 	
 	private static Random _random = new Random(0);
 	
-	public Population(Instance instance, Master master)
+	public Population(Instance instance, MasterPacking master)
 	{
 		_instance = instance;
 		_master = master;

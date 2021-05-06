@@ -14,7 +14,9 @@ public class Test
 //		Solution solution = algorithm.run();
 		
 		RectangularModel model = new RectangularModel(instance);
-		Solution solution = model.solve(true, 60);
+		model.setMaxTime(60);
+		model.setStrongBinding(false);
+		Solution solution = model.solve();
 
 		new Viewer(instance, solution);
 	}

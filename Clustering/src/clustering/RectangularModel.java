@@ -8,36 +8,91 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.IntParam;
 import ilog.cplex.IloCplex.Status;
+import ilog.cplex.IloCplex.UnknownObjectException;
 
 public class RectangularModel
 {
+	// Instance
 	private Instance _instance;
+	
+	// Solution
 	private ArrayList<Cluster> _clusters;
 	
+	// Parameters
+	private boolean _integer = true;
+	private boolean _strongBinding = true;
+	private int _maxTime = 3600;
+	
+	// Model sizes
+	private int p; // Points
+	private int n; // Clusters
+	private int o; // Outliers
+	private int d; // Dimension
+
+	// Solver
+	private IloCplex cplex;
+
+    // Variables
+	private IloNumVar[][] z;
+	private IloNumVar[][] r;
+	private IloNumVar[][] l;
+
 	public RectangularModel(Instance instance)
 	{
 		_instance = instance;
+
+		p = _instance.getPoints();
+		n = _instance.getClusters();
+		o = _instance.getOutliers();
+		d = _instance.getDimension();
 	}
 	
-	public Solution solve(boolean integer, double maxTime) throws IloException
+	public void setInteger(boolean value)
 	{
-		// Model sizes
-		int p = _instance.getPoints();
-		int n = _instance.getClusters();
-		int o = _instance.getOutliers();
-		int d = _instance.getDimension();
+		_integer = value;
+	}
+	
+	public void setStrongBinding(boolean value)
+	{
+		_strongBinding = value;
+	}
+	
+	public void setMaxTime(int value)
+	{
+		_maxTime = value;
+	}
+	
+	public Solution solve() throws IloException
+	{
+		createSolver();
+		createVariables();
+	    createClusteringConstraints();
+	    createBindingConstraints();
+	    createOrderingConstraints();
+		createOutliersConstraint();
+		createObjective();
+		
+		solveModel();
+    	obtainSolution();
+	    closeSolver();
+	    
+	    return new Solution(_clusters);
+	}
 
-		// Create solver
-		IloCplex cplex = new IloCplex();
+	private void createSolver() throws IloException
+	{
+		cplex = new IloCplex();
+	}
 
-	    // Create variables
-		IloNumVar[][] z = new IloNumVar[p][n];
-		IloNumVar[][] r = new IloNumVar[n][d];
-		IloNumVar[][] l = new IloNumVar[n][d];
+	private void createVariables() throws IloException
+	{
+		z = new IloNumVar[p][n];
+		r = new IloNumVar[n][d];
+		l = new IloNumVar[n][d];
 		
 		for(int i=0; i<p; ++i)
 	    for(int j=0; j<n; ++j)
-	    	z[i][j] = integer ? cplex.boolVar("z" + i + "_" + j) : cplex.numVar(0, 1000, "z" + i + "_" + j);
+	    	z[i][j] = _integer ? cplex.boolVar("z" + i + "_" + j) : cplex.numVar(0, 1000, "z" + i + "_" + j);
 
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
@@ -46,9 +101,11 @@ public class RectangularModel
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 	    	l[j][t] = cplex.numVar(_instance.min(t), _instance.max(t), "l" + j + "_" + t);
+	}
 
-	    // Create clustering constraints
-	    for(int i=0; i<p; ++i)
+	private void createClusteringConstraints() throws IloException
+	{
+		for(int i=0; i<p; ++i)
 	    {
 			IloNumExpr lhs = cplex.linearIntExpr();
 			
@@ -57,16 +114,48 @@ public class RectangularModel
 		    
 		    cplex.addLe(lhs, 1, "clus" + i);
 	    }
+	}
+	
+	private void createBindingConstraints() throws IloException
+	{
+		if( _strongBinding == true )
+			createStrongBindingConstraints();
+		else
+			createWeakBindingConstraints();
+	}
+
+	private void createStrongBindingConstraints() throws IloException
+	{
+		for(int i=0; i<p; ++i)
+	    for(int j=0; j<n; ++j)
+		for(int t=0; t<d; ++t)
+		{
+			IloNumExpr lhs = cplex.linearIntExpr();
+			lhs = cplex.sum(lhs, l[j][t]);
+			lhs = cplex.sum(lhs, cplex.prod(- _instance.getPoint(i).get(t) + _instance.max(t), z[i][j]));
+			cplex.addLe(lhs, _instance.max(t));
+		}
 	    
-	    // Create binding constraints
 	    for(int i=0; i<p; ++i)
+	    for(int j=0; j<n; ++j)
+		for(int t=0; t<d; ++t)
+		{
+			IloNumExpr lhs = cplex.linearIntExpr();
+			lhs = cplex.sum(lhs, r[j][t]);
+			lhs = cplex.sum(lhs, cplex.prod(- _instance.getPoint(i).get(t) + _instance.min(t), z[i][j]));
+			cplex.addGe(lhs, _instance.min(t));
+		}
+	}
+	
+	private void createWeakBindingConstraints() throws IloException
+	{
+		for(int i=0; i<p; ++i)
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 		{
 			IloNumExpr lhs = cplex.linearIntExpr();
 			lhs = cplex.sum(lhs, l[j][t]);
 			lhs = cplex.sum(lhs, cplex.prod(_instance.max(t) - _instance.min(t), z[i][j]));
-			
 			cplex.addLe(lhs, _instance.getPoint(i).get(t) + _instance.max(t) - _instance.min(t));
 		}
 	    
@@ -77,12 +166,13 @@ public class RectangularModel
 			IloNumExpr lhs = cplex.linearIntExpr();
 			lhs = cplex.sum(lhs, r[j][t]);
 			lhs = cplex.sum(lhs, cplex.prod(-_instance.max(t) + _instance.min(t), z[i][j]));
-			
 			cplex.addGe(lhs, _instance.getPoint(i).get(t) - _instance.max(t) + _instance.min(t));
 		}
-	    
-	    // Relation between l and r
-	    for(int j=0; j<n; ++j)
+	}	
+
+	private void createOrderingConstraints() throws IloException
+	{
+		for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 		{
 			IloNumExpr lhs = cplex.linearIntExpr();
@@ -92,8 +182,10 @@ public class RectangularModel
 			
 			cplex.addLe(lhs, 0);
 		}
+	}
 
-	    // Create outliers constraint
+	private void createOutliersConstraint() throws IloException
+	{
 		IloNumExpr lhsOut = cplex.linearIntExpr();
 		
 	    for(int i=0; i<p; ++i)
@@ -101,8 +193,10 @@ public class RectangularModel
 		 	lhsOut = cplex.sum(lhsOut, z[i][j]);
 		    
 	    cplex.addGe(lhsOut, p-o, "out");
-	    
-	    // Create objective
+	}
+
+	private void createObjective() throws IloException
+	{
 		IloNumExpr fobj = cplex.linearNumExpr();
 
 		for(int j=0; j<n; ++j)
@@ -113,15 +207,20 @@ public class RectangularModel
 		}
 		
 		cplex.addMinimize(fobj);
-		
-		// Solve model
-		cplex.setParam(IntParam.TimeLimit, maxTime);
+	}
+	
+	private void solveModel() throws IloException
+	{
+		cplex.setParam(IntParam.TimeLimit, _maxTime);
 		cplex.solve();
 		
 		System.out.println("Status: " + cplex.getStatus());
+	}
 
-		// Get solution
-    	_clusters = new ArrayList<Cluster>();
+	private void obtainSolution() throws IloException, UnknownObjectException
+	{
+		_clusters = new ArrayList<Cluster>();
+		
     	if( cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible )
 		{
 	    	for(int j=0; j<n; ++j)
@@ -140,21 +239,22 @@ public class RectangularModel
 			for(int i=0; i<p; ++i)
 		    for(int j=0; j<n; ++j) if( cplex.getValue(z[i][j]) > 0.9 )
 		    {
-		    	System.out.println("z" + i + "_" + j + " = " + cplex.getValue(z[i][j]));
+//		    	System.out.println("z" + i + "_" + j + " = " + cplex.getValue(z[i][j]));
 		    	_clusters.get(j).add(_instance.getPoint(i));
 		    }
 
-			for(int j=0; j<n; ++j)
-			for(int t=0; t<d; ++t)
-			{
-				System.out.println("l" + j + "_" + t + " = " + cplex.getValue(l[j][t]));
-				System.out.println("r" + j + "_" + t + " = " + cplex.getValue(r[j][t]));
-			}
+//			for(int j=0; j<n; ++j)
+//			for(int t=0; t<d; ++t)
+//			{
+//				System.out.println("l" + j + "_" + t + " = " + cplex.getValue(l[j][t]));
+//				System.out.println("r" + j + "_" + t + " = " + cplex.getValue(r[j][t]));
+//			}
 		}
-	    
-	    cplex.end();
-	    
-	    return new Solution(_clusters);
+	}
+	
+	private void closeSolver()
+	{
+		cplex.end();
 	}
 
 	public ArrayList<Cluster> getClusters()

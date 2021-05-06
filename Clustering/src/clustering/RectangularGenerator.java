@@ -111,18 +111,20 @@ public class RectangularGenerator
 		for(int i=0; i<p; ++i)
 			fobj = cplex.sum(fobj, cplex.prod(-_master.getDual(i), z[i]));
 		
+		fobj = cplex.sum(fobj, _master.getClustersDual());
+		
 		cplex.addMinimize(fobj);
 	}
 	
 	private void solveModel() throws IloException
 	{
-//		cplex.exportModel("model.lp");
-//		
-//		System.out.println(_master.getClustersDual());
-//		System.out.println(_master.getOutliersDual());
-//		
-//		for(int i=0; i<p; ++i)
-//			System.out.println(i + " = " + _master.getDual(i));
+		cplex.exportModel("model.lp");
+		
+		System.out.println(_master.getClustersDual());
+		System.out.println(_master.getOutliersDual());
+		
+		for(int i=0; i<p; ++i)
+			System.out.println(i + " = " + _master.getDual(i));
 		
 		cplex.setOut(null);
 		cplex.solve();
@@ -141,14 +143,14 @@ public class RectangularGenerator
 				ret.setMin(t, cplex.getValue(l[t]));
 				ret.setMax(t, cplex.getValue(r[t]));
 				
-//				System.out.println("l" + t + " = " + cplex.getValue(l[t]));
-//				System.out.println("r" + t + " = " + cplex.getValue(r[t]));
+				System.out.println("l" + t + " = " + cplex.getValue(l[t]));
+				System.out.println("r" + t + " = " + cplex.getValue(r[t]));
 			}
 			
 			for(int i=0; i<p; ++i) if( cplex.getValue(z[i]) > 0.9 )
 			{
 				ret.add(_instance.getPoint(i));
-//				System.out.println("z" + i + " = " + cplex.getValue(z[i]));
+				System.out.println("z" + i + " = " + cplex.getValue(z[i]));
 			}
 		}
     	

@@ -13,6 +13,22 @@ public class RectangularCluster extends Cluster
 		_max = new double[dimension];
 	}
 	
+	public static Cluster rectangularWithAllPoints(Instance instance)
+	{
+		RectangularCluster ret = new RectangularCluster(instance.getDimension());
+		
+		for(int i=0; i<instance.getPoints(); ++i)
+			ret.add(instance.getPoint(i));
+		
+		for(int t=0; t<instance.getDimension(); ++t)
+		{
+			ret.setMin(t, instance.min(t));
+			ret.setMax(t, instance.max(t));
+		}
+		
+		return ret;
+	}
+	
 	public void setMin(int coordinate, double value)
 	{
 		_min[coordinate] = value;

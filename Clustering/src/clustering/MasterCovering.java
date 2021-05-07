@@ -79,6 +79,11 @@ public class MasterCovering
 		if( integer == false )
 			cplex.setOut(null);
 		
+//		if( integer == true )
+//			cplex.exportModel("master-int.lp");
+//		else
+//			cplex.exportModel("master-rel.lp");
+		
 		cplex.solve();
 
 		boolean ret = cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible;
@@ -87,6 +92,23 @@ public class MasterCovering
 			_obj = cplex.getObjValue();
 			_primal = cplex.getValues(x);
 			_dual = integer ? null : cplex.getDuals(constraints);
+
+//			if( integer == false)
+//			{
+//				System.out.println("----------------------------");
+//				System.out.println("rel:");
+//				
+//			    for(int j=0; j<n; ++j)
+//					System.out.println("x" + j + " = " + cplex.getValue(x[j]));
+//
+//			    for(int i=0; i<p; ++i)
+//					System.out.println("y" + i + " = " + cplex.getValue(y[i]));
+//			    
+//			    for(int i=0; i<p+2; ++i)
+//					System.out.println("constr " + i + " = " + cplex.getDual(constraints[i]));
+//	
+//				System.out.println("----------------------------");
+//			}
 		}
 	    
 	    cplex.end();

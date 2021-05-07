@@ -6,18 +6,18 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
-//		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
+		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
-		Instance instance = testInstance();
+//		Instance instance = testInstance();
 		new Viewer(instance, null);
 		
-		Algorithm algorithm = new Algorithm(instance);
-		Solution solution = algorithm.run();
+//		Algorithm algorithm = new Algorithm(instance);
+//		Solution solution = algorithm.run();
 		
-//		RectangularModel model = new RectangularModel(instance);
-//		model.setMaxTime(60);
-//		model.setStrongBinding(false);
-//		Solution solution = model.solve();
+		RectangularModel model = new RectangularModel(instance);
+		model.setMaxTime(600);
+		model.setStrongBinding(false);
+		Solution solution = model.solve();
 
 		new Viewer(instance, solution);
 	}

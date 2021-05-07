@@ -78,13 +78,13 @@ public class RectangularGenerator
 			IloNumExpr lhs2 = cplex.linearIntExpr();
 			
 			lhs1 = cplex.sum(lhs1, l[t]);
-			lhs1 = cplex.sum(lhs1, cplex.prod(-_instance.getPoint(i).get(t) + _instance.min(t), z[i]));
+			lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(t) -_instance.getPoint(i).get(t), z[i]));
 			
 			lhs2 = cplex.sum(lhs2, r[t]);
-			lhs2 = cplex.sum(lhs2, cplex.prod(-_instance.getPoint(i).get(t) + _instance.max(t), z[i]));
+			lhs2 = cplex.sum(lhs2, cplex.prod(_instance.min(t) -_instance.getPoint(i).get(t), z[i]));
 
-		    cplex.addGe(lhs1, _instance.min(t), "l" + i + "_" + t);
-		    cplex.addLe(lhs2, _instance.max(t), "r" + i + "_" + t);
+		    cplex.addLe(lhs1, _instance.max(t), "l" + i + "_" + t);
+		    cplex.addGe(lhs2, _instance.min(t), "r" + i + "_" + t);
 	    }
 		
 		for(int t=0; t<d; ++t)
@@ -118,13 +118,13 @@ public class RectangularGenerator
 	
 	private void solveModel() throws IloException
 	{
-		cplex.exportModel("model.lp");
+//		cplex.exportModel("model.lp");
 		
-		System.out.println(_master.getClustersDual());
-		System.out.println(_master.getOutliersDual());
-		
-		for(int i=0; i<p; ++i)
-			System.out.println(i + " = " + _master.getDual(i));
+//		System.out.println(_master.getClustersDual());
+//		System.out.println(_master.getOutliersDual());
+//		
+//		for(int i=0; i<p; ++i)
+//			System.out.println(i + " = " + _master.getDual(i));
 		
 		cplex.setOut(null);
 		cplex.solve();
@@ -138,20 +138,25 @@ public class RectangularGenerator
 		{
     		ret = new RectangularCluster(d);
 	    		
+//    		System.out.println("------------------------------");
+//    		System.out.println("Gen sol:");
+    		
 			for(int t=0; t<d; ++t)
 			{
 				ret.setMin(t, cplex.getValue(l[t]));
 				ret.setMax(t, cplex.getValue(r[t]));
 				
-				System.out.println("l" + t + " = " + cplex.getValue(l[t]));
-				System.out.println("r" + t + " = " + cplex.getValue(r[t]));
+//				System.out.println("l" + t + " = " + cplex.getValue(l[t]));
+//				System.out.println("r" + t + " = " + cplex.getValue(r[t]));
 			}
 			
 			for(int i=0; i<p; ++i) if( cplex.getValue(z[i]) > 0.9 )
 			{
 				ret.add(_instance.getPoint(i));
-				System.out.println("z" + i + " = " + cplex.getValue(z[i]));
+//				System.out.println("z" + i + " = " + cplex.getValue(z[i]));
 			}
+			
+//    		System.out.println("------------------------------");
 		}
     	
     	return ret;

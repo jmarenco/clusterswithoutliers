@@ -16,7 +16,7 @@ public class Algorithm
 	public Solution run() throws IloException
 	{
 		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
-		Cluster nuevo = Cluster.withAllPoints(_instance);
+		Cluster nuevo = RectangularCluster.rectangularWithAllPoints(_instance);
 		
 		while( nuevo != null )
 		{

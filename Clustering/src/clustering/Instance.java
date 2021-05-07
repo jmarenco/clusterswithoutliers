@@ -53,11 +53,11 @@ public class Instance
 	
 	public double min(int coordinate)
 	{
-		return _points.stream().mapToDouble(p -> p.get(coordinate)).min().orElse(0);
+		return _points.stream().mapToDouble(p -> p.get(coordinate)).min().orElse(0) - 1;
 	}
 	
 	public double max(int coordinate)
 	{
-		return _points.stream().mapToDouble(p -> p.get(coordinate)).max().orElse(0);
+		return _points.stream().mapToDouble(p -> p.get(coordinate)).max().orElse(0) + 1;
 	}
 }

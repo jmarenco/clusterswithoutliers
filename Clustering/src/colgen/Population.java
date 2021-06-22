@@ -1,5 +1,6 @@
-package clustering;
+package colgen;
 
+import clustering.Instance;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;

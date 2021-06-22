@@ -1,5 +1,8 @@
-package clustering;
+package colgen;
 
+import clustering.Cluster;
+import clustering.Instance;
+import clustering.RectangularCluster;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;

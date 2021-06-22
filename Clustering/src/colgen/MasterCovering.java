@@ -1,7 +1,9 @@
-package clustering;
+package colgen;
 
 import java.util.ArrayList;
 
+import clustering.Instance;
+import clustering.Cluster;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;

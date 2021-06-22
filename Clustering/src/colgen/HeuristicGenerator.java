@@ -1,6 +1,9 @@
-package clustering;
+package colgen;
 
 import java.util.Random;
+
+import clustering.Instance;
+import clustering.Cluster;
 
 public class HeuristicGenerator
 {

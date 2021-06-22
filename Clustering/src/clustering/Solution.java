@@ -2,6 +2,9 @@ package clustering;
 
 import java.util.ArrayList;
 
+import colgen.MasterCovering;
+import colgen.MasterPacking;
+
 public class Solution
 {
 	private ArrayList<Cluster> _clusters;

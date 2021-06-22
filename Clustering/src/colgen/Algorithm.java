@@ -1,7 +1,11 @@
-package clustering;
+package colgen;
 
 import java.util.ArrayList;
 
+import clustering.Instance;
+import clustering.Solution;
+import clustering.Cluster;
+import clustering.RectangularCluster;
 import ilog.concert.IloException;
 
 public class Algorithm

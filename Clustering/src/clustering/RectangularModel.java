@@ -272,12 +272,19 @@ public class RectangularModel
 	{
 		return z[point][cluster];
 	}
+	
 	public IloNumVar rVar(int cluster, int dimension)
 	{
 		return r[cluster][dimension];
 	}
+	
 	public IloNumVar lVar(int cluster, int dimension)
 	{
 		return l[cluster][dimension];
+	}
+	
+	public IloCplex getCplex()
+	{
+		return cplex;
 	}
 }

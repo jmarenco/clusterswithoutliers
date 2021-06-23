@@ -211,6 +211,7 @@ public class RectangularModel
 	
 	private void solveModel() throws IloException
 	{
+		cplex.use(new LinearSeparator(this));
 		cplex.setParam(IntParam.TimeLimit, _maxTime);
 		cplex.solve();
 		
@@ -260,5 +261,23 @@ public class RectangularModel
 	public ArrayList<Cluster> getClusters()
 	{
 		return _clusters;
+	}
+	
+	public Instance getInstance()
+	{
+		return _instance;
+	}
+	
+	public IloNumVar zVar(int point, int cluster)
+	{
+		return z[point][cluster];
+	}
+	public IloNumVar rVar(int cluster, int dimension)
+	{
+		return r[cluster][dimension];
+	}
+	public IloNumVar lVar(int cluster, int dimension)
+	{
+		return l[cluster][dimension];
 	}
 }

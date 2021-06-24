@@ -1,5 +1,8 @@
 package clustering;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
@@ -13,16 +16,19 @@ public class LinearSeparator
 	
 	private int _cluster;
 	private int _dimension;
-	private boolean _silent = true;
+	private double[] _coordinates;
+	private boolean _silent = false;
+	private boolean _check = false;
 	
 	public LinearSeparator(Separator parent, int cluster, int dimension)
 	{
 		_parent = parent;
 		_model = parent.getRectangularModel();
 		_instance = _model.getInstance();
-		
+
 		_cluster = cluster;
 		_dimension = dimension;
+		_coordinates = getCoordinates();
 	}
 	
 	public void separate() throws IloException
@@ -48,21 +54,36 @@ public class LinearSeparator
 		
 		cplex.addMaximize(fobj);
 		
+//		// Create constraints for pairs of points
+//		for(int i=0; i<_instance.getPoints(); ++i)
+//		for(int j=i; j<_instance.getPoints(); ++j)
+//		{
+//			IloNumExpr lhs = cplex.linearNumExpr();
+//			lhs = cplex.sum(lhs, cplex.prod(1.0, beta));
+//			lhs = cplex.sum(lhs, cplex.prod(-max(i,j,_dimension), a));
+//			lhs = cplex.sum(lhs, cplex.prod(min(i,j,_dimension), b));
+//			
+//			for(int k=i; k<=j; ++k)
+//				lhs = cplex.sum(lhs, alpha[k]);
+//			
+//			cplex.addLe(lhs, 0, "c" + i);
+//		}
+
 		// Create constraints for pairs of points
-		for(int i=0; i<_instance.getPoints(); ++i)
-		for(int j=i; j<_instance.getPoints(); ++j)
+		for(int i=0; i<_coordinates.length; ++i)
+		for(int j=i; j<_coordinates.length; ++j)
 		{
 			IloNumExpr lhs = cplex.linearNumExpr();
 			lhs = cplex.sum(lhs, cplex.prod(1.0, beta));
-			lhs = cplex.sum(lhs, cplex.prod(-max(i,j,_dimension), a));
-			lhs = cplex.sum(lhs, cplex.prod(min(i,j,_dimension), b));
+			lhs = cplex.sum(lhs, cplex.prod(-_coordinates[j], a));
+			lhs = cplex.sum(lhs, cplex.prod(_coordinates[i], b));
 			
-			for(int k=i; k<=j; ++k)
+			for(int k=0; k<_instance.getPoints(); ++k) if( _coordinates[i]-0.001 <= _instance.getPoint(k).get(_dimension) && _instance.getPoint(k).get(_dimension) <= _coordinates[j]+0.001)
 				lhs = cplex.sum(lhs, alpha[k]);
 			
-			cplex.addLe(lhs, 0, "c" + i);
+			cplex.addLe(lhs, 0, "c" + i + "_" + j);
 		}
-		
+
 		// Create constraints for empty intervals
 		IloNumExpr lhs1 = cplex.linearNumExpr();
 		IloNumExpr lhs2 = cplex.linearNumExpr();
@@ -91,6 +112,12 @@ public class LinearSeparator
 		cplex.exportModel("separator.lp");
 		cplex.setOut(null);
 		cplex.solve();
+		
+		if( cplex.getStatus() != IloCplex.Status.Optimal )
+		{
+			System.out.println(cplex.getStatus());
+			System.exit(1);
+		}
 		
 		// Show the obtained inequality
 //		System.out.println("l = " + this.getValue(_model.lVar(cluster, dimension)));
@@ -128,7 +155,51 @@ public class LinearSeparator
 			System.out.println();
 		}
 		
-		if( rhsval-lhsval > 0.01 )
+		// Check validity
+		if( _check == true )
+		{
+			boolean[] x = new boolean[_instance.getPoints() + 1];
+			x[0] = true;
+			
+			while( x[_instance.getPoints()] == false )
+			{
+				double min = _instance.max(_dimension);
+				double max = _instance.min(_dimension);
+				
+				double lhs = 0;
+				for(int i=0; i<_instance.getPoints(); ++i) if( x[i] == true )
+				{
+					min = Math.min(min, _instance.getPoint(i).get(_dimension));
+					max = Math.max(max, _instance.getPoint(i).get(_dimension));
+					lhs -= cplex.getValue(alpha[i]);
+				}
+				
+				lhs += cplex.getValue(a) * max - cplex.getValue(b) * min + cplex.getValue(beta);
+				
+				if (lhs < -0.01)
+				{
+					System.out.print("************** No es válida! a = ");
+					
+					for(int i=0; i<_instance.getPoints(); ++i)
+						System.out.print(x[i] ? "1 " : "0 ");
+					
+					System.out.println("- dim: " + _dimension + ", min: " + min + ", max: " + max + ", lhs: " + lhs);
+					System.out.println("Status: " + cplex.getStatus());
+					System.exit(1);
+				}
+	
+				int j = 0;
+				while( x[j] == true )
+				{
+					x[j] = false;
+					++j;
+				}
+				
+				x[j] = true;
+			}
+		}
+		
+		if( rhsval-lhsval > 0.5 )
 		{
 			IloCplex master = _model.getCplex();
 			IloNumExpr inequality = master.linearNumExpr();
@@ -145,22 +216,17 @@ public class LinearSeparator
 		cplex.end();
 	}
 	
-	public double min(int start, int end, int dimension)
+	public double[] getCoordinates()
 	{
-		double ret = _instance.getPoint(start).get(dimension);
+		ArrayList<Double> coordinates = new ArrayList<Double>();
+		for(int i=0; i<_instance.getPoints(); ++i) if( !coordinates.contains(_instance.getPoint(i).get(_dimension)))
+			coordinates.add(_instance.getPoint(i).get(_dimension));
 		
-		for(int i=start+1; i<=end; ++i)
-			ret = Math.min(ret, _instance.getPoint(i).get(dimension));
+		Collections.sort(coordinates);
 		
-		return ret;
-	}
-	
-	public double max(int start, int end, int dimension)
-	{
-		double ret = _instance.getPoint(start).get(dimension);
-		
-		for(int i=start+1; i<=end; ++i)
-			ret = Math.max(ret, _instance.getPoint(i).get(dimension));
+		double[] ret = new double[coordinates.size()];
+		for(int i=0; i<coordinates.size(); ++i)
+			ret[i] = coordinates.get(i);
 		
 		return ret;
 	}

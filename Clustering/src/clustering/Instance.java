@@ -60,4 +60,25 @@ public class Instance
 	{
 		return _points.stream().mapToDouble(p -> p.get(coordinate)).max().orElse(0) + 1;
 	}
+	
+	public void scale(double factor)
+	{
+		for(Point point: _points)
+			point.scale(factor);
+	}
+	
+	public void integrize()
+	{
+		for(Point point: _points)
+			point.integrize();
+	}
+
+	public void print()
+	{
+		System.out.println("Clusters: " + _clusters);
+		System.out.println("Outliers: " + _outliers);
+		
+		for(int i=0; i<_points.size(); ++i)
+			System.out.println("x[" + i + "] = " + _points.get(i));
+	}
 }

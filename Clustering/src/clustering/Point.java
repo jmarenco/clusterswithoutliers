@@ -88,6 +88,18 @@ public class Point
 	{
 		return Point.fromVector(_id, _values);
 	}
+	
+	public void scale(double factor)
+	{
+		for(int i=0; i<getDimension(); ++i)
+			this.set(i, factor * this.get(i));
+	}
+	
+	public void integrize()
+	{
+		for(int i=0; i<getDimension(); ++i)
+			this.set(i, (int)this.get(i));
+	}
 
 	@Override
 	public int hashCode()

@@ -211,11 +211,18 @@ public class RectangularModel
 	
 	private void solveModel() throws IloException
 	{
-		cplex.use(new LinearSeparator(this));
+		long start = System.currentTimeMillis();
+		
+		cplex.use(new Separator(this));
 		cplex.setParam(IntParam.TimeLimit, _maxTime);
 		cplex.solve();
 		
+		double time = (System.currentTimeMillis() - start) / 1000.0;
+		
 		System.out.println("Status: " + cplex.getStatus());
+		System.out.println("Time: " + String.format("%6.2f", time));
+		System.out.println("Nodes: " + cplex.getNnodes());
+		System.out.println("Gap: " + ((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) : "  ****"));
 	}
 
 	private void obtainSolution() throws IloException, UnknownObjectException

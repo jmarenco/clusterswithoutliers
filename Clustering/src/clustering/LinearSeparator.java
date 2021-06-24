@@ -5,29 +5,27 @@ import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
-public class LinearSeparator extends IloCplex.UserCutCallback
+public class LinearSeparator
 {
+	private Separator _parent;
 	private RectangularModel _model;
 	private Instance _instance;
 	
-	public LinearSeparator(RectangularModel model)
-	{
-		_model = model;
-		_instance = model.getInstance();
-	}
+	private int _cluster;
+	private int _dimension;
+	private boolean _silent = true;
 	
-	@Override
-	protected void main() throws IloException
+	public LinearSeparator(Separator parent, int cluster, int dimension)
 	{
-		if( !this.isAfterCutLoop() )
-	        return;
+		_parent = parent;
+		_model = parent.getRectangularModel();
+		_instance = _model.getInstance();
 		
-		for(int i=0; i<_instance.getClusters(); ++i)
-		for(int j=0; j<_instance.getDimension(); ++j)
-			separate(i, j);
+		_cluster = cluster;
+		_dimension = dimension;
 	}
 	
-	private void separate(int cluster, int dimension) throws IloException
+	public void separate() throws IloException
 	{
 		// Create model and variables
 		IloCplex cplex = new IloCplex();
@@ -42,11 +40,11 @@ public class LinearSeparator extends IloCplex.UserCutCallback
 		// Create objective function
 		IloNumExpr fobj = cplex.linearNumExpr();
 		fobj = cplex.sum(fobj, cplex.prod(-1.0, beta));
-		fobj = cplex.sum(fobj, cplex.prod(-rVar(cluster, dimension), a));
-		fobj = cplex.sum(fobj, cplex.prod(lVar(cluster, dimension), b));
+		fobj = cplex.sum(fobj, cplex.prod(-rVar(_cluster, _dimension), a));
+		fobj = cplex.sum(fobj, cplex.prod(lVar(_cluster, _dimension), b));
 
 		for(int i=0; i<_instance.getPoints(); ++i)
-			fobj = cplex.sum(fobj, cplex.prod(zVar(i,cluster), alpha[i]));
+			fobj = cplex.sum(fobj, cplex.prod(zVar(i,_cluster), alpha[i]));
 		
 		cplex.addMaximize(fobj);
 		
@@ -56,8 +54,8 @@ public class LinearSeparator extends IloCplex.UserCutCallback
 		{
 			IloNumExpr lhs = cplex.linearNumExpr();
 			lhs = cplex.sum(lhs, cplex.prod(1.0, beta));
-			lhs = cplex.sum(lhs, cplex.prod(-max(i,j,dimension), a));
-			lhs = cplex.sum(lhs, cplex.prod(min(i,j,dimension), b));
+			lhs = cplex.sum(lhs, cplex.prod(-max(i,j,_dimension), a));
+			lhs = cplex.sum(lhs, cplex.prod(min(i,j,_dimension), b));
 			
 			for(int k=i; k<=j; ++k)
 				lhs = cplex.sum(lhs, alpha[k]);
@@ -70,12 +68,12 @@ public class LinearSeparator extends IloCplex.UserCutCallback
 		IloNumExpr lhs2 = cplex.linearNumExpr();
 
 		lhs1 = cplex.sum(lhs1, cplex.prod(-1, beta));
-		lhs1 = cplex.sum(lhs1, cplex.prod(-_instance.max(dimension), a));
-		lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(dimension), b));
+		lhs1 = cplex.sum(lhs1, cplex.prod(-_instance.max(_dimension), a));
+		lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(_dimension), b));
 		
 		lhs2 = cplex.sum(lhs2, cplex.prod(-1,  beta));
-		lhs2 = cplex.sum(lhs2, cplex.prod(-_instance.min(dimension), a));
-		lhs2 = cplex.sum(lhs2, cplex.prod(_instance.min(dimension), b));
+		lhs2 = cplex.sum(lhs2, cplex.prod(-_instance.min(_dimension), a));
+		lhs2 = cplex.sum(lhs2, cplex.prod(_instance.min(_dimension), b));
 		
 		cplex.addLe(lhs1, 0, "inflim");
 		cplex.addLe(lhs2, 0, "suplim");
@@ -111,35 +109,37 @@ public class LinearSeparator extends IloCplex.UserCutCallback
 //		
 //		System.out.println();
 		
-		System.out.printf("%.2f * r", cplex.getValue(a));
-		System.out.printf(" - %.2f * l >=", cplex.getValue(b));
-		
-		for(int i=0; i<_instance.getPoints(); ++i) if( Math.abs(cplex.getValue(alpha[i])) > 0.001 )
-			System.out.printf(" + %.2f * z[%d]", cplex.getValue(alpha[i]), i);
-
-		System.out.printf(" - %.2f", cplex.getValue(beta));
-		
-		double lhsval = cplex.getValue(a) * this.getValue(_model.rVar(cluster, dimension)) - cplex.getValue(b) * this.getValue(_model.lVar(cluster, dimension));
+		double lhsval = cplex.getValue(a) * _parent.getValor(_model.rVar(_cluster, _dimension)) - cplex.getValue(b) * _parent.getValor(_model.lVar(_cluster, _dimension));
 		double rhsval = -cplex.getValue(beta);
 
 		for(int i=0; i<_instance.getPoints(); ++i)
-			rhsval += cplex.getValue(alpha[i]) * this.getValue(_model.zVar(i, cluster));
-		
-		System.out.printf(" (viol: %.2f)", rhsval-lhsval);
-		System.out.println();
+			rhsval += cplex.getValue(alpha[i]) * _parent.getValor(_model.zVar(i, _cluster));
+
+		if( _silent == false )
+		{
+			System.out.printf("%.2f * r", cplex.getValue(a));
+			System.out.printf(" - %.2f * l >=", cplex.getValue(b));
+			
+			for(int i=0; i<_instance.getPoints(); ++i) if( Math.abs(cplex.getValue(alpha[i])) > 0.001 )
+				System.out.printf(" + %.2f * z[%d]", cplex.getValue(alpha[i]), i);
+	
+			System.out.printf(" - %.2f", cplex.getValue(beta));
+			System.out.printf(" (viol: %.2f)", rhsval-lhsval);
+			System.out.println();
+		}
 		
 		if( rhsval-lhsval > 0.01 )
 		{
 			IloCplex master = _model.getCplex();
 			IloNumExpr inequality = master.linearNumExpr();
 			
-			inequality = master.sum(inequality, master.prod(cplex.getValue(a), _model.rVar(cluster, dimension)));
-			inequality = master.sum(inequality, master.prod(-cplex.getValue(b), _model.lVar(cluster, dimension)));
+			inequality = master.sum(inequality, master.prod(cplex.getValue(a), _model.rVar(_cluster, _dimension)));
+			inequality = master.sum(inequality, master.prod(-cplex.getValue(b), _model.lVar(_cluster, _dimension)));
 			
 			for(int i=0; i<_instance.getPoints(); ++i)
-				inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, cluster)));
+				inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, _cluster)));
 					
-			this.add( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
+			_parent.agregar( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
 		}
 		
 		cplex.end();
@@ -167,17 +167,17 @@ public class LinearSeparator extends IloCplex.UserCutCallback
 
 	public double zVar(int point, int cluster) throws IloException
 	{
-		return this.getValue(_model.zVar(point, cluster));
+		return _parent.getValor(_model.zVar(point, cluster));
 	}
 	
 	public double rVar(int cluster, int dimension) throws IloException
 	{
-		return this.getValue(_model.rVar(cluster, dimension));
+		return _parent.getValor(_model.rVar(cluster, dimension));
 	}
 	
 	public double lVar(int cluster, int dimension) throws IloException
 	{
-		return this.getValue(_model.lVar(cluster, dimension));
+		return _parent.getValor(_model.lVar(cluster, dimension));
 	}
 }
 

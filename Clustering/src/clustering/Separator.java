@@ -12,7 +12,9 @@ public class Separator extends IloCplex.UserCutCallback
 	private RectangularModel _model;
 	private Instance _instance;
 	private ArrayList<LinearSeparator> _linearSeparators;
-	private boolean _active = true;
+	
+	private static boolean _active = true;
+	private static boolean _multithreaded = false;
 	
 	public Separator(RectangularModel model)
 	{
@@ -38,8 +40,31 @@ public class Separator extends IloCplex.UserCutCallback
 		if( this.isAfterCutLoop() == false || _active == false )
 	        return;
 		
-		for(LinearSeparator linearSeparator: _linearSeparators)
-			linearSeparator.separate();
+		if( _multithreaded == false )
+		{
+			for(LinearSeparator linearSeparator: _linearSeparators)
+				linearSeparator.separate();
+		}
+		else
+		{
+			try
+			{
+				ArrayList<LinearSeparatorThread> threads = new ArrayList<LinearSeparatorThread>(_linearSeparators.size());
+				
+				for(LinearSeparator linearSeparator: _linearSeparators)
+					threads.add(new LinearSeparatorThread(linearSeparator));
+				
+				for(LinearSeparatorThread thread: threads)
+					thread.start();
+			
+				for(LinearSeparatorThread thread: threads)
+					thread.join();
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public RectangularModel getRectangularModel()

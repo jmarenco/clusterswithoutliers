@@ -107,7 +107,7 @@ public class LinearSeparator
 		cplex.addEq(lhs3, _instance.getPoints() + 1, "norm");
 	}
 	
-	public Inequality separate() throws IloException
+	public void separate() throws IloException
 	{
 		// Update objective function
 		cplex.setLinearCoef(objective, -rVar(_cluster, _dimension), a);
@@ -123,7 +123,7 @@ public class LinearSeparator
 		if( cplex.getStatus() != IloCplex.Status.Optimal )
 		{
 			System.err.println("LinearSeparator: " + cplex.getStatus());
-			return null;
+			return;
 		}
 		
 		if( _verbose == true )
@@ -132,21 +132,20 @@ public class LinearSeparator
 		if( _check == true )
 			checkValidity();
 		
-		// If the inequality is violated, keeps the inequality
+		// If the inequality is violated, adds the inequality to the master problem
 		if( violation() > _threshold )
 		{
-			Inequality ret = new Inequality(_instance, _cluster, _dimension);
-			ret.setA(cplex.getValue(a));
-			ret.setB(cplex.getValue(b));
-			ret.setBeta(cplex.getValue(beta));
+			IloCplex master = _model.getCplex();
+			IloNumExpr inequality = master.linearNumExpr();
+			
+			inequality = master.sum(inequality, master.prod(cplex.getValue(a), _model.rVar(_cluster, _dimension)));
+			inequality = master.sum(inequality, master.prod(-cplex.getValue(b), _model.lVar(_cluster, _dimension)));
 			
 			for(int i=0; i<_instance.getPoints(); ++i)
-				ret.setAlpha(i, cplex.getValue(alpha[i]));
-			
-			return ret;
+				inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, _cluster)));
+					
+			_parent.addCut( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
 		}
-		
-		return null;
 	}
 	
 	// Violation of the found inequality for the current point
@@ -161,7 +160,6 @@ public class LinearSeparator
 		return rhsval-lhsval;
 	}
 	
-	// Prints the inequality to the console
 	private void printInequality() throws IloException
 	{
 		System.out.printf("%.2f * r", cplex.getValue(a));
@@ -175,7 +173,6 @@ public class LinearSeparator
 		System.out.println();
 	}
 	
-	// Checks if the current inequality is valid 
 	private void checkValidity() throws IloException
 	{
 		boolean[] x = new boolean[_instance.getPoints() + 1];
@@ -225,7 +222,6 @@ public class LinearSeparator
 			cplex.end();
 	}
 	
-	// Gets the coordinates in current dimension, with no repetitions and in ascending order
 	public double[] getCoordinates()
 	{
 		ArrayList<Double> coordinates = new ArrayList<Double>();
@@ -241,15 +237,16 @@ public class LinearSeparator
 		return ret;
 	}
 
-	// Current master solution
 	public double zVar(int point, int cluster) throws IloException
 	{
 		return _parent.get(_model.zVar(point, cluster));
 	}
+	
 	public double rVar(int cluster, int dimension) throws IloException
 	{
 		return _parent.get(_model.rVar(cluster, dimension));
 	}
+	
 	public double lVar(int cluster, int dimension) throws IloException
 	{
 		return _parent.get(_model.lVar(cluster, dimension));

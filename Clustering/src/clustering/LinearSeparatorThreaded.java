@@ -9,6 +9,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex;
 
+@Deprecated
 public class LinearSeparatorThreaded
 {
 	private SeparatorThreaded _parent;

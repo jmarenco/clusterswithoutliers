@@ -160,6 +160,7 @@ public class LinearSeparator
 		return rhsval-lhsval;
 	}
 	
+	// Prints the inequality to the console
 	private void printInequality() throws IloException
 	{
 		System.out.printf("%.2f * r", cplex.getValue(a));
@@ -173,6 +174,7 @@ public class LinearSeparator
 		System.out.println();
 	}
 	
+	// Checks if the current inequality is valid 
 	private void checkValidity() throws IloException
 	{
 		boolean[] x = new boolean[_instance.getPoints() + 1];
@@ -216,12 +218,14 @@ public class LinearSeparator
 		}
 	}
 	
+	// Closes the separator
 	public void end()
 	{
 		if( cplex != null )
 			cplex.end();
 	}
 	
+	// Gets the coordinates in current dimension, with no repetitions and in ascending order
 	public double[] getCoordinates()
 	{
 		ArrayList<Double> coordinates = new ArrayList<Double>();
@@ -237,16 +241,15 @@ public class LinearSeparator
 		return ret;
 	}
 
+	// Current master solution
 	public double zVar(int point, int cluster) throws IloException
 	{
 		return _parent.get(_model.zVar(point, cluster));
 	}
-	
 	public double rVar(int cluster, int dimension) throws IloException
 	{
 		return _parent.get(_model.rVar(cluster, dimension));
 	}
-	
 	public double lVar(int cluster, int dimension) throws IloException
 	{
 		return _parent.get(_model.lVar(cluster, dimension));

@@ -7,6 +7,7 @@ import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
+@Deprecated
 public class SeparatorThreaded extends IloCplex.UserCutCallback
 {
 	private RectangularModel _model;

@@ -9,7 +9,7 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
 @Deprecated
-public class StandaloneLinearSeparator
+public class LinearSeparatorStandalone
 {
 	private Separator _parent;
 	private RectangularModel _model;
@@ -21,7 +21,7 @@ public class StandaloneLinearSeparator
 	private boolean _silent = true;
 	private boolean _check = false;
 	
-	public StandaloneLinearSeparator(Separator parent, int cluster, int dimension)
+	public LinearSeparatorStandalone(Separator parent, int cluster, int dimension)
 	{
 		_parent = parent;
 		_model = parent.getRectangularModel();

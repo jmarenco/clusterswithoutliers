@@ -9,7 +9,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex;
 
-public class LinearSeparator
+public class LinearSeparatorThreadUnsafe
 {
 	private Separator _parent;
 	private RectangularModel _model;
@@ -20,7 +20,7 @@ public class LinearSeparator
 	private double[] _coordinates;
 	
 	private static double _threshold = 0.5;
-	private static boolean _verbose = false;
+	private static boolean _verbose = true;
 	private static boolean _check = false;
 	
 	private IloCplex cplex;
@@ -29,9 +29,8 @@ public class LinearSeparator
 	private IloNumVar a;
 	private IloNumVar b;
 	private IloObjective objective;
-	private Inequality _inequality;
 	
-	public LinearSeparator(Separator parent, int cluster, int dimension) throws IloException
+	public LinearSeparatorThreadUnsafe(Separator parent, int cluster, int dimension) throws IloException
 	{
 		_parent = parent;
 		_model = parent.getRectangularModel();
@@ -110,8 +109,6 @@ public class LinearSeparator
 	
 	public void separate() throws IloException
 	{
-		_inequality = null;
-
 		// Update objective function
 		cplex.setLinearCoef(objective, -rVar(_cluster, _dimension), a);
 		cplex.setLinearCoef(objective, lVar(_cluster, _dimension), b);
@@ -135,16 +132,19 @@ public class LinearSeparator
 		if( _check == true )
 			checkValidity();
 		
-		// If the inequality is violated, keeps the inequality
+		// If the inequality is violated, adds the inequality to the master problem
 		if( violation() > _threshold )
 		{
-			_inequality = new Inequality(_instance, _cluster, _dimension);
-			_inequality.setA(cplex.getValue(a));
-			_inequality.setB(cplex.getValue(b));
-			_inequality.setBeta(cplex.getValue(beta));
+			IloCplex master = _model.getCplex();
+			IloNumExpr inequality = master.linearNumExpr();
+			
+			inequality = master.sum(inequality, master.prod(cplex.getValue(a), _model.rVar(_cluster, _dimension)));
+			inequality = master.sum(inequality, master.prod(-cplex.getValue(b), _model.lVar(_cluster, _dimension)));
 			
 			for(int i=0; i<_instance.getPoints(); ++i)
-				_inequality.setAlpha(i, cplex.getValue(alpha[i]));
+				inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, _cluster)));
+					
+			_parent.addCut( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
 		}
 	}
 	
@@ -220,12 +220,6 @@ public class LinearSeparator
 	{
 		if( cplex != null )
 			cplex.end();
-	}
-	
-	// Result of the separation procedure
-	public Inequality getInequality()
-	{
-		return _inequality;
 	}
 	
 	public double[] getCoordinates()

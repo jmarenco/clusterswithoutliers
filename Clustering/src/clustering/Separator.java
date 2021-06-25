@@ -3,6 +3,7 @@ package clustering;
 import java.util.ArrayList;
 
 import ilog.concert.IloException;
+import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
@@ -14,7 +15,7 @@ public class Separator extends IloCplex.UserCutCallback
 	private ArrayList<LinearSeparator> _linearSeparators;
 	
 	private static boolean _active = true;
-	private static boolean _multithreaded = false;
+	private static boolean _multithreaded = true;
 	
 	public Separator(RectangularModel model)
 	{
@@ -59,6 +60,9 @@ public class Separator extends IloCplex.UserCutCallback
 			
 				for(LinearSeparatorThread thread: threads)
 					thread.join();
+				
+				for(LinearSeparator linearSeparator: _linearSeparators) if( linearSeparator.getInequality() != null )
+					addCut(linearSeparator.getInequality());
 			}
 			catch (InterruptedException e)
 			{
@@ -80,6 +84,20 @@ public class Separator extends IloCplex.UserCutCallback
 	public void addCut(IloRange range, int cutManagement) throws IloException
 	{
 		this.add(range, cutManagement);
+	}
+	
+	public void addCut(Inequality inequality) throws IloException
+	{
+		IloCplex master = _model.getCplex();
+		IloNumExpr lhs = master.linearNumExpr();
+		
+		lhs = master.sum(lhs, master.prod(inequality.getA(), _model.rVar(inequality.getCluster(), inequality.getDimension())));
+		lhs = master.sum(lhs, master.prod(-inequality.getB(), _model.lVar(inequality.getCluster(), inequality.getDimension())));
+		
+		for(int i=0; i<_instance.getPoints(); ++i)
+			lhs = master.sum(lhs, master.prod(-inequality.getAlpha(i), _model.zVar(i, inequality.getCluster())));
+				
+		this.addCut( master.ge(lhs, -inequality.getBeta()), IloCplex.CutManagement.UseCutForce );
 	}
 }
 

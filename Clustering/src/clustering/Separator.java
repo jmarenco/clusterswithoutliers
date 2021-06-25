@@ -61,8 +61,8 @@ public class Separator extends IloCplex.UserCutCallback
 				for(LinearSeparatorThread thread: threads)
 					thread.join();
 				
-				for(LinearSeparator linearSeparator: _linearSeparators) if( linearSeparator.getInequality() != null )
-					addCut(linearSeparator.getInequality());
+				for(LinearSeparatorThread thread: threads) if( thread.getInequality() != null )
+					addCut(thread.getInequality());
 			}
 			catch (InterruptedException e)
 			{

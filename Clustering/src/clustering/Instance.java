@@ -53,12 +53,12 @@ public class Instance
 	
 	public double min(int coordinate)
 	{
-		return _points.stream().mapToDouble(p -> p.get(coordinate)).min().orElse(0) - 1;
+		return _points.stream().mapToDouble(p -> p.get(coordinate)).min().orElse(0);
 	}
 	
 	public double max(int coordinate)
 	{
-		return _points.stream().mapToDouble(p -> p.get(coordinate)).max().orElse(0) + 1;
+		return _points.stream().mapToDouble(p -> p.get(coordinate)).max().orElse(0);
 	}
 	
 	public void scale(double factor)
@@ -71,6 +71,17 @@ public class Instance
 	{
 		for(Point point: _points)
 			point.integrize();
+	}
+	
+	public void positivize()
+	{
+		for(int j=0; j<this.getDimension(); ++j)
+		{
+			double min = this.min(j);
+			
+			for(Point point: _points)
+				point.set(j, point.get(j) - min + 1);
+		}
 	}
 
 	public void print()

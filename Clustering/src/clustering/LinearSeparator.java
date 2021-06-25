@@ -17,7 +17,7 @@ public class LinearSeparator
 	private int _cluster;
 	private int _dimension;
 	private double[] _coordinates;
-	private boolean _silent = false;
+	private boolean _silent = true;
 	private boolean _check = false;
 	
 	public LinearSeparator(Separator parent, int cluster, int dimension)
@@ -37,8 +37,8 @@ public class LinearSeparator
 		IloCplex cplex = new IloCplex();
 		IloNumVar[] alpha = new IloNumVar[_instance.getPoints()];
 		IloNumVar beta = cplex.numVar(-1e10, 1e10, "beta");
-		IloNumVar a = cplex.numVar(0, 10, "a");
-		IloNumVar b = cplex.numVar(0, 10, "b");
+		IloNumVar a = cplex.numVar(0, 10 * _instance.getPoints(), "a");
+		IloNumVar b = cplex.numVar(0, 10 * _instance.getPoints(), "b");
 		
 		for(int i=0; i<_instance.getPoints(); ++i)
 			alpha[i] = cplex.numVar(0, 1e10, "alfa" + i);
@@ -53,28 +53,13 @@ public class LinearSeparator
 			fobj = cplex.sum(fobj, cplex.prod(zVar(i,_cluster), alpha[i]));
 		
 		cplex.addMaximize(fobj);
-		
-//		// Create constraints for pairs of points
-//		for(int i=0; i<_instance.getPoints(); ++i)
-//		for(int j=i; j<_instance.getPoints(); ++j)
-//		{
-//			IloNumExpr lhs = cplex.linearNumExpr();
-//			lhs = cplex.sum(lhs, cplex.prod(1.0, beta));
-//			lhs = cplex.sum(lhs, cplex.prod(-max(i,j,_dimension), a));
-//			lhs = cplex.sum(lhs, cplex.prod(min(i,j,_dimension), b));
-//			
-//			for(int k=i; k<=j; ++k)
-//				lhs = cplex.sum(lhs, alpha[k]);
-//			
-//			cplex.addLe(lhs, 0, "c" + i);
-//		}
 
 		// Create constraints for pairs of points
 		for(int i=0; i<_coordinates.length; ++i)
 		for(int j=i; j<_coordinates.length; ++j)
 		{
 			IloNumExpr lhs = cplex.linearNumExpr();
-			lhs = cplex.sum(lhs, cplex.prod(1.0, beta));
+			lhs = cplex.sum(lhs, cplex.prod(-1.0, beta));
 			lhs = cplex.sum(lhs, cplex.prod(-_coordinates[j], a));
 			lhs = cplex.sum(lhs, cplex.prod(_coordinates[i], b));
 			
@@ -101,10 +86,12 @@ public class LinearSeparator
 		
 		// Create normalization constraint
 		IloNumExpr lhs3 = cplex.linearNumExpr();
-		lhs3 = cplex.sum(lhs3, cplex.prod(-1.0, beta));
+//		lhs3 = cplex.sum(lhs3, cplex.prod(-1.0, beta));
+		lhs3 = cplex.sum(lhs3, a);
+		lhs3 = cplex.sum(lhs3, b);
 
-		for(int i=0; i<_instance.getPoints(); ++i)
-			lhs3 = cplex.sum(lhs3, alpha[i]);
+//		for(int i=0; i<_instance.getPoints(); ++i)
+//			lhs3 = cplex.sum(lhs3, alpha[i]);
 		
 		cplex.addEq(lhs3, _instance.getPoints() + 1, "norm");
 		
@@ -112,19 +99,21 @@ public class LinearSeparator
 		cplex.exportModel("separator.lp");
 		cplex.setOut(null);
 		cplex.solve();
-		
+
 		if( cplex.getStatus() != IloCplex.Status.Optimal )
 		{
-			System.out.println(cplex.getStatus());
-			System.exit(1);
+			System.err.println("LinearSeparator: " + cplex.getStatus());
+
+			cplex.end();
+			return;
 		}
 		
 		// Show the obtained inequality
-//		System.out.println("l = " + this.getValue(_model.lVar(cluster, dimension)));
-//		System.out.println("r = " + this.getValue(_model.rVar(cluster, dimension)));
+//		System.out.println("l = " + _parent.getValor(_model.lVar(_cluster, _dimension)));
+//		System.out.println("r = " + _parent.getValor(_model.rVar(_cluster, _dimension)));
 //		
 //		for(int i=0; i<_instance.getPoints(); ++i)
-//			System.out.println("z[i] = " + this.getValue(_model.zVar(i, cluster)));
+//			System.out.println("z[" + i + "] = " + _parent.getValor(_model.zVar(i, _cluster)));
 //		
 //		System.out.println();
 //		System.out.println("a = " + cplex.getValue(a));

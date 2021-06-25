@@ -10,14 +10,14 @@ public class Test
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
 		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
 //		Instance instance = testInstance();
+		
+		instance.positivize();
+//		instance.print();
+		
 		new Viewer(instance, null);
 		
 //		Algorithm algorithm = new Algorithm(instance);
 //		Solution solution = algorithm.run();
-		
-		instance.scale(100);
-		instance.integrize();
-		instance.print();
 		
 		RectangularModel model = new RectangularModel(instance);
 		model.setMaxTime(600);

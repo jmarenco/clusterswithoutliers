@@ -20,9 +20,16 @@ public class Separator extends IloCplex.UserCutCallback
 		_instance = model.getInstance();
 		_linearSeparators = new ArrayList<LinearSeparator>();
 		
-		for(int i=0; i<_instance.getClusters(); ++i)
-		for(int j=0; j<_instance.getDimension(); ++j)
-			_linearSeparators.add(new LinearSeparator(this, i, j));
+		try
+		{
+			for(int i=0; i<_instance.getClusters(); ++i)
+			for(int j=0; j<_instance.getDimension(); ++j)
+				_linearSeparators.add(new LinearSeparator(this, i, j));
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -40,12 +47,12 @@ public class Separator extends IloCplex.UserCutCallback
 		return _model;
 	}
 	
-	public double getValor(IloNumVar variable) throws IloException
+	public double get(IloNumVar variable) throws IloException
 	{
 		return this.getValue(variable);
 	}
 	
-	public void agregar(IloRange range, int cutManagement) throws IloException
+	public void addCut(IloRange range, int cutManagement) throws IloException
 	{
 		this.add(range, cutManagement);
 	}

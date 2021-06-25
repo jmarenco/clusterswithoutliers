@@ -8,8 +8,8 @@ public class Test
 	{
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
-		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
-//		Instance instance = testInstance();
+//		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
+		Instance instance = testInstance();
 		
 		instance.positivize();
 //		instance.print();

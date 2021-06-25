@@ -6,6 +6,7 @@ import java.util.Collections;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
+import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex;
 
 public class LinearSeparator
@@ -17,10 +18,19 @@ public class LinearSeparator
 	private int _cluster;
 	private int _dimension;
 	private double[] _coordinates;
-	private boolean _silent = true;
-	private boolean _check = false;
 	
-	public LinearSeparator(Separator parent, int cluster, int dimension)
+	private static double _threshold = 0.5;
+	private static boolean _verbose = false;
+	private static boolean _check = false;
+	
+	private IloCplex cplex;
+	private IloNumVar[] alpha;
+	private IloNumVar beta;
+	private IloNumVar a;
+	private IloNumVar b;
+	private IloObjective objective;
+	
+	public LinearSeparator(Separator parent, int cluster, int dimension) throws IloException
 	{
 		_parent = parent;
 		_model = parent.getRectangularModel();
@@ -29,16 +39,21 @@ public class LinearSeparator
 		_cluster = cluster;
 		_dimension = dimension;
 		_coordinates = getCoordinates();
+		
+		createModel();
 	}
 	
-	public void separate() throws IloException
+	private void createModel() throws IloException
 	{
-		// Create model and variables
-		IloCplex cplex = new IloCplex();
-		IloNumVar[] alpha = new IloNumVar[_instance.getPoints()];
-		IloNumVar beta = cplex.numVar(-1e10, 1e10, "beta");
-		IloNumVar a = cplex.numVar(0, 10 * _instance.getPoints(), "a");
-		IloNumVar b = cplex.numVar(0, 10 * _instance.getPoints(), "b");
+		// Create model
+		cplex = new IloCplex();
+		cplex.setOut(null);
+		
+		// Create variables
+		alpha = new IloNumVar[_instance.getPoints()];
+		beta = cplex.numVar(-1e10, 1e10, "beta");
+		a = cplex.numVar(0, 10 * _instance.getPoints(), "a");
+		b = cplex.numVar(0, 10 * _instance.getPoints(), "b");
 		
 		for(int i=0; i<_instance.getPoints(); ++i)
 			alpha[i] = cplex.numVar(0, 1e10, "alfa" + i);
@@ -46,13 +61,13 @@ public class LinearSeparator
 		// Create objective function
 		IloNumExpr fobj = cplex.linearNumExpr();
 		fobj = cplex.sum(fobj, cplex.prod(-1.0, beta));
-		fobj = cplex.sum(fobj, cplex.prod(-rVar(_cluster, _dimension), a));
-		fobj = cplex.sum(fobj, cplex.prod(lVar(_cluster, _dimension), b));
+		fobj = cplex.sum(fobj, cplex.prod(-1.0, a));
+		fobj = cplex.sum(fobj, cplex.prod(1-0, b));
 
 		for(int i=0; i<_instance.getPoints(); ++i)
-			fobj = cplex.sum(fobj, cplex.prod(zVar(i,_cluster), alpha[i]));
+			fobj = cplex.sum(fobj, cplex.prod(1.0, alpha[i]));
 		
-		cplex.addMaximize(fobj);
+		objective = cplex.addMaximize(fobj);
 
 		// Create constraints for pairs of points
 		for(int i=0; i<_coordinates.length; ++i)
@@ -86,109 +101,39 @@ public class LinearSeparator
 		
 		// Create normalization constraint
 		IloNumExpr lhs3 = cplex.linearNumExpr();
-//		lhs3 = cplex.sum(lhs3, cplex.prod(-1.0, beta));
 		lhs3 = cplex.sum(lhs3, a);
 		lhs3 = cplex.sum(lhs3, b);
 
-//		for(int i=0; i<_instance.getPoints(); ++i)
-//			lhs3 = cplex.sum(lhs3, alpha[i]);
-		
 		cplex.addEq(lhs3, _instance.getPoints() + 1, "norm");
-		
+	}
+	
+	public void separate() throws IloException
+	{
+		// Update objective function
+		cplex.setLinearCoef(objective, -rVar(_cluster, _dimension), a);
+		cplex.setLinearCoef(objective, lVar(_cluster, _dimension), b);
+
+		for(int i=0; i<_instance.getPoints(); ++i)
+			cplex.setLinearCoef(objective, zVar(i,_cluster), alpha[i]);
+
 		// Solve
-		cplex.exportModel("separator.lp");
-		cplex.setOut(null);
 		cplex.solve();
 
+		// The model should be feasible and bounded ...
 		if( cplex.getStatus() != IloCplex.Status.Optimal )
 		{
 			System.err.println("LinearSeparator: " + cplex.getStatus());
-
-			cplex.end();
 			return;
 		}
 		
-		// Show the obtained inequality
-//		System.out.println("l = " + _parent.getValor(_model.lVar(_cluster, _dimension)));
-//		System.out.println("r = " + _parent.getValor(_model.rVar(_cluster, _dimension)));
-//		
-//		for(int i=0; i<_instance.getPoints(); ++i)
-//			System.out.println("z[" + i + "] = " + _parent.getValor(_model.zVar(i, _cluster)));
-//		
-//		System.out.println();
-//		System.out.println("a = " + cplex.getValue(a));
-//		System.out.println("b = " + cplex.getValue(b));
-//		System.out.println("beta = " + cplex.getValue(beta));
-//		
-//		for(int i=0; i<_instance.getPoints(); ++i)
-//			System.out.println("alpha[" + i + "] = " + cplex.getValue(alpha[i]));
-//		
-//		System.out.println();
+		if( _verbose == true )
+			printInequality();
 		
-		double lhsval = cplex.getValue(a) * _parent.getValor(_model.rVar(_cluster, _dimension)) - cplex.getValue(b) * _parent.getValor(_model.lVar(_cluster, _dimension));
-		double rhsval = -cplex.getValue(beta);
-
-		for(int i=0; i<_instance.getPoints(); ++i)
-			rhsval += cplex.getValue(alpha[i]) * _parent.getValor(_model.zVar(i, _cluster));
-
-		if( _silent == false )
-		{
-			System.out.printf("%.2f * r", cplex.getValue(a));
-			System.out.printf(" - %.2f * l >=", cplex.getValue(b));
-			
-			for(int i=0; i<_instance.getPoints(); ++i) if( Math.abs(cplex.getValue(alpha[i])) > 0.001 )
-				System.out.printf(" + %.2f * z[%d]", cplex.getValue(alpha[i]), i);
-	
-			System.out.printf(" - %.2f", cplex.getValue(beta));
-			System.out.printf(" (viol: %.2f)", rhsval-lhsval);
-			System.out.println();
-		}
-		
-		// Check validity
 		if( _check == true )
-		{
-			boolean[] x = new boolean[_instance.getPoints() + 1];
-			x[0] = true;
-			
-			while( x[_instance.getPoints()] == false )
-			{
-				double min = _instance.max(_dimension);
-				double max = _instance.min(_dimension);
-				
-				double lhs = 0;
-				for(int i=0; i<_instance.getPoints(); ++i) if( x[i] == true )
-				{
-					min = Math.min(min, _instance.getPoint(i).get(_dimension));
-					max = Math.max(max, _instance.getPoint(i).get(_dimension));
-					lhs -= cplex.getValue(alpha[i]);
-				}
-				
-				lhs += cplex.getValue(a) * max - cplex.getValue(b) * min + cplex.getValue(beta);
-				
-				if (lhs < -0.01)
-				{
-					System.out.print("************** No es válida! a = ");
-					
-					for(int i=0; i<_instance.getPoints(); ++i)
-						System.out.print(x[i] ? "1 " : "0 ");
-					
-					System.out.println("- dim: " + _dimension + ", min: " + min + ", max: " + max + ", lhs: " + lhs);
-					System.out.println("Status: " + cplex.getStatus());
-					System.exit(1);
-				}
-	
-				int j = 0;
-				while( x[j] == true )
-				{
-					x[j] = false;
-					++j;
-				}
-				
-				x[j] = true;
-			}
-		}
+			checkValidity();
 		
-		if( rhsval-lhsval > 0.5 )
+		// If the inequality is violated, adds the inequality to the master problem
+		if( violation() > _threshold )
 		{
 			IloCplex master = _model.getCplex();
 			IloNumExpr inequality = master.linearNumExpr();
@@ -199,10 +144,82 @@ public class LinearSeparator
 			for(int i=0; i<_instance.getPoints(); ++i)
 				inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, _cluster)));
 					
-			_parent.agregar( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
+			_parent.addCut( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
 		}
+	}
+	
+	// Violation of the found inequality for the current point
+	private double violation() throws IloException
+	{
+		double lhsval = cplex.getValue(a) * _parent.get(_model.rVar(_cluster, _dimension)) - cplex.getValue(b) * _parent.get(_model.lVar(_cluster, _dimension));
+		double rhsval = -cplex.getValue(beta);
+
+		for(int i=0; i<_instance.getPoints(); ++i)
+			rhsval += cplex.getValue(alpha[i]) * _parent.get(_model.zVar(i, _cluster));
 		
-		cplex.end();
+		return rhsval-lhsval;
+	}
+	
+	private void printInequality() throws IloException
+	{
+		System.out.printf("%.2f * r", cplex.getValue(a));
+		System.out.printf(" - %.2f * l >=", cplex.getValue(b));
+		
+		for(int i=0; i<_instance.getPoints(); ++i) if( Math.abs(cplex.getValue(alpha[i])) > 0.001 )
+			System.out.printf(" + %.2f * z[%d]", cplex.getValue(alpha[i]), i);
+
+		System.out.printf(" - %.2f", cplex.getValue(beta));
+		System.out.printf(" (viol: %.2f)", violation());
+		System.out.println();
+	}
+	
+	private void checkValidity() throws IloException
+	{
+		boolean[] x = new boolean[_instance.getPoints() + 1];
+		x[0] = true;
+		
+		while( x[_instance.getPoints()] == false )
+		{
+			double min = _instance.max(_dimension);
+			double max = _instance.min(_dimension);
+			
+			double lhs = 0;
+			for(int i=0; i<_instance.getPoints(); ++i) if( x[i] == true )
+			{
+				min = Math.min(min, _instance.getPoint(i).get(_dimension));
+				max = Math.max(max, _instance.getPoint(i).get(_dimension));
+				lhs -= cplex.getValue(alpha[i]);
+			}
+			
+			lhs += cplex.getValue(a) * max - cplex.getValue(b) * min + cplex.getValue(beta);
+			
+			if (lhs < -0.01)
+			{
+				System.out.print("************** Not valid! a = ");
+				
+				for(int i=0; i<_instance.getPoints(); ++i)
+					System.out.print(x[i] ? "1 " : "0 ");
+				
+				System.out.println("- dim: " + _dimension + ", min: " + min + ", max: " + max + ", lhs: " + lhs);
+				System.out.println("Status: " + cplex.getStatus());
+				System.exit(1);
+			}
+
+			int j = 0;
+			while( x[j] == true )
+			{
+				x[j] = false;
+				++j;
+			}
+			
+			x[j] = true;
+		}
+	}
+	
+	public void end()
+	{
+		if( cplex != null )
+			cplex.end();
 	}
 	
 	public double[] getCoordinates()
@@ -222,17 +239,17 @@ public class LinearSeparator
 
 	public double zVar(int point, int cluster) throws IloException
 	{
-		return _parent.getValor(_model.zVar(point, cluster));
+		return _parent.get(_model.zVar(point, cluster));
 	}
 	
 	public double rVar(int cluster, int dimension) throws IloException
 	{
-		return _parent.getValor(_model.rVar(cluster, dimension));
+		return _parent.get(_model.rVar(cluster, dimension));
 	}
 	
 	public double lVar(int cluster, int dimension) throws IloException
 	{
-		return _parent.getValor(_model.lVar(cluster, dimension));
+		return _parent.get(_model.lVar(cluster, dimension));
 	}
 }
 

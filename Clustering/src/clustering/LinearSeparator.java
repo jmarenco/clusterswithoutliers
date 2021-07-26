@@ -22,6 +22,7 @@ public class LinearSeparator
 	private static double _threshold = 0.5;
 	private static boolean _verbose = false;
 	private static boolean _check = false;
+	private static boolean _allClusters = false;
 	
 	private IloCplex cplex;
 	private IloNumVar[] alpha;
@@ -135,17 +136,31 @@ public class LinearSeparator
 		// If the inequality is violated, adds the inequality to the master problem
 		if( violation() > _threshold )
 		{
-			IloCplex master = _model.getCplex();
-			IloNumExpr inequality = master.linearNumExpr();
-			
-			inequality = master.sum(inequality, master.prod(cplex.getValue(a), _model.rVar(_cluster, _dimension)));
-			inequality = master.sum(inequality, master.prod(-cplex.getValue(b), _model.lVar(_cluster, _dimension)));
-			
-			for(int i=0; i<_instance.getPoints(); ++i)
-				inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, _cluster)));
-					
-			_parent.addCut( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
+			if( _allClusters == false)
+			{
+				addCut(_cluster);
+			}
+			else
+			{
+				for(int i=0; i<_instance.getClusters(); ++i)
+					addCut(i);
+			}
 		}
+	}
+	
+	// Adds inequality to the master problem
+	private void addCut(int cluster) throws IloException
+	{
+		IloCplex master = _model.getCplex();
+		IloNumExpr inequality = master.linearNumExpr();
+		
+		inequality = master.sum(inequality, master.prod(cplex.getValue(a), _model.rVar(cluster, _dimension)));
+		inequality = master.sum(inequality, master.prod(-cplex.getValue(b), _model.lVar(cluster, _dimension)));
+		
+		for(int i=0; i<_instance.getPoints(); ++i)
+			inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, cluster)));
+				
+		_parent.addCut( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
 	}
 	
 	// Violation of the found inequality for the current point

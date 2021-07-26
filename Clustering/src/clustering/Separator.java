@@ -14,7 +14,13 @@ public class Separator extends IloCplex.UserCutCallback
 	private ArrayList<LinearSeparator> _linearSeparators;
 	
 	private static boolean _active = true;
+	private static boolean _cutAndBranch = false;
+	private static int _maxRounds = 10;
 	
+	private IloCplex.NodeId _root;
+	private IloCplex.NodeId _lastNode;
+	private int _rounds;
+
 	public Separator(RectangularModel model)
 	{
 		_model = model;
@@ -39,8 +45,37 @@ public class Separator extends IloCplex.UserCutCallback
 		if( this.isAfterCutLoop() == false || _active == false )
 	        return;
 		
+		IloCplex.NodeId current = updateNodes();
+
+		if( _cutAndBranch && current.equals(_root) == false )
+			return;
+		
+		if( _rounds++ > _maxRounds )
+			return;
+		
 		for(LinearSeparator linearSeparator: _linearSeparators)
 			linearSeparator.separate();
+	}
+	
+	private IloCplex.NodeId updateNodes() throws IloException
+	{
+		IloCplex.NodeId current = this.getNodeId();
+		
+		if( current == null )
+			return null;
+		
+		if( _root == null )
+			_root = current;
+		
+		if( current.equals(_lastNode) == false )
+		{
+			_lastNode = current;
+			_rounds = 0;
+		}
+		
+		_rounds++;
+		
+		return current;
 	}
 	
 	public RectangularModel getRectangularModel()

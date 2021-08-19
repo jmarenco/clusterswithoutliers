@@ -222,7 +222,9 @@ public class RectangularModel
 	{
 		long start = System.currentTimeMillis();
 		
-		cplex.use(new Separator(this));
+		Separator separator = new Separator(this);
+		
+		cplex.use(separator);
 		cplex.setParam(IntParam.TimeLimit, _maxTime);
 		cplex.solve();
 		
@@ -245,7 +247,7 @@ public class RectangularModel
 			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
 			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
 			System.out.print("SF: " + Separator.getSkipFactor() + " | ");
-			System.out.print("Cut execs: " + Separator.getExecutions() + " | ");
+			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
 			System.out.println();
 		}
 	}

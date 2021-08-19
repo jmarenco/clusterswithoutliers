@@ -17,12 +17,12 @@ public class Separator extends IloCplex.UserCutCallback
 	private static boolean _cutAndBranch = false;
 	private static int _maxRounds = 10;
 	private static int _skipFactor = 0;
-	private static int _executions = 0;
 	
 	private IloCplex.NodeId _root;
 	private IloCplex.NodeId _lastNode;
 	private int _rounds;
 	private int _skipped;
+	private int _executions = 0;
 
 	public Separator(RectangularModel model)
 	{
@@ -136,14 +136,9 @@ public class Separator extends IloCplex.UserCutCallback
 		return _skipFactor;
 	}
 
-	public static int getExecutions()
+	public int getExecutions()
 	{
 		return _executions;
-	}
-	
-	public static void initialize()
-	{
-		_executions = 0;
 	}
 }
 

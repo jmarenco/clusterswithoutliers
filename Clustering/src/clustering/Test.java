@@ -16,24 +16,34 @@ public class Test
 //		instance.print();
 		
 //		new Viewer(instance, null);
+
+		solve(instance, 0, 0, false);
+		solve(instance, 1000, 0, false);
 		
+		for(int rounds = 0; rounds <= 20; ++rounds)
+			solve(instance, rounds, 0, false);
+
+		for(int skip = 0; skip <= 20; ++skip)
+			solve(instance, 1, skip, false);
+
+//		new Viewer(instance, solution);
+	}
+	
+	private static Solution solve(Instance instance, int cutRounds, int skipFactor, boolean cutAndBranch) throws IloException
+	{
 		RectangularModel.setVerbose(false);
 		RectangularModel.showSummary(true);
 
-		for(int rounds = 0; rounds <= 20; ++rounds)
-		{
-			Separator.initialize();
-			Separator.setMaxRounds(1);
-			Separator.setSkipFactor(rounds);
+		Separator.setActive(cutRounds > 0);
+		Separator.setMaxRounds(cutRounds);
+		Separator.setSkipFactor(skipFactor);
+		Separator.setCutAndBranch(cutAndBranch);
 
-			RectangularModel model = new RectangularModel(instance);
+		RectangularModel model = new RectangularModel(instance);
 	
-			model.setMaxTime(600);
-			model.setStrongBinding(false);
-			Solution solution = model.solve();
-		}
-
-//		new Viewer(instance, solution);
+		model.setMaxTime(600);
+		model.setStrongBinding(false);
+		return model.solve();
 	}
 	
 	public static Instance testInstance()

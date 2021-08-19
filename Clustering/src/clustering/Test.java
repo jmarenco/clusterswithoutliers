@@ -8,21 +8,29 @@ public class Test
 	{
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
-		Instance instance = RandomInstance.generate(2, 30, 5, 3, 0.1, 106);
-//		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
+//		Instance instance = RandomInstance.generate(2, 30, 5, 3, 0.1, 106);
+		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
 //		Instance instance = tostInstance();
 		
 		instance.positivize();
 //		instance.print();
 		
-		new Viewer(instance, null);
+//		new Viewer(instance, null);
 		
-		RectangularModel model = new RectangularModel(instance);
-		model.setMaxTime(600);
-		model.setStrongBinding(false);
-		Solution solution = model.solve();
+		RectangularModel.setVerbose(false);
+		RectangularModel.showSummary(true);
 
-		new Viewer(instance, solution);
+		for(int rounds = 1; rounds <= 20; ++rounds)
+		{
+			Separator.setMaxRounds(rounds);
+			RectangularModel model = new RectangularModel(instance);
+	
+			model.setMaxTime(600);
+			model.setStrongBinding(false);
+			Solution solution = model.solve();
+		}
+
+//		new Viewer(instance, solution);
 	}
 	
 	public static Instance testInstance()

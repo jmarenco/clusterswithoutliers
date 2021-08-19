@@ -49,6 +49,7 @@ public class LinearSeparator
 		// Create model
 		cplex = new IloCplex();
 		cplex.setOut(null);
+		cplex.setWarning(null);
 		
 		// Create variables
 		alpha = new IloNumVar[_instance.getPoints()];

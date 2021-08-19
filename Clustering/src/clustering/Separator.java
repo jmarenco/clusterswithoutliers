@@ -92,5 +92,25 @@ public class Separator extends IloCplex.UserCutCallback
 	{
 		this.add(range, cutManagement);
 	}
+	
+	public static void setActive(boolean active)
+	{
+		_active = active;
+	}
+	
+	public static void setCutAndBranch(boolean cutAndBranch)
+	{
+		_cutAndBranch = cutAndBranch;
+	}
+	
+	public static void setMaxRounds(int maxRounds)
+	{
+		_maxRounds = maxRounds;
+	}
+	
+	public static int getMaxRounds()
+	{
+		return _maxRounds;
+	}
 }
 

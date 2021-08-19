@@ -23,6 +23,9 @@ public class RectangularModel
 	private boolean _strongBinding = true;
 	private int _maxTime = 3600;
 	
+	private static boolean _verbose = true;
+	private static boolean _summary = false;
+	
 	// Model sizes
 	private int p; // Points
 	private int n; // Clusters
@@ -82,6 +85,12 @@ public class RectangularModel
 	private void createSolver() throws IloException
 	{
 		cplex = new IloCplex();
+		
+		if( _verbose == false )
+		{
+			cplex.setOut(null);
+			cplex.setWarning(null);
+		}
 	}
 
 	private void createVariables() throws IloException
@@ -219,10 +228,24 @@ public class RectangularModel
 		
 		double time = (System.currentTimeMillis() - start) / 1000.0;
 		
-		System.out.println("Status: " + cplex.getStatus());
-		System.out.println("Time: " + String.format("%6.2f", time));
-		System.out.println("Nodes: " + cplex.getNnodes());
-		System.out.println("Gap: " + ((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) : "  ****"));
+		if( _summary == false)
+		{
+			System.out.println("Status: " + cplex.getStatus());
+			System.out.println("Time: " + String.format("%6.2f", time));
+			System.out.println("Nodes: " + cplex.getNnodes());
+			System.out.println("Gap: " + ((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) : "  ****"));
+			System.out.println("Cuts: " + cplex.getNcuts(IloCplex.CutType.User));
+		}
+		else
+		{
+			System.out.print(cplex.getStatus() + " | ");
+			System.out.print(String.format("%6.2f", time) + " sec. | ");
+			System.out.print(cplex.getNnodes() + " nodes | ");
+			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | ": "  **** | "));
+			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
+			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
+			System.out.println();
+		}
 	}
 
 	private void obtainSolution() throws IloException, UnknownObjectException
@@ -293,5 +316,15 @@ public class RectangularModel
 	public IloCplex getCplex()
 	{
 		return cplex;
+	}
+	
+	public static void setVerbose(boolean verbose)
+	{
+		_verbose = verbose;
+	}
+	
+	public static void showSummary(boolean summary)
+	{
+		_summary = summary;
 	}
 }

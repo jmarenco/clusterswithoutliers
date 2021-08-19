@@ -244,6 +244,8 @@ public class RectangularModel
 			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | ": "  **** | "));
 			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
 			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
+			System.out.print("SF: " + Separator.getSkipFactor() + " | ");
+			System.out.print("Cut execs: " + Separator.getExecutions() + " | ");
 			System.out.println();
 		}
 	}

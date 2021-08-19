@@ -20,9 +20,12 @@ public class Test
 		RectangularModel.setVerbose(false);
 		RectangularModel.showSummary(true);
 
-		for(int rounds = 1; rounds <= 20; ++rounds)
+		for(int rounds = 0; rounds <= 20; ++rounds)
 		{
-			Separator.setMaxRounds(rounds);
+			Separator.initialize();
+			Separator.setMaxRounds(1);
+			Separator.setSkipFactor(rounds);
+
 			RectangularModel model = new RectangularModel(instance);
 	
 			model.setMaxTime(600);

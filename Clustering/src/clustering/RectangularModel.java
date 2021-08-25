@@ -240,6 +240,7 @@ public class RectangularModel
 		}
 		else
 		{
+			System.out.print(_instance.getName() + " | ");
 			System.out.print(cplex.getStatus() + " | ");
 			System.out.print(String.format("%6.2f", time) + " sec. | ");
 			System.out.print(cplex.getNnodes() + " nodes | ");
@@ -248,6 +249,7 @@ public class RectangularModel
 			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
 			System.out.print("SF: " + Separator.getSkipFactor() + " | ");
 			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
+			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
 			System.out.println();
 		}
 	}

@@ -4,15 +4,35 @@ import java.util.ArrayList;
 
 public class Instance
 {
+	private String _name;
 	private ArrayList<Point> _points;
 	private int _clusters;
 	private int _outliers;
 	
-	public Instance(int clusters, int outliers)
+	public Instance(String name, int clusters, int outliers)
 	{
+		_name = name;
 		_points = new ArrayList<Point>();
 		_clusters = clusters;
 		_outliers = outliers;
+	}
+	
+	public Instance(int clusters, int outliers)
+	{
+		_name = "";
+		_points = new ArrayList<Point>();
+		_clusters = clusters;
+		_outliers = outliers;
+	}
+	
+	public void setName(String name)
+	{
+		_name = name;
+	}
+	
+	public String getName()
+	{
+		return _name;
 	}
 	
 	public void add(Point p)

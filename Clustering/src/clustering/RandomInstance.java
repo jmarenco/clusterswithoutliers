@@ -13,6 +13,7 @@ public class RandomInstance
 	{
 		Random random = new Random(seed);
 		Instance instance = new Instance(clusters, outliers);
+		instance.setName("R(" + dimension + "," + points + "," + clusters + "," + outliers + "," + dispersion + "," + seed + ")");
 		
 		Point[] centroids = new Point[clusters];
 		

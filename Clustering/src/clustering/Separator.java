@@ -126,6 +126,11 @@ public class Separator extends IloCplex.UserCutCallback
 		_skipFactor = skipFactor;
 	}
 	
+	public static boolean getCutAndBranch()
+	{
+		return _cutAndBranch;
+	}
+
 	public static int getMaxRounds()
 	{
 		return _maxRounds;

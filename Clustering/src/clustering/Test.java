@@ -9,19 +9,32 @@ public class Test
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
 //		Instance instance = RandomInstance.generate(2, 30, 5, 3, 0.1, 106);
-		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
+//		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
 //		Instance instance = tostInstance();
 		
+		for(int points = 10; points <= 100; points += 5)
+		for(int i=0; i<10; ++i)
+			solve(RandomInstance.generate(2, points, 5, 3, 0.05, 106));
+	}
+	
+	private static void solve(Instance instance) throws IloException
+	{
 		instance.positivize();
 //		instance.print();
 		
 //		new Viewer(instance, null);
 
 		solve(instance, 0, 0, false);
-		solve(instance, 1000, 0, false);
-		
-		for(int rounds = 0; rounds <= 20; ++rounds)
+
+		for(int rounds = 1; rounds <= 20; ++rounds)
 			solve(instance, rounds, 0, false);
+
+		solve(instance, 1000, 0, false);
+
+		for(int rounds = 1; rounds <= 20; ++rounds)
+			solve(instance, rounds, 0, true);
+
+		solve(instance, 1000, 0, true);
 
 		for(int skip = 0; skip <= 20; ++skip)
 			solve(instance, 1, skip, false);

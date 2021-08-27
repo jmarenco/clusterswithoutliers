@@ -6,15 +6,35 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
+		if( args.length != 9 )
+		{
+			System.out.println("Parameters: dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch");
+			return;
+		}
+		
+		int dimension = Integer.parseInt(args[0]);
+		int points = Integer.parseInt(args[1]);
+		int clusters = Integer.parseInt(args[2]);
+		int outliers = Integer.parseInt(args[3]);
+		double dispersion = Double.parseDouble(args[4]);
+		int seed = Integer.parseInt(args[5]);
+
+		int cutRounds = Integer.parseInt(args[6]);
+		int skipFactor = Integer.parseInt(args[7]);
+		boolean cutAndBranch  = Integer.parseInt(args[8]) == 1;
+		
+		Instance instance = RandomInstance.generate(dimension, points, clusters, outliers, dispersion);
+		solve(instance, cutRounds, skipFactor, cutAndBranch);
+		
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
 //		Instance instance = RandomInstance.generate(2, 30, 5, 3, 0.1, 106);
 //		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
 //		Instance instance = tostInstance();
 		
-		for(int points = 10; points <= 100; points += 5)
-		for(int i=0; i<10; ++i)
-			solve(RandomInstance.generate(2, points, 5, 3, 0.05, 106));
+//		for(int points = 10; points <= 100; points += 5)
+//		for(int i=0; i<10; ++i)
+//			solve(RandomInstance.generate(2, points, 5, 3, 0.05, 106));
 	}
 	
 	private static void solve(Instance instance) throws IloException

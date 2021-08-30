@@ -250,6 +250,7 @@ public class RectangularModel
 			System.out.print("SF: " + Separator.getSkipFactor() + " | ");
 			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
 			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
+			System.out.print("MT: " + _maxTime + " | ");
 			System.out.println();
 		}
 	}

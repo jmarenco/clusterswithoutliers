@@ -53,7 +53,7 @@ public class Separator extends IloCplex.UserCutCallback
 		if( _cutAndBranch && current.equals(_root) == false )
 			return;
 		
-		if( _rounds++ > _maxRounds )
+		if( _rounds > _maxRounds )
 			return;
 		
 		if (_skipped < _skipFactor )

@@ -25,6 +25,9 @@ public class RectangularModel
 	
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
+	private static SymmetryBreaking _symmetryBreaking = SymmetryBreaking.None;
+	
+	public static enum SymmetryBreaking { None, Size, IndexSum }; 
 	
 	// Model sizes
 	private int p; // Points
@@ -73,6 +76,7 @@ public class RectangularModel
 	    createBindingConstraints();
 	    createOrderingConstraints();
 		createOutliersConstraint();
+		createSymmetryBreakingConstraints();
 		createObjective();
 		
 		solveModel();
@@ -204,6 +208,41 @@ public class RectangularModel
 	    cplex.addGe(lhsOut, p-o, "out");
 	}
 
+	private void createSymmetryBreakingConstraints() throws IloException
+	{
+		if( _symmetryBreaking == SymmetryBreaking.Size )
+		{
+			for(int j=1; j<n; ++j)
+			{
+				IloNumExpr lhsOut = cplex.linearIntExpr();
+				
+			    for(int i=0; i<p; ++i)
+			    {
+				 	lhsOut = cplex.sum(lhsOut, z[i][j]);
+				 	lhsOut = cplex.sum(lhsOut, cplex.prod(-1, z[i][j-1]));
+			    }
+				    
+			    cplex.addGe(lhsOut, 0, "sb" + j);
+			}
+		}
+
+		if( _symmetryBreaking == SymmetryBreaking.IndexSum )
+		{
+			for(int j=1; j<n; ++j)
+			{
+				IloNumExpr lhsOut = cplex.linearIntExpr();
+				
+			    for(int i=0; i<p; ++i)
+			    {
+				 	lhsOut = cplex.sum(lhsOut, cplex.prod(i, z[i][j]));
+				 	lhsOut = cplex.sum(lhsOut, cplex.prod(-i, z[i][j-1]));
+			    }
+				    
+			    cplex.addGe(lhsOut, 0, "sb" + j);
+			}
+		}
+	}
+
 	private void createObjective() throws IloException
 	{
 		IloNumExpr fobj = cplex.linearNumExpr();
@@ -251,6 +290,7 @@ public class RectangularModel
 			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
 			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
 			System.out.print("MT: " + _maxTime + " | ");
+			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : "    ")) + " |"); 
 			System.out.println();
 		}
 	}
@@ -333,5 +373,10 @@ public class RectangularModel
 	public static void showSummary(boolean summary)
 	{
 		_summary = summary;
+	}
+	
+	public static void setSymmetryBreaking(SymmetryBreaking value)
+	{
+		_symmetryBreaking = value;
 	}
 }

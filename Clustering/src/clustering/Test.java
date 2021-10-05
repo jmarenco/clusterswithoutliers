@@ -6,9 +6,9 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
-		if( args.length != 10 )
+		if( args.length != 10 && args.length != 11 )
 		{
-			System.out.println("Parameters: dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch maxTime");
+			System.out.println("Parameters: dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch maxTime [symmBreak]");
 			return;
 		}
 		
@@ -23,9 +23,10 @@ public class Test
 		int skipFactor = Integer.parseInt(args[7]);
 		boolean cutAndBranch  = Integer.parseInt(args[8]) == 1;
 		int maxTime = Integer.parseInt(args[9]);
+		int symmBreak = args.length > 10 ? Integer.parseInt(args[10]) : 0;
 		
 		Instance instance = RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
-		solve(instance, cutRounds, skipFactor, cutAndBranch, maxTime);
+		solve(instance, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
 		
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
@@ -45,28 +46,34 @@ public class Test
 		
 //		new Viewer(instance, null);
 
-		solve(instance, 0, 0, false, 60);
+		solve(instance, 0, 0, false, 60, 0);
 
 		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, rounds, 0, false, 60);
+			solve(instance, rounds, 0, false, 60, 0);
 
-		solve(instance, 1000, 0, false, 60);
+		solve(instance, 1000, 0, false, 60, 0);
 
 		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, rounds, 0, true, 60);
+			solve(instance, rounds, 0, true, 60, 0);
 
-		solve(instance, 1000, 0, true, 60);
+		solve(instance, 1000, 0, true, 60, 0);
 
 		for(int skip = 0; skip <= 20; ++skip)
-			solve(instance, 1, skip, false, 60);
+			solve(instance, 1, skip, false, 60, 0);
 
 //		new Viewer(instance, solution);
 	}
 	
-	private static Solution solve(Instance instance, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime) throws IloException
+	private static Solution solve(Instance instance, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
 	{
 		RectangularModel.setVerbose(false);
 		RectangularModel.showSummary(true);
+		
+		if( symmBreak == 1 )
+			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
+
+		if( symmBreak == 2 )
+			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.IndexSum);
 
 		Separator.setActive(cutRounds > 0);
 		Separator.setMaxRounds(cutRounds);

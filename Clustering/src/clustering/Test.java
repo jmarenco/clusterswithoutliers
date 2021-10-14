@@ -75,6 +75,9 @@ public class Test
 		if( symmBreak == 2 )
 			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.IndexSum);
 
+		if( symmBreak == 3 )
+			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.OrderedStart);
+
 		Separator.setActive(cutRounds > 0);
 		Separator.setMaxRounds(cutRounds);
 		Separator.setSkipFactor(skipFactor);

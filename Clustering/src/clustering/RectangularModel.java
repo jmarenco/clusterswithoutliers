@@ -27,7 +27,7 @@ public class RectangularModel
 	private static boolean _summary = false;
 	private static SymmetryBreaking _symmetryBreaking = SymmetryBreaking.None;
 	
-	public static enum SymmetryBreaking { None, Size, IndexSum }; 
+	public static enum SymmetryBreaking { None, Size, IndexSum, OrderedStart }; 
 	
 	// Model sizes
 	private int p; // Points
@@ -241,6 +241,25 @@ public class RectangularModel
 			    cplex.addGe(lhsOut, 0, "sb" + j);
 			}
 		}
+
+		if( _symmetryBreaking == SymmetryBreaking.OrderedStart )
+		{
+			for(int i=0; i<p; ++i)
+			for(int j=0; j<n-1; ++j)
+			for(int t=0; t<p; ++t) if( _instance.getPoint(t).get(0) < _instance.getPoint(i).get(0) )
+			{
+				IloNumExpr lhsOut = cplex.linearIntExpr();
+				lhsOut = cplex.sum(lhsOut, z[i][j]);
+				
+			    for(int k=0; k<p; ++k) if( _instance.getPoint(k).get(0) < _instance.getPoint(i).get(0) )
+				 	lhsOut = cplex.sum(lhsOut, cplex.prod(-1, z[k][j]));
+			    
+			    for(int jp=j+1; jp<n; ++jp)
+					lhsOut = cplex.sum(lhsOut, z[t][jp]);
+				    
+			    cplex.addLe(lhsOut, 1, "sb" + i + "_" + j + "_" + t);
+			}
+		}
 	}
 
 	private void createObjective() throws IloException
@@ -281,6 +300,7 @@ public class RectangularModel
 		{
 			System.out.print(_instance.getName() + " | ");
 			System.out.print(cplex.getStatus() + " | ");
+			System.out.print("Obj: " + String.format("%6.4f", cplex.getObjValue()) + " | ");
 			System.out.print(String.format("%6.2f", time) + " sec. | ");
 			System.out.print(cplex.getNnodes() + " nodes | ");
 			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | ": "  **** | "));
@@ -290,7 +310,7 @@ public class RectangularModel
 			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
 			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
 			System.out.print("MT: " + _maxTime + " | ");
-			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : "    ")) + " |"); 
+			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " |"); 
 			System.out.println();
 		}
 	}

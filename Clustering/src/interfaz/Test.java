@@ -38,16 +38,6 @@ public class Test
 		
 		Instance instance = RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
 		solve(instance, method, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
-		
-//		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
-//		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
-//		Instance instance = RandomInstance.generate(2, 30, 5, 3, 0.1, 106);
-//		Instance instance = RandomInstance.generate(2, 18, 5, 3, 0.05, 106);
-//		Instance instance = tostInstance();
-		
-//		for(int points = 10; points <= 100; points += 5)
-//		for(int i=0; i<10; ++i)
-//			solve(RandomInstance.generate(2, points, 5, 3, 0.05, 106));
 	}
 	
 	private static enum Method { Standard, POP, ColGen };
@@ -79,27 +69,27 @@ public class Test
 	
 	private static Solution solve(Instance instance, Method method, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
 	{
-		RectangularModel.setVerbose(false);
-		RectangularModel.showSummary(true);
-		
-		if( symmBreak == 1 )
-			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
-
-		if( symmBreak == 2 )
-			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.IndexSum);
-
-		if( symmBreak == 3 )
-			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.OrderedStart);
-
-		Separator.setActive(cutRounds > 0);
-		Separator.setMaxRounds(cutRounds);
-		Separator.setSkipFactor(skipFactor);
-		Separator.setCutAndBranch(cutAndBranch);
-		
 		Solution ret = null;
 
 		if( method == Method.Standard )
 		{
+			RectangularModel.setVerbose(false);
+			RectangularModel.showSummary(true);
+
+			Separator.setActive(cutRounds > 0);
+			Separator.setMaxRounds(cutRounds);
+			Separator.setSkipFactor(skipFactor);
+			Separator.setCutAndBranch(cutAndBranch);
+
+			if( symmBreak == 1 )
+				RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
+
+			if( symmBreak == 2 )
+				RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.IndexSum);
+
+			if( symmBreak == 3 )
+				RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.OrderedStart);
+
 			RectangularModel model = new RectangularModel(instance);
 	
 			model.setMaxTime(maxTime);

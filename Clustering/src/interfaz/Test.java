@@ -1,5 +1,6 @@
 package interfaz;
 
+import colgen.Algorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
@@ -106,6 +107,12 @@ public class Test
 			model.setStrongBinding(false);
 			
 			ret = model.solve();
+		}
+		
+		if( method == Method.ColGen )
+		{
+			Algorithm algorithm = new Algorithm(instance);
+			ret = algorithm.run();
 		}
 		
 		return ret;

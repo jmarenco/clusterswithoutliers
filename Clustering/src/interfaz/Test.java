@@ -1,6 +1,13 @@
-package clustering;
+package interfaz;
 
+import general.Instance;
+import general.Point;
+import general.RandomInstance;
+import general.Solution;
 import ilog.concert.IloException;
+import standardModel.RectangularModel;
+import standardModel.Separator;
+import standardModel.RectangularModel.SymmetryBreaking;
 
 public class Test
 {

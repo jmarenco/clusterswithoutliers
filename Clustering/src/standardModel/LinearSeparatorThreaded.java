@@ -1,17 +1,19 @@
-package clustering;
+package standardModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
+import general.Instance;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex;
 
-public class LinearSeparator
+@Deprecated
+public class LinearSeparatorThreaded
 {
-	private Separator _parent;
+	private SeparatorThreaded _parent;
 	private RectangularModel _model;
 	private Instance _instance;
 	
@@ -22,7 +24,6 @@ public class LinearSeparator
 	private static double _threshold = 0.5;
 	private static boolean _verbose = false;
 	private static boolean _check = false;
-	private static boolean _allClusters = false;
 	
 	private IloCplex cplex;
 	private IloNumVar[] alpha;
@@ -31,7 +32,7 @@ public class LinearSeparator
 	private IloNumVar b;
 	private IloObjective objective;
 	
-	public LinearSeparator(Separator parent, int cluster, int dimension) throws IloException
+	public LinearSeparatorThreaded(SeparatorThreaded parent, int cluster, int dimension) throws IloException
 	{
 		_parent = parent;
 		_model = parent.getRectangularModel();
@@ -49,7 +50,6 @@ public class LinearSeparator
 		// Create model
 		cplex = new IloCplex();
 		cplex.setOut(null);
-		cplex.setWarning(null);
 		
 		// Create variables
 		alpha = new IloNumVar[_instance.getPoints()];
@@ -109,7 +109,7 @@ public class LinearSeparator
 		cplex.addEq(lhs3, _instance.getPoints() + 1, "norm");
 	}
 	
-	public void separate() throws IloException
+	public Inequality separate() throws IloException
 	{
 		// Update objective function
 		cplex.setLinearCoef(objective, -rVar(_cluster, _dimension), a);
@@ -125,7 +125,7 @@ public class LinearSeparator
 		if( cplex.getStatus() != IloCplex.Status.Optimal )
 		{
 			System.err.println("LinearSeparator: " + cplex.getStatus());
-			return;
+			return null;
 		}
 		
 		if( _verbose == true )
@@ -134,34 +134,21 @@ public class LinearSeparator
 		if( _check == true )
 			checkValidity();
 		
-		// If the inequality is violated, adds the inequality to the master problem
+		// If the inequality is violated, keeps the inequality
 		if( violation() > _threshold )
 		{
-			if( _allClusters == false)
-			{
-				addCut(_cluster);
-			}
-			else
-			{
-				for(int i=0; i<_instance.getClusters(); ++i)
-					addCut(i);
-			}
+			Inequality ret = new Inequality(_instance, _cluster, _dimension);
+			ret.setA(cplex.getValue(a));
+			ret.setB(cplex.getValue(b));
+			ret.setBeta(cplex.getValue(beta));
+			
+			for(int i=0; i<_instance.getPoints(); ++i)
+				ret.setAlpha(i, cplex.getValue(alpha[i]));
+			
+			return ret;
 		}
-	}
-	
-	// Adds inequality to the master problem
-	private void addCut(int cluster) throws IloException
-	{
-		IloCplex master = _model.getCplex();
-		IloNumExpr inequality = master.linearNumExpr();
 		
-		inequality = master.sum(inequality, master.prod(cplex.getValue(a), _model.rVar(cluster, _dimension)));
-		inequality = master.sum(inequality, master.prod(-cplex.getValue(b), _model.lVar(cluster, _dimension)));
-		
-		for(int i=0; i<_instance.getPoints(); ++i)
-			inequality = master.sum(inequality, master.prod(-cplex.getValue(alpha[i]), _model.zVar(i, cluster)));
-				
-		_parent.addCut( master.ge(inequality, -cplex.getValue(beta)), IloCplex.CutManagement.UseCutForce );
+		return null;
 	}
 	
 	// Violation of the found inequality for the current point
@@ -234,7 +221,6 @@ public class LinearSeparator
 		}
 	}
 	
-	// Closes the separator
 	public void end()
 	{
 		if( cplex != null )
@@ -270,5 +256,34 @@ public class LinearSeparator
 	{
 		return _parent.get(_model.lVar(cluster, dimension));
 	}
+	
+	public static class LinearSeparatorThread extends Thread
+	{
+		private LinearSeparatorThreaded _linearSeparator;
+		private Inequality _inequality;
+
+		public LinearSeparatorThread(LinearSeparatorThreaded linearSeparator)
+		{
+			_linearSeparator = linearSeparator;
+		}
+		
+		@Override public void run()
+		{
+			try
+			{
+				_inequality = _linearSeparator.separate();
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		public Inequality getInequality()
+		{
+			return _inequality;
+		}
+	}
+	
 }
 

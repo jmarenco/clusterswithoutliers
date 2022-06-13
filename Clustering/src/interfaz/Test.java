@@ -5,6 +5,7 @@ import general.Point;
 import general.RandomInstance;
 import general.Solution;
 import ilog.concert.IloException;
+import popModel.POPModel;
 import standardModel.RectangularModel;
 import standardModel.Separator;
 import standardModel.RectangularModel.SymmetryBreaking;
@@ -13,27 +14,30 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
-		if( args.length != 10 && args.length != 11 )
+		if( args.length != 11 && args.length != 12 )
 		{
-			System.out.println("Parameters: dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch maxTime [symmBreak]");
+			System.out.println("Parameters: method dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch maxTime [symmBreak]");
+			System.out.println(" - method: sm = standard model, pop = POP model, cg = column generation");
 			return;
 		}
 		
-		int dimension = Integer.parseInt(args[0]);
-		int points = Integer.parseInt(args[1]);
-		int clusters = Integer.parseInt(args[2]);
-		int outliers = Integer.parseInt(args[3]);
-		double dispersion = Double.parseDouble(args[4]);
-		int seed = Integer.parseInt(args[5]);
+		Method method = args[0].equals("sm") ? Method.Standard : (args[0].equals("pop") ? Method.POP : Method.ColGen); 
+		
+		int dimension = Integer.parseInt(args[1]);
+		int points = Integer.parseInt(args[2]);
+		int clusters = Integer.parseInt(args[3]);
+		int outliers = Integer.parseInt(args[4]);
+		double dispersion = Double.parseDouble(args[5]);
+		int seed = Integer.parseInt(args[6]);
 
-		int cutRounds = Integer.parseInt(args[6]);
-		int skipFactor = Integer.parseInt(args[7]);
-		boolean cutAndBranch  = Integer.parseInt(args[8]) == 1;
-		int maxTime = Integer.parseInt(args[9]);
-		int symmBreak = args.length > 10 ? Integer.parseInt(args[10]) : 0;
+		int cutRounds = Integer.parseInt(args[7]);
+		int skipFactor = Integer.parseInt(args[8]);
+		boolean cutAndBranch  = Integer.parseInt(args[9]) == 1;
+		int maxTime = Integer.parseInt(args[10]);
+		int symmBreak = args.length > 11 ? Integer.parseInt(args[11]) : 0;
 		
 		Instance instance = RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
-		solve(instance, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
+		solve(instance, method, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
 		
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
@@ -46,32 +50,34 @@ public class Test
 //			solve(RandomInstance.generate(2, points, 5, 3, 0.05, 106));
 	}
 	
-	private static void solve(Instance instance) throws IloException
+	private static enum Method { Standard, POP, ColGen };
+	
+	private static void solve(Instance instance, Method method) throws IloException
 	{
 		instance.positivize();
 //		instance.print();
 		
 //		new Viewer(instance, null);
 
-		solve(instance, 0, 0, false, 60, 0);
+		solve(instance, method, 0, 0, false, 60, 0);
 
 		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, rounds, 0, false, 60, 0);
+			solve(instance, method, rounds, 0, false, 60, 0);
 
-		solve(instance, 1000, 0, false, 60, 0);
+		solve(instance, method, 1000, 0, false, 60, 0);
 
 		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, rounds, 0, true, 60, 0);
+			solve(instance, method, rounds, 0, true, 60, 0);
 
-		solve(instance, 1000, 0, true, 60, 0);
+		solve(instance, method, 1000, 0, true, 60, 0);
 
 		for(int skip = 0; skip <= 20; ++skip)
-			solve(instance, 1, skip, false, 60, 0);
+			solve(instance, method, 1, skip, false, 60, 0);
 
 //		new Viewer(instance, solution);
 	}
 	
-	private static Solution solve(Instance instance, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
+	private static Solution solve(Instance instance, Method method, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
 	{
 		RectangularModel.setVerbose(false);
 		RectangularModel.showSummary(true);
@@ -89,12 +95,30 @@ public class Test
 		Separator.setMaxRounds(cutRounds);
 		Separator.setSkipFactor(skipFactor);
 		Separator.setCutAndBranch(cutAndBranch);
+		
+		Solution ret = null;
 
-		RectangularModel model = new RectangularModel(instance);
+		if( method == Method.Standard )
+		{
+			RectangularModel model = new RectangularModel(instance);
 	
-		model.setMaxTime(maxTime);
-		model.setStrongBinding(false);
-		return model.solve();
+			model.setMaxTime(maxTime);
+			model.setStrongBinding(false);
+			
+			ret = model.solve();
+		}
+		
+		if( method == Method.POP )
+		{
+			POPModel model = new POPModel(instance);
+			
+			model.setMaxTime(maxTime);
+			model.setStrongBinding(false);
+			
+			ret = model.solve();
+		}
+		
+		return ret;
 	}
 	
 	public static Instance testInstance()

@@ -13,6 +13,22 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
+		String[] a = {			
+				"2" 		// Dimension 
+				, "15" 		// Points
+				, "4" 		// Clusters
+				, "3"		// Outliers
+				, "10"		// Dispersion
+				, "0"		// Seed
+				, "sm"		// Model
+				, "0"		// CutRounds
+				, "1"		// SkipFactor
+				, "1"		// CutAndBranch
+				, "60"		// MaxTime
+				, "2"		// Symbreak
+		};
+		args = a;
+		
 		if( args.length > 6 && args[6].equals("sm"))
 			solveStandard(args);
 		else if( args.length > 6 && args[6].equals("pop"))
@@ -39,7 +55,7 @@ public class Test
 		
 		Instance instance = constructInstance(args);
 
-		RectangularModel.setVerbose(false);
+		RectangularModel.setVerbose(true);
 		RectangularModel.showSummary(true);
 
 		Separator.setActive(cutRounds > 0);
@@ -70,6 +86,9 @@ public class Test
 			showUsage();
 			return;
 		}
+		
+		POPModel.setVerbose(true);
+		POPModel.showSummary(true);
 
 		int maxTime = Integer.parseInt(args[7]);
 		

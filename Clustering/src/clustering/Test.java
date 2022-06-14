@@ -6,9 +6,25 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
-		if( args.length != 10 && args.length != 11 )
+		String[] a = {			
+				"2" 		// Dimension 
+				, "15" 		// Points
+				, "4" 		// Clusters
+				, "3"		// Outliers
+				, "10"		// Dispersion
+				, "0"		// Seed
+				, "0"	// CutRounds
+				, "1"		// SkipFactor
+				, "1"		// CutAndBranch
+				, "60"		// MaxTime
+				, "POP"		// Model
+//				, "1"		// Symbreak
+		};
+		args = a;
+		
+		if( args.length < 10 || args.length > 12 )
 		{
-			System.out.println("Parameters: dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch maxTime [symmBreak]");
+			System.out.println("Parameters: dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch maxTime model [symmBreak]");
 			return;
 		}
 		
@@ -23,10 +39,19 @@ public class Test
 		int skipFactor = Integer.parseInt(args[7]);
 		boolean cutAndBranch  = Integer.parseInt(args[8]) == 1;
 		int maxTime = Integer.parseInt(args[9]);
-		int symmBreak = args.length > 10 ? Integer.parseInt(args[10]) : 0;
+		String model = args[10];
+		int symmBreak = args.length > 11 ? Integer.parseInt(args[11]) : 0;
 		
 		Instance instance = RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
-		solve(instance, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
+		
+		
+		Solution sol = null;
+		if (model.toUpperCase().equals("REC"))
+			sol = solveRectangular(instance, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
+		else
+			sol = solvePOP(instance, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
+		
+//		new Viewer(instance, sol);
 		
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.4, 111);
 //		Instance instance = RandomInstance.generate(2, 50, 5, 3, 0.1, 106);
@@ -46,27 +71,27 @@ public class Test
 		
 //		new Viewer(instance, null);
 
-		solve(instance, 0, 0, false, 60, 0);
+		solveRectangular(instance, 0, 0, false, 60, 0);
 
 		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, rounds, 0, false, 60, 0);
+			solveRectangular(instance, rounds, 0, false, 60, 0);
 
-		solve(instance, 1000, 0, false, 60, 0);
+		solveRectangular(instance, 1000, 0, false, 60, 0);
 
 		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, rounds, 0, true, 60, 0);
+			solveRectangular(instance, rounds, 0, true, 60, 0);
 
-		solve(instance, 1000, 0, true, 60, 0);
+		solveRectangular(instance, 1000, 0, true, 60, 0);
 
 		for(int skip = 0; skip <= 20; ++skip)
-			solve(instance, 1, skip, false, 60, 0);
+			solveRectangular(instance, 1, skip, false, 60, 0);
 
 //		new Viewer(instance, solution);
 	}
 	
-	private static Solution solve(Instance instance, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
+	private static Solution solveRectangular(Instance instance, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
 	{
-		RectangularModel.setVerbose(false);
+		RectangularModel.setVerbose(true);
 		RectangularModel.showSummary(true);
 		
 		if( symmBreak == 1 )
@@ -87,6 +112,32 @@ public class Test
 	
 		model.setMaxTime(maxTime);
 		model.setStrongBinding(false);
+		return model.solve();
+	}
+	
+	private static Solution solvePOP(Instance instance, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
+	{
+		POPModel.setVerbose(true);
+		POPModel.showSummary(true);
+		
+//		if( symmBreak == 1 )
+//			POPModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
+//
+//		if( symmBreak == 2 )
+//			POPModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.IndexSum);
+//
+//		if( symmBreak == 3 )
+//			POPModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.OrderedStart);
+
+//		Separator.setActive(cutRounds > 0);
+//		Separator.setMaxRounds(cutRounds);
+//		Separator.setSkipFactor(skipFactor);
+//		Separator.setCutAndBranch(cutAndBranch);
+
+		POPModel model = new POPModel(instance);
+	
+		model.setMaxTime(maxTime);
+		model.setStrongBinding(true);
 		return model.solve();
 	}
 	

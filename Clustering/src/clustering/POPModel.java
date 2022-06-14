@@ -183,7 +183,7 @@ public class POPModel
 	private void createStrongBindingConstraints() throws IloException
 	{
 		for(int i=0; i<p; ++i)
-	    for(int j=0; j<n+1; ++j)
+	    for(int j=1; j<n+1; ++j)
 		for(int t=0; t<d; ++t)
 		{
 			IloNumExpr lhs = cplex.linearIntExpr();
@@ -194,7 +194,7 @@ public class POPModel
 		}
 	    
 	    for(int i=0; i<p; ++i)
-	    for(int j=0; j<n+1; ++j)
+	    for(int j=1; j<n+1; ++j)
 		for(int t=0; t<d; ++t)
 		{
 			IloNumExpr lhs = cplex.linearIntExpr();

@@ -1,9 +1,10 @@
 package colgen;
 
-import clustering.Instance;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
+
+import general.Instance;
 
 public class Population
 {

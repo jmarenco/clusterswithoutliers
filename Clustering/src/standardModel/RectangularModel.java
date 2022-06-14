@@ -1,7 +1,11 @@
-package clustering;
+package standardModel;
 
 import java.util.ArrayList;
 
+import general.Cluster;
+import general.Instance;
+import general.RectangularCluster;
+import general.Solution;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;

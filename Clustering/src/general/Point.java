@@ -1,4 +1,4 @@
-package clustering;
+package general;
 
 import java.util.Arrays;
 

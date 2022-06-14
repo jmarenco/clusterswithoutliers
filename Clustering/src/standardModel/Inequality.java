@@ -1,4 +1,6 @@
-package clustering;
+package standardModel;
+
+import general.Instance;
 
 public class Inequality
 {

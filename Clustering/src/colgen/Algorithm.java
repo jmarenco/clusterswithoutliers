@@ -2,10 +2,10 @@ package colgen;
 
 import java.util.ArrayList;
 
-import clustering.Instance;
-import clustering.Solution;
-import clustering.Cluster;
-import clustering.RectangularCluster;
+import general.Cluster;
+import general.Instance;
+import general.RectangularCluster;
+import general.Solution;
 import ilog.concert.IloException;
 
 public class Algorithm

@@ -1,4 +1,4 @@
-package clustering;
+package general;
 
 public class RectangularCluster extends Cluster
 {

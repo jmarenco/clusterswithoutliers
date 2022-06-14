@@ -1,7 +1,8 @@
-package clustering;
+package standardModel;
 
 import java.util.ArrayList;
 
+import general.Instance;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;

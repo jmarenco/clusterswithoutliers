@@ -1,4 +1,4 @@
-package clustering;
+package interfaz;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -19,6 +19,8 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.util.ShapeUtilities;
+
+import general.*;
 
 public class Viewer
 {

@@ -2,8 +2,8 @@ package colgen;
 
 import java.util.Random;
 
-import clustering.Instance;
-import clustering.Cluster;
+import general.Cluster;
+import general.Instance;
 
 public class Individual implements Comparable<Individual>
 {

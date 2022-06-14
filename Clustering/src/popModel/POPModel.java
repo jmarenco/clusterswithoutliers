@@ -1,7 +1,8 @@
-package clustering;
+package popModel;
 
 import java.util.ArrayList;
 
+import general.*;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
@@ -314,9 +315,6 @@ public class POPModel
 	{
 		long start = System.currentTimeMillis();
 		
-//		Separator separator = new Separator(this);
-		
-//		cplex.use(separator);
 		cplex.setParam(IntParam.TimeLimit, _maxTime);
 		cplex.solve();
 		
@@ -339,10 +337,10 @@ public class POPModel
 			System.out.print(cplex.getNnodes() + " nodes | ");
 			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | ": "  **** | "));
 			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
-			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
-			System.out.print("SF: " + Separator.getSkipFactor() + " | ");
+			System.out.print("MR: " + 0 + " | ");
+			System.out.print("SF: " + 0 + " | ");
 //			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
-			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
+			System.out.print("    | ");
 			System.out.print("MT: " + _maxTime + " | ");
 //			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " |"); 
 			System.out.println();
@@ -433,9 +431,4 @@ public class POPModel
 	{
 		_summary = summary;
 	}
-	
-//	public static void setSymmetryBreaking(SymmetryBreaking value)
-//	{
-//		_symmetryBreaking = value;
-//	}
 }

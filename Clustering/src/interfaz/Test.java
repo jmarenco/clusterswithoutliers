@@ -77,7 +77,6 @@ public class Test
 		POPModel model = new POPModel(instance);
 		
 		model.setMaxTime(maxTime);
-		model.setStrongBinding(false);
 		model.solve();
 	}
 	

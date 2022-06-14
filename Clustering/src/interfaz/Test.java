@@ -4,48 +4,32 @@ import colgen.Algorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
-import general.Solution;
 import ilog.concert.IloException;
 import popModel.POPModel;
 import standardModel.RectangularModel;
 import standardModel.Separator;
-import standardModel.RectangularModel.SymmetryBreaking;
 
 public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
-		String[] a = {			
-				"pop"		// Model
-				, "2" 		// Dimension 
-				, "15" 		// Points
-				, "4" 		// Clusters
-				, "3"		// Outliers
-				, "10"		// Dispersion
-				, "0"		// Seed
-				, "0"	// CutRounds
-				, "1"		// SkipFactor
-				, "1"		// CutAndBranch
-				, "60"		// MaxTime
-//				, "1"		// Symbreak
-		};
-		args = a;
-		
+		if( args.length > 6 && args[6].equals("sm"))
+			solveStandard(args);
+		else if( args.length > 6 && args[6].equals("pop"))
+			solvePop(args);
+		else if( args.length > 6 && args[6].equals("cg"))
+			solveColGen(args);
+		else
+			showUsage();
+	}
+	
+	private static void solveStandard(String[] args) throws IloException
+	{
 		if( args.length != 11 && args.length != 12 )
 		{
-			System.out.println("Parameters: method dimension points clusters outliers dispersion seed cutRounds skipFactor cutAndBranch maxTime [symmBreak]");
-			System.out.println(" - method: sm = standard model, pop = POP model, cg = column generation");
+			showUsage();
 			return;
 		}
-		
-		Method method = args[0].equals("sm") ? Method.Standard : (args[0].equals("pop") ? Method.POP : Method.ColGen); 
-		
-		int dimension = Integer.parseInt(args[1]);
-		int points = Integer.parseInt(args[2]);
-		int clusters = Integer.parseInt(args[3]);
-		int outliers = Integer.parseInt(args[4]);
-		double dispersion = Double.parseDouble(args[5]);
-		int seed = Integer.parseInt(args[6]);
 
 		int cutRounds = Integer.parseInt(args[7]);
 		int skipFactor = Integer.parseInt(args[8]);
@@ -53,88 +37,80 @@ public class Test
 		int maxTime = Integer.parseInt(args[10]);
 		int symmBreak = args.length > 11 ? Integer.parseInt(args[11]) : 0;
 		
-		Instance instance = RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
-		solve(instance, method, cutRounds, skipFactor, cutAndBranch, maxTime, symmBreak);
+		Instance instance = constructInstance(args);
+
+		RectangularModel.setVerbose(false);
+		RectangularModel.showSummary(true);
+
+		Separator.setActive(cutRounds > 0);
+		Separator.setMaxRounds(cutRounds);
+		Separator.setSkipFactor(skipFactor);
+		Separator.setCutAndBranch(cutAndBranch);
+
+		if( symmBreak == 1 )
+			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
+
+		if( symmBreak == 2 )
+			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.IndexSum);
+
+		if( symmBreak == 3 )
+			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.OrderedStart);
+
+		RectangularModel model = new RectangularModel(instance);
+
+		model.setMaxTime(maxTime);
+		model.setStrongBinding(false);
+		model.solve();
 	}
 	
-	private static enum Method { Standard, POP, ColGen };
-	
-	private static void solve(Instance instance, Method method) throws IloException
+	private static void solvePop(String[] args) throws IloException
 	{
-		instance.positivize();
-//		instance.print();
+		if( args.length != 8 )
+		{
+			showUsage();
+			return;
+		}
+
+		int maxTime = Integer.parseInt(args[7]);
 		
-//		new Viewer(instance, null);
-
-		solve(instance, method, 0, 0, false, 60, 0);
-
-		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, method, rounds, 0, false, 60, 0);
-
-		solve(instance, method, 1000, 0, false, 60, 0);
-
-		for(int rounds = 1; rounds <= 20; ++rounds)
-			solve(instance, method, rounds, 0, true, 60, 0);
-
-		solve(instance, method, 1000, 0, true, 60, 0);
-
-		for(int skip = 0; skip <= 20; ++skip)
-			solve(instance, method, 1, skip, false, 60, 0);
-
-//		new Viewer(instance, solution);
+		Instance instance = constructInstance(args);
+		POPModel model = new POPModel(instance);
+		
+		model.setMaxTime(maxTime);
+		model.setStrongBinding(false);
+		model.solve();
 	}
 	
-	private static Solution solve(Instance instance, Method method, int cutRounds, int skipFactor, boolean cutAndBranch, int maxTime, int symmBreak) throws IloException
+	private static void solveColGen(String[] args) throws IloException
 	{
-		Solution ret = null;
-
-		if( method == Method.Standard )
+		if( args.length != 7 )
 		{
-			RectangularModel.setVerbose(false);
-			RectangularModel.showSummary(true);
-
-			Separator.setActive(cutRounds > 0);
-			Separator.setMaxRounds(cutRounds);
-			Separator.setSkipFactor(skipFactor);
-			Separator.setCutAndBranch(cutAndBranch);
-
-			if( symmBreak == 1 )
-				RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
-
-			if( symmBreak == 2 )
-				RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.IndexSum);
-
-			if( symmBreak == 3 )
-				RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.OrderedStart);
-
-			RectangularModel model = new RectangularModel(instance);
+			showUsage();
+			return;
+		}
+		
+		Instance instance = constructInstance(args);
+		Algorithm algorithm = new Algorithm(instance);
+		algorithm.run();
+	}
 	
-			model.setMaxTime(maxTime);
-			model.setStrongBinding(false);
-			
-			ret = model.solve();
-		}
+	private static void showUsage()
+	{
+		System.out.println("Standard model: dimension points clusters outliers dispersion seed 'sm' cutRounds skipFactor cutAndBranch maxTime [symmBreak]");
+		System.out.println("Pop model: dimension points clusters outliers dispersion seed 'pop' maxTime");
+		System.out.println("Column generation: dimension points clusters outliers dispersion seed 'cg'");
+	}
+	
+	private static Instance constructInstance(String[] args)
+	{
+		int dimension = Integer.parseInt(args[0]);
+		int points = Integer.parseInt(args[1]);
+		int clusters = Integer.parseInt(args[2]);
+		int outliers = Integer.parseInt(args[3]);
+		double dispersion = Double.parseDouble(args[4]);
+		int seed = Integer.parseInt(args[5]);
 		
-		if( method == Method.POP )
-		{
-			POPModel.setVerbose(true);
-			POPModel.showSummary(true);
-			
-			POPModel model = new POPModel(instance);
-			
-			model.setMaxTime(maxTime);
-			model.setStrongBinding(true);
-			
-			ret = model.solve();
-		}
-		
-		if( method == Method.ColGen )
-		{
-			Algorithm algorithm = new Algorithm(instance);
-			ret = algorithm.run();
-		}
-		
-		return ret;
+		return RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
 	}
 	
 	public static Instance testInstance()

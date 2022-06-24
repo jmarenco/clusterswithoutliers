@@ -13,22 +13,6 @@ public class Test
 {
 	public static void main(String[] args) throws IloException
 	{
-		String[] a = {			
-				"-d", "2" 		// Dimension 
-				, "-n", "15" 		// Points
-				, "-c", "4" 		// Clusters
-				, "-o", "3"		// Outliers
-				, "-disp", "10"		// Dispersion
-				, "-s", "0"		// Seed
-				, "-m", "sm"		// Model
-				, "-cr", "0"		// CutRounds
-				, "-sf", "1"		// SkipFactor
-				, "-cb", "1"		// CutAndBranch
-				, "-tl", "60"		// MaxTime
-				, "-symm", "2"		// Symbreak
-		};
-		args = a;
-		
 		ArgMap argmap = new ArgMap(args);
 		
 		if (argmap.containsArg("-?"))
@@ -38,6 +22,7 @@ public class Test
 		}
 		
 		String model = argmap.stringArg("-m", "");
+
 		if(model.equals("sm"))
 			solveStandard(args);
 		else if(model.equals("pop"))
@@ -50,23 +35,17 @@ public class Test
 	
 	private static void solveStandard(String[] args) throws IloException
 	{
-//		if( args.length != 11 && args.length != 12 )
-//		{
-//			showUsage();
-//			return;
-//		}
-		
 		ArgMap argmap = new ArgMap(args);
 
 		int cutRounds = argmap.intArg("-cr", 0);
 		int skipFactor = argmap.intArg("-sf", 0);
 		boolean cutAndBranch  = argmap.intArg("-cb", 0) == 1;
 		int maxTime = argmap.intArg("-tl", 300);
-		int symmBreak = argmap.intArg("symm", 0);
+		int symmBreak = argmap.intArg("-symm", 0);
 
 		Instance instance = constructInstance(args);
 
-		RectangularModel.setVerbose(true);
+		RectangularModel.setVerbose(false);
 		RectangularModel.showSummary(true);
 
 		Separator.setActive(cutRounds > 0);
@@ -92,12 +71,6 @@ public class Test
 	
 	private static void solvePop(String[] args) throws IloException
 	{
-//		if( args.length != 8 )
-//		{
-//			showUsage();
-//			return;
-//		}
-		
 		ArgMap argmap = new ArgMap(args);
 
 		POPModel.setVerbose(true);
@@ -114,12 +87,6 @@ public class Test
 	
 	private static void solveColGen(String[] args) throws IloException
 	{
-//		if( args.length != 7 )
-//		{
-//			showUsage();
-//			return;
-//		}
-		
 		Instance instance = constructInstance(args);
 		Algorithm algorithm = new Algorithm(instance);
 		algorithm.run();
@@ -127,11 +94,8 @@ public class Test
 	
 	private static void showUsage()
 	{
-//		System.out.println("Standard model: dimension points clusters outliers dispersion seed 'sm' cutRounds skipFactor cutAndBranch maxTime [symmBreak]");
-//		System.out.println("Pop model: dimension points clusters outliers dispersion seed 'pop' maxTime");
-//		System.out.println("Column generation: dimension points clusters outliers dispersion seed 'cg'");
 		System.out.println("Available configuration options: ");
-		System.out.println("    -m [sm|pop|cg]           Model tu use [def:sm]");
+		System.out.println("    -m [sm|pop|cg]           Model to use [def:sm]");
 		System.out.println("    -d <n>                   Dimension for the instance [def: 2]");
 		System.out.println("    -n <n>                   Number of points [def: 10]");
 		System.out.println("    -c <n>                   Number of clusters [def: 3]");
@@ -142,6 +106,7 @@ public class Test
 		System.out.println("    -sf <n>                  Skip factor for sm model [def: 0]");
 		System.out.println("    -cb [1|0]                Use cut and branch on sm model [def: 0]");
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");
+		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -?                       Displays this help");
 		System.out.println();
 	}

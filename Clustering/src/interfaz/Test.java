@@ -119,7 +119,7 @@ public class Test
 		int points = argmap.intArg("-n", 10);
 		int clusters = argmap.intArg("-c", 3);
 		int outliers = argmap.intArg("-o", 2);
-		double dispersion = argmap.doubleArg("disp", 0.5);
+		double dispersion = argmap.doubleArg("-disp", 0.5);
 		int seed = argmap.intArg("-s", 0);
 		
 		return RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);

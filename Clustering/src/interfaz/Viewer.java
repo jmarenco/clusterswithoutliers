@@ -53,7 +53,7 @@ public class Viewer
 				
 				Shape rectangle = new Rectangle2D.Double(rectCluster.getMin(0), rectCluster.getMin(1), rectCluster.getMax(0) - rectCluster.getMin(0), rectCluster.getMax(1) - rectCluster.getMin(1));
 				XYShapeAnnotation shapeAnnotation = new XYShapeAnnotation(rectangle, new BasicStroke(0.5f), Color.GRAY);
-				plot.addAnnotation(shapeAnnotation);		
+				plot.addAnnotation(shapeAnnotation);
 			}
 		}
 		

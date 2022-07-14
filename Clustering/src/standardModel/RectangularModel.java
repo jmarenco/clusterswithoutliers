@@ -292,7 +292,7 @@ public class RectangularModel
 		
 		double time = (System.currentTimeMillis() - start) / 1000.0;
 		
-		if( _summary == false)
+		if( _summary == false )
 		{
 			System.out.println("Status: " + cplex.getStatus());
 			System.out.println("Time: " + String.format("%6.2f", time));
@@ -314,7 +314,8 @@ public class RectangularModel
 			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
 			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
 			System.out.print("MT: " + _maxTime + " | ");
-			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " |"); 
+			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " | "); 
+			System.out.print("Thr: " + LinearSeparator.getThreshold() + " | ");
 			System.out.println();
 		}
 	}

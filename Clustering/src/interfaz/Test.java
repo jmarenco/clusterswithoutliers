@@ -6,6 +6,7 @@ import general.Point;
 import general.RandomInstance;
 import ilog.concert.IloException;
 import popModel.POPModel;
+import standardModel.LinearSeparator;
 import standardModel.RectangularModel;
 import standardModel.Separator;
 
@@ -42,6 +43,7 @@ public class Test
 		boolean cutAndBranch  = argmap.intArg("-cb", 0) == 1;
 		int maxTime = argmap.intArg("-tl", 300);
 		int symmBreak = argmap.intArg("-symm", 0);
+		double threshold = argmap.doubleArg("-thr", 0.5);
 
 		Instance instance = constructInstance(args);
 
@@ -52,6 +54,7 @@ public class Test
 		Separator.setMaxRounds(cutRounds);
 		Separator.setSkipFactor(skipFactor);
 		Separator.setCutAndBranch(cutAndBranch);
+		LinearSeparator.setThreshold(threshold);
 
 		if( symmBreak == 1 )
 			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
@@ -107,6 +110,7 @@ public class Test
 		System.out.println("    -cb [1|0]                Use cut and branch on sm model [def: 0]");
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");
 		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
+		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
 		System.out.println("    -?                       Displays this help");
 		System.out.println();
 	}

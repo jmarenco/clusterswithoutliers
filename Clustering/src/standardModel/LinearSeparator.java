@@ -271,5 +271,15 @@ public class LinearSeparator
 	{
 		return _parent.get(_model.lVar(cluster, dimension));
 	}
+	
+	// Parameters
+	public static void setThreshold(double value)
+	{
+		_threshold = value;
+	}
+	public static double getThreshold()
+	{
+		return _threshold;
+	}
 }
 

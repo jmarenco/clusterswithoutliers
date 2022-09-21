@@ -1,6 +1,7 @@
 package colgen;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import general.Cluster;
 import general.Instance;
@@ -20,11 +21,12 @@ public class Algorithm
 	public Solution run() throws IloException
 	{
 		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
-		Cluster nuevo = RectangularCluster.rectangularWithAllPoints(_instance);
+		List<Cluster> nuevos = new ArrayList<Cluster>();
+		nuevos.add(RectangularCluster.rectangularWithAllPoints(_instance));
 		
-		while( nuevo != null )
+		while( !nuevos.isEmpty() )
 		{
-			clusters.add(nuevo);
+			clusters.addAll(nuevos);
 		
 			MasterCovering master = new MasterCovering(_instance, clusters);
 			master.solve(false);
@@ -34,13 +36,16 @@ public class Algorithm
 //			nuevo = population.bestIndividual().fitness() > 0.01 ? population.bestIndividual().asCluster() : null;
 			
 			RectangularGenerator generator = new RectangularGenerator(_instance, master);
-			nuevo = generator.solve();
-			
-			System.out.print("It: " + clusters.size() + " | ");
-			System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
-			System.out.print("Rc: " + (nuevo != null ? String.format("%1$,6.2f", master.reducedCost(nuevo)) : "      ") + " | ");
-			System.out.print("Clus: " + nuevo);
-			System.out.println();
+			nuevos = generator.solve();
+
+			for (Cluster nuevo : nuevos)
+			{
+				System.out.print("It: " + clusters.size() + " | ");
+				System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
+				System.out.print("Rc: " + (nuevos != null ? String.format("%1$,6.2f", master.reducedCost(nuevo)) : "      ") + " | ");
+				System.out.print("Clus: " + nuevo);
+				System.out.println();
+			}
 		}
 		
 		System.out.println();
@@ -51,7 +56,7 @@ public class Algorithm
 		System.out.println("Obj = " + master.getObjective());
 		System.out.println();
 
-		for(int i=0; i<clusters.size(); ++i)
+		for(int i=0; i<clusters.size(); ++i) if (master.getPrimal(i) > 0.5)
 			System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
 
 		return new Solution(master);

@@ -1,5 +1,9 @@
 package colgen;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import general.Cluster;
 import general.Instance;
 import general.RectangularCluster;
@@ -37,7 +41,7 @@ public class RectangularGenerator
 		d = _instance.getDimension();
 	}
 	
-	public Cluster solve() throws IloException
+	public List<Cluster> solve() throws IloException
 	{
 		createSolver();
 		createVariables();
@@ -45,7 +49,7 @@ public class RectangularGenerator
 		createObjective();
 		
 		solveModel();
-    	Cluster ret = obtainSolution();
+		List<Cluster> ret = obtainSolution();
 	    closeSolver();
 	    
 	    return ret;
@@ -133,36 +137,42 @@ public class RectangularGenerator
 		cplex.solve();
 	}
 
-	private Cluster obtainSolution() throws IloException, UnknownObjectException
+	private List<Cluster> obtainSolution() throws IloException, UnknownObjectException
 	{
-		RectangularCluster ret = null;
+		ArrayList<Cluster> list = new ArrayList<Cluster>();
 		
     	if( (cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getObjValue() < -0.01 )
 		{
-    		ret = new RectangularCluster(d);
+    		int n = cplex.getSolnPoolNsolns();
+    		for (int j = 0; j < n; j++) if (cplex.getObjValue(j) < -0.01)
+    		{
+	    		RectangularCluster ret = new RectangularCluster(d);
+		    		
+	//    		System.out.println("------------------------------");
+	//    		System.out.println("Gen sol:");
 	    		
-//    		System.out.println("------------------------------");
-//    		System.out.println("Gen sol:");
-    		
-			for(int t=0; t<d; ++t)
-			{
-				ret.setMin(t, cplex.getValue(l[t]));
-				ret.setMax(t, cplex.getValue(r[t]));
+				for(int t=0; t<d; ++t)
+				{
+					ret.setMin(t, cplex.getValue(l[t], j));
+					ret.setMax(t, cplex.getValue(r[t], j));
+					
+	//				System.out.println("l" + t + " = " + cplex.getValue(l[t]));
+	//				System.out.println("r" + t + " = " + cplex.getValue(r[t]));
+				}
 				
-//				System.out.println("l" + t + " = " + cplex.getValue(l[t]));
-//				System.out.println("r" + t + " = " + cplex.getValue(r[t]));
-			}
-			
-			for(int i=0; i<p; ++i) if( cplex.getValue(z[i]) > 0.9 )
-			{
-				ret.add(_instance.getPoint(i));
-//				System.out.println("z" + i + " = " + cplex.getValue(z[i]));
-			}
-			
+				for(int i=0; i<p; ++i) if( cplex.getValue(z[i], j) > 0.9 )
+				{
+					ret.add(_instance.getPoint(i));
+	//				System.out.println("z" + i + " = " + cplex.getValue(z[i]));
+				}
+				
+				list.add(ret);
+    		}
+    		
 //    		System.out.println("------------------------------");
 		}
     	
-    	return ret;
+    	return list;
 	}
 	
 	private void closeSolver()

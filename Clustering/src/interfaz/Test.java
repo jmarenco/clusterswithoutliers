@@ -4,6 +4,7 @@ import colgen.Algorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
+import general.Solution;
 import ilog.concert.IloException;
 import popModel.POPModel;
 import standardModel.LinearSeparator;
@@ -69,7 +70,9 @@ public class Test
 
 		model.setMaxTime(maxTime);
 		model.setStrongBinding(false);
-		model.solve();
+		
+		Solution sol = model.solve();
+		new Viewer(instance, sol);
 	}
 	
 	private static void solvePop(String[] args) throws IloException
@@ -92,7 +95,9 @@ public class Test
 	{
 		Instance instance = constructInstance(args);
 		Algorithm algorithm = new Algorithm(instance);
-		algorithm.run();
+
+		Solution sol = algorithm.run();
+		new Viewer(instance, sol);
 	}
 	
 	private static void showUsage()

@@ -1,0 +1,92 @@
+\documentclass[12pt,A4wide]{article}
+\usepackage{amsmath,amsfonts,amssymb}
+
+\usepackage{mathrsfs} 
+\usepackage{color}
+%\usepackage[lined,ruled,linesnumbered,norelsize]{algorithm2e}
+%\setlength{\algomargin}{1.5em}  
+\usepackage{mathtools}
+\usepackage{mathrsfs} 
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\newcommand{\toDo}[1]{\textcolor{red}{ TO DO: #1}}
+\newcommand{\DD}[1]{\textcolor{cyan}{#1}}
+\newcommand{\out}[1]{\textcolor{purple}{\sout{#1}}}
+\newcommand{\answer}[1]{\textcolor{blue}{#1}}
+
+\begin{document}
+
+\title{Clustering with outliers}
+\date{}
+
+\maketitle
+
+\newcommand{\x}{\mathsf{x}}
+\newcommand{\MAX}{\mathsf{max}}
+\newcommand{\MIN}{\mathsf{min}}
+
+\section*{POP formulation}
+
+\textbf{Obs:} Cluster number 0 represents outliers and $P_0 := \{0\} \cup [p]$. \\
+
+\textbf{Variables:}
+\begin{itemize}
+	\item $y_{ci} = 1 \Leftrightarrow$ $c$ is \textbf{smaller} than the cluster assigned to $i$ ($i \in [n],~ c \in P_0$)
+	\item $z_{ic} = 1 \Leftrightarrow$ $c$ is \textbf{bigger} than the cluster assigned to $i$ ($i \in [n],~ c \in P_0$)
+	\item $\ell^t_c, r^t_c\in \mathbb{R}_+$: lower and upper limits of cluster $c$ in axis $t$ ($c \in [p], ~ t \in [d]$)
+\end{itemize}
+
+$$
+\min \quad \sum_{c \in [p]} \sum_{t \in [d]} (r^t_c - \ell^t_c) 
+$$
+\begin{align}
+\sum_{i \in [n]} z_{i1} &\leq q & \\
+y_{pi} & = 0 & i \in [n]\\
+z_{i0} & = 0 & i \in [n]\\
+y_{c+1,i}	&\leq y_{ci} & i \in [n],~ c \in \{0\} \cup [p-1]\\
+\label{eq:consec_z} z_{ic}	&\leq z_{i, c+1} & i \in [n],~ c \in \{0\} \cup [p-1]\\
+\label{eq:exclusion_yz} y_{ci} + z_{i,c+1} & = 1 & i \in [n],~ c \in \{0\} \cup [p-1]\\
+\ell^t_c - (\MAX_t - \x^i_t) (y_{ci} + z_{ic})&\leq \x^i_t  & i \in [n],~ c \in [p],~ t \in [d]\\
+r^t_c - (\MIN_t - \x^i_t) (y_{ci} + z_{ic})&\geq \x^i_t  & i \in [n],~ c \in [p],~ t \in [d]\\
+\ell^t_c &\leq r^t_c & c \in [p],~ t \in [d]\\
+y_{ic}, z_{ci} &\in \{0,1\} & i \in [n],~ c \in P_0\\
+\ell^t_c, r^t_c &\in \mathbb{R}_+
+\end{align}
+
+\textbf{Comments:}
+\begin{itemize}
+	\item Constraint \eqref{eq:consec_z} is not really necessary, as it is implied by the consecutive property of variables $y$ and Constraint \eqref{eq:exclusion_yz}.
+\end{itemize}
+
+
+\section*{Representatives formulation}
+
+\textbf{Variables:}
+\begin{itemize}
+	\item $x_{ij} = 1 \Leftrightarrow$ $i$ is the representative of $j$ ($i \leq j$)
+	\item $\ell^t_c, r^t_c\in \mathbb{R}_+$: lower and upper limits of cluster $c$ in axis $t$ ($c \in [p], ~ t \in [d]$)
+\end{itemize}
+
+$$
+\min \quad \sum_{c \in [n]} \sum_{t \in [d]} (r^t_c - \ell^t_c) 
+$$
+\begin{align}
+	x_{ij} &\leq x_{jj} & i,j \in [n],~ i \leq j\\
+	\sum_{\substack{i \in [n]\\i\leq j}} x_{ij} &\leq 1 & j \in [n]\\
+	\sum_{i \in [n]} x_{ii} &\leq p & \\
+	\sum_{j \in [n]} \sum_{\substack{i \in [n]\\i\leq j}} x_{ij} &\geq n - q & \\
+	\ell^t_c - (\MAX_t - \x^i_t) (1 - x_{ci})&\leq \x^i_t  & i \in [n],~ c \in [n],~ t \in [d]\\
+	r^t_c - (\MIN_t - \x^i_t) (1 - x_{ci})&\geq \x^i_t  & i \in [n],~ c \in [n],~ t \in [d]\\
+	\ell^t_c &\leq r^t_c & c \in [n],~ t \in [d]\\
+	x_{ij} &\in \{0,1\} & i,j \in [n],~ i \leq j\\
+	\ell^t_c, r^t_c &\in \mathbb{R}_+ & c \in [n],~ t \in [d]
+\end{align}
+
+%\bibliography{../biblio}
+%\bibliographystyle{plain}
+
+
+\end{document}
+

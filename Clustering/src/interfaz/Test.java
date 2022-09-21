@@ -7,6 +7,7 @@ import general.RandomInstance;
 import general.Solution;
 import ilog.concert.IloException;
 import popModel.POPModel;
+import repModel.RepModel;
 import standardModel.LinearSeparator;
 import standardModel.RectangularModel;
 import standardModel.Separator;
@@ -31,6 +32,8 @@ public class Test
 			solvePop(args);
 		else if(model.equals("cg"))
 			solveColGen(args);
+		else if(model.equals("rep"))
+			solveRep(args);
 		else
 			showUsage();
 	}
@@ -88,9 +91,28 @@ public class Test
 		POPModel model = new POPModel(instance);
 		
 		model.setMaxTime(maxTime);
-		model.solve();
+		Solution sol = model.solve();
+		new Viewer(instance, sol);
 	}
 	
+	private static void solveRep(String[] args) throws IloException
+	{
+		ArgMap argmap = new ArgMap(args);
+
+		RepModel.setVerbose(true);
+		RepModel.showSummary(true);
+
+		int maxTime = argmap.intArg("-tl", 300);
+		
+		Instance instance = constructInstance(args);
+		RepModel model = new RepModel(instance);
+		
+		model.setMaxTime(maxTime);
+
+		Solution sol = model.solve();
+		new Viewer(instance, sol);
+	}
+
 	private static void solveColGen(String[] args) throws IloException
 	{
 		Instance instance = constructInstance(args);

@@ -24,8 +24,8 @@ public class POPModel
 	private boolean _strongBinding = true;
 	private int _maxTime = 3600;
 	
-	private static boolean _verbose = true;
-	private static boolean _summary = false;
+	private static boolean _verbose = false;
+	private static boolean _summary = true;
 	
 	// Model sizes
 	private int p; // Points
@@ -330,7 +330,7 @@ public class POPModel
 		}
 		else
 		{
-			System.out.print(_instance.getName() + " | ");
+			System.out.print(_instance.getName() + " | Pop | ");
 			System.out.print(cplex.getStatus() + " | ");
 			System.out.print("Obj: " + String.format("%6.4f", cplex.getObjValue()) + " | ");
 			System.out.print(String.format("%6.2f", time) + " sec. | ");
@@ -339,10 +339,10 @@ public class POPModel
 			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
 			System.out.print("MR: " + 0 + " | ");
 			System.out.print("SF: " + 0 + " | ");
-//			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
+			System.out.print("Cut execs: " + 0 + " | ");
 			System.out.print("    | ");
 			System.out.print("MT: " + _maxTime + " | ");
-//			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " |"); 
+			System.out.print("SB: |"); 
 			System.out.println();
 		}
 	}

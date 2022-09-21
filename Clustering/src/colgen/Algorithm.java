@@ -12,6 +12,7 @@ import ilog.concert.IloException;
 public class Algorithm
 {
 	private Instance _instance;
+	private boolean _summary = true;
 	
 	public Algorithm(Instance instance)
 	{
@@ -24,6 +25,8 @@ public class Algorithm
 		List<Cluster> nuevos = new ArrayList<Cluster>();
 		nuevos.add(RectangularCluster.rectangularWithAllPoints(_instance));
 		
+		long start = System.currentTimeMillis();
+
 		while( !nuevos.isEmpty() )
 		{
 			clusters.addAll(nuevos);
@@ -38,26 +41,47 @@ public class Algorithm
 			RectangularGenerator generator = new RectangularGenerator(_instance, master);
 			nuevos = generator.solve();
 
-			for (Cluster nuevo : nuevos)
-			{
-				System.out.print("It: " + clusters.size() + " | ");
-				System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
-				System.out.print("Rc: " + (nuevos != null ? String.format("%1$,6.2f", master.reducedCost(nuevo)) : "      ") + " | ");
-				System.out.print("Clus: " + nuevo);
-				System.out.println();
-			}
+//			for (Cluster nuevo : nuevos)
+//			{
+//				System.out.print("It: " + clusters.size() + " | ");
+//				System.out.print("Obj: " + String.format("%1$,6.2f", master.getObjective()) + " | ");
+//				System.out.print("Rc: " + (nuevos != null ? String.format("%1$,6.2f", master.reducedCost(nuevo)) : "      ") + " | ");
+//				System.out.print("Clus: " + nuevo);
+//				System.out.println();
+//			}
 		}
 		
-		System.out.println();
+//		System.out.println();
 
 		MasterCovering master = new MasterCovering(_instance, clusters);
 		master.solve(true);
 		
-		System.out.println("Obj = " + master.getObjective());
-		System.out.println();
+//		System.out.println("Obj = " + master.getObjective());
+//		System.out.println();
+//
+//		for(int i=0; i<clusters.size(); ++i) if (master.getPrimal(i) > 0.5)
+//			System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
+		
+		double time = (System.currentTimeMillis() - start) / 1000.0;
 
-		for(int i=0; i<clusters.size(); ++i) if (master.getPrimal(i) > 0.5)
-			System.out.println("x[" + i + "] = " + master.getPrimal(i) + "  " + clusters.get(i) + " -> " + clusters.get(i).objective());
+		if( _summary == true)
+		{
+			System.out.print(_instance.getName() + " | CG  | ");
+			System.out.print(" | ");
+			System.out.print("Obj: " + String.format("%6.4f", master.getObjective()) + " | ");
+			System.out.print(String.format("%6.2f", time) + " sec. | ");
+			System.out.print(" | ");
+			System.out.print(" | ");
+			System.out.print(" | ");
+			System.out.print("MR: " + 0 + " | ");
+			System.out.print("SF: " + 0 + " | ");
+			System.out.print("Cut execs: " + 0 + " | ");
+			System.out.print("    | ");
+			System.out.print("MT: | ");
+			System.out.print("SB: |"); 
+			System.out.println();
+		}
+		
 
 		return new Solution(master);
 	}

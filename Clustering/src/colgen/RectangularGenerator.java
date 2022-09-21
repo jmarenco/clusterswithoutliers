@@ -58,6 +58,9 @@ public class RectangularGenerator
 	private void createSolver() throws IloException
 	{
 		cplex = new IloCplex();
+
+		cplex.setOut(null);
+		cplex.setWarning(null);
 	}
 
 	private void createVariables() throws IloException

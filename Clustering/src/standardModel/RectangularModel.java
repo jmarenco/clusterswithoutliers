@@ -302,7 +302,7 @@ public class RectangularModel
 		}
 		else
 		{
-			System.out.print(_instance.getName() + " | ");
+			System.out.print(_instance.getName() + " | Std | ");
 			System.out.print(cplex.getStatus() + " | ");
 			System.out.print("Obj: " + String.format("%6.4f", cplex.getObjValue()) + " | ");
 			System.out.print(String.format("%6.2f", time) + " sec. | ");

@@ -4,7 +4,6 @@ import colgen.Algorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
-import general.Solution;
 import ilog.concert.IloException;
 import popModel.POPModel;
 import repModel.RepModel;
@@ -73,16 +72,14 @@ public class Test
 
 		model.setMaxTime(maxTime);
 		model.setStrongBinding(false);
-		
-		Solution sol = model.solve();
-		new Viewer(instance, sol);
+		model.solve();
 	}
 	
 	private static void solvePop(String[] args) throws IloException
 	{
 		ArgMap argmap = new ArgMap(args);
 
-		POPModel.setVerbose(true);
+		POPModel.setVerbose(false);
 		POPModel.showSummary(true);
 
 		int maxTime = argmap.intArg("-tl", 300);
@@ -91,15 +88,14 @@ public class Test
 		POPModel model = new POPModel(instance);
 		
 		model.setMaxTime(maxTime);
-		Solution sol = model.solve();
-		new Viewer(instance, sol);
+		model.solve();
 	}
 	
 	private static void solveRep(String[] args) throws IloException
 	{
 		ArgMap argmap = new ArgMap(args);
 
-		RepModel.setVerbose(true);
+		RepModel.setVerbose(false);
 		RepModel.showSummary(true);
 
 		int maxTime = argmap.intArg("-tl", 300);
@@ -108,9 +104,7 @@ public class Test
 		RepModel model = new RepModel(instance);
 		
 		model.setMaxTime(maxTime);
-
-		Solution sol = model.solve();
-		new Viewer(instance, sol);
+		model.solve();
 	}
 
 	private static void solveColGen(String[] args) throws IloException
@@ -118,8 +112,7 @@ public class Test
 		Instance instance = constructInstance(args);
 		Algorithm algorithm = new Algorithm(instance);
 
-		Solution sol = algorithm.run();
-		new Viewer(instance, sol);
+		algorithm.run();
 	}
 	
 	private static void showUsage()

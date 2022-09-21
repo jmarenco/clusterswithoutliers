@@ -19,6 +19,8 @@ public class MasterCovering
 	private double[] _primal;
 	private double[] _dual;
 	
+	private boolean _verbose = false;
+	
 	public MasterCovering(Instance instance, ArrayList<Cluster> clusters)
 	{
 		_instance = instance;
@@ -35,7 +37,13 @@ public class MasterCovering
 		// Create solver
 		IloCplex cplex = new IloCplex();
 
-	    // Create variables
+		if( _verbose == false )
+		{
+			cplex.setOut(null);
+			cplex.setWarning(null);
+		}
+
+		// Create variables
 		IloNumVar[] x = new IloNumVar[n];
 		IloNumVar[] y = new IloNumVar[p];
 		

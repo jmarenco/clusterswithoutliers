@@ -17,7 +17,6 @@ public class LinearSeparatorSparse implements SeparatorInterface
 	
 	private int _cluster;
 	private int _dimension;
-	private double[] _coordinates;
 	
 	private static double _threshold = 0.5;
 	private static double _lowerLimit = 0.1; // In order to consider a z-variable in the separation
@@ -40,7 +39,6 @@ public class LinearSeparatorSparse implements SeparatorInterface
 
 		_cluster = cluster;
 		_dimension = dimension;
-		_coordinates = getCoordinates();
 	}
 	
 	public void separate() throws IloException
@@ -107,15 +105,16 @@ public class LinearSeparatorSparse implements SeparatorInterface
 		cplex.addMaximize(fobj);
 
 		// Create constraints for pairs of points
-		for(int i=0; i<_coordinates.length; ++i)
-		for(int j=i; j<_coordinates.length; ++j)
+		double[] coordinates = getCoordinates();
+		for(int i=0; i<coordinates.length; ++i)
+		for(int j=i; j<coordinates.length; ++j)
 		{
 			IloNumExpr lhs = cplex.linearNumExpr();
 			lhs = cplex.sum(lhs, cplex.prod(-1.0, beta));
-			lhs = cplex.sum(lhs, cplex.prod(-_coordinates[j], a));
-			lhs = cplex.sum(lhs, cplex.prod(_coordinates[i], b));
+			lhs = cplex.sum(lhs, cplex.prod(-coordinates[j], a));
+			lhs = cplex.sum(lhs, cplex.prod(coordinates[i], b));
 			
-			for(int k=0; k<_instance.getPoints(); ++k) if( alpha[k] != null && _coordinates[i]-0.001 <= _instance.getPoint(k).get(_dimension) && _instance.getPoint(k).get(_dimension) <= _coordinates[j]+0.001)
+			for(int k=0; k<_instance.getPoints(); ++k) if( alpha[k] != null && coordinates[i]-0.001 <= _instance.getPoint(k).get(_dimension) && _instance.getPoint(k).get(_dimension) <= coordinates[j]+0.001)
 				lhs = cplex.sum(lhs, alpha[k]);
 			
 			cplex.addLe(lhs, 0, "c" + i + "_" + j);
@@ -143,6 +142,22 @@ public class LinearSeparatorSparse implements SeparatorInterface
 
 		cplex.addEq(lhs3, _instance.getPoints() + 1, "norm");
 	}	
+	
+	// Gets the coordinates in current dimension for active variables, with no repetitions and in ascending order
+	private double[] getCoordinates()
+	{
+		ArrayList<Double> coordinates = new ArrayList<Double>();
+		for(int i=0; i<_instance.getPoints(); ++i) if( alpha[i] != null && !coordinates.contains(_instance.getPoint(i).get(_dimension)))
+			coordinates.add(_instance.getPoint(i).get(_dimension));
+		
+		Collections.sort(coordinates);
+		
+		double[] ret = new double[coordinates.size()];
+		for(int i=0; i<coordinates.size(); ++i)
+			ret[i] = coordinates.get(i);
+		
+		return ret;
+	}
 	
 	// Adds inequality to the master problem
 	private void addCut(int cluster) throws IloException
@@ -197,11 +212,11 @@ public class LinearSeparatorSparse implements SeparatorInterface
 			double max = _instance.min(_dimension);
 			
 			double lhs = 0;
-			for(int i=0; i<_instance.getPoints(); ++i) if( alpha[i] != null && x[i] == true )
+			for(int i=0; i<_instance.getPoints(); ++i) if( x[i] == true )
 			{
 				min = Math.min(min, _instance.getPoint(i).get(_dimension));
 				max = Math.max(max, _instance.getPoint(i).get(_dimension));
-				lhs -= cplex.getValue(alpha[i]);
+				lhs -= alpha[i] != null ? cplex.getValue(alpha[i]) : 0;
 			}
 			
 			lhs += cplex.getValue(a) * max - cplex.getValue(b) * min + cplex.getValue(beta);
@@ -234,22 +249,6 @@ public class LinearSeparatorSparse implements SeparatorInterface
 	{
 		if( cplex != null )
 			cplex.end();
-	}
-	
-	// Gets the coordinates in current dimension, with no repetitions and in ascending order
-	public double[] getCoordinates()
-	{
-		ArrayList<Double> coordinates = new ArrayList<Double>();
-		for(int i=0; i<_instance.getPoints(); ++i) if( !coordinates.contains(_instance.getPoint(i).get(_dimension)))
-			coordinates.add(_instance.getPoint(i).get(_dimension));
-		
-		Collections.sort(coordinates);
-		
-		double[] ret = new double[coordinates.size()];
-		for(int i=0; i<coordinates.size(); ++i)
-			ret[i] = coordinates.get(i);
-		
-		return ret;
 	}
 
 	// Current master solution

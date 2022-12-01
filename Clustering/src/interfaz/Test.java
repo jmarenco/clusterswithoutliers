@@ -47,16 +47,18 @@ public class Test
 		int maxTime = argmap.intArg("-tl", 300);
 		int symmBreak = argmap.intArg("-symm", 0);
 		double threshold = argmap.doubleArg("-thr", 0.5);
+		int sepStrategy = argmap.intArg("-sstr", 0);
 
 		Instance instance = constructInstance(args);
 
-		RectangularModel.setVerbose(false);
-		RectangularModel.showSummary(true);
+		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
+		RectangularModel.showSummary(!argmap.containsArg("-verbose"));
 
 		Separator.setActive(cutRounds > 0);
 		Separator.setMaxRounds(cutRounds);
 		Separator.setSkipFactor(skipFactor);
 		Separator.setCutAndBranch(cutAndBranch);
+		Separator.setStrategy(sepStrategy);
 		LinearSeparator.setThreshold(threshold);
 
 		if( symmBreak == 1 )
@@ -79,8 +81,8 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 
-		POPModel.setVerbose(false);
-		POPModel.showSummary(true);
+		POPModel.setVerbose(argmap.containsArg("-verbose"));
+		POPModel.showSummary(!argmap.containsArg("-verbose"));
 
 		int maxTime = argmap.intArg("-tl", 300);
 		
@@ -95,8 +97,8 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 
-		RepModel.setVerbose(false);
-		RepModel.showSummary(true);
+		RepModel.setVerbose(argmap.containsArg("-verbose"));
+		RepModel.showSummary(!argmap.containsArg("-verbose"));
 
 		int maxTime = argmap.intArg("-tl", 300);
 		
@@ -128,9 +130,11 @@ public class Test
 		System.out.println("    -cr <n>                  Cutting rounds for sm model [def: 0]");
 		System.out.println("    -sf <n>                  Skip factor for sm model [def: 0]");
 		System.out.println("    -cb [1|0]                Use cut and branch on sm model [def: 0]");
+		System.out.println("    -sstr [1|0]              Separation strategy on sm model [def: 0]");
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");
 		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
+		System.out.println("    -verbose                 Verbose output");
 		System.out.println("    -?                       Displays this help");
 		System.out.println();
 	}

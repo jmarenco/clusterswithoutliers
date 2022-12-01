@@ -316,6 +316,7 @@ public class RectangularModel
 			System.out.print("MT: " + _maxTime + " | ");
 			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " | "); 
 			System.out.print("Thr: " + LinearSeparator.getThreshold() + " | ");
+			System.out.print("Ss: " + Separator.getStrategy() + " | ");
 			System.out.println();
 		}
 	}

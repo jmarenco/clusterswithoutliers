@@ -12,12 +12,13 @@ public class Separator extends IloCplex.UserCutCallback
 {
 	private RectangularModel _model;
 	private Instance _instance;
-	private ArrayList<LinearSeparator> _linearSeparators;
+	private ArrayList<SeparatorInterface> _linearSeparators;
 	
 	private static boolean _active = true;
 	private static boolean _cutAndBranch = false;
 	private static int _maxRounds = 10;
 	private static int _skipFactor = 0;
+	private static int _strategy = 0;
 	
 	private IloCplex.NodeId _root;
 	private IloCplex.NodeId _lastNode;
@@ -29,13 +30,18 @@ public class Separator extends IloCplex.UserCutCallback
 	{
 		_model = model;
 		_instance = model.getInstance();
-		_linearSeparators = new ArrayList<LinearSeparator>();
+		_linearSeparators = new ArrayList<SeparatorInterface>();
 		
 		try
 		{
 			for(int i=0; i<_instance.getClusters(); ++i)
 			for(int j=0; j<_instance.getDimension(); ++j)
-				_linearSeparators.add(new LinearSeparator(this, i, j));
+			{
+				if( _strategy == 0 )
+					_linearSeparators.add(new LinearSeparator(this, i, j));
+				else
+					_linearSeparators.add(new LinearSeparatorSparse(this, i, j));
+			}
 		}
 		catch(Exception e)
 		{
@@ -60,7 +66,7 @@ public class Separator extends IloCplex.UserCutCallback
 		if (_skipped < _skipFactor )
 			return;
 		
-		for(LinearSeparator linearSeparator: _linearSeparators)
+		for(SeparatorInterface linearSeparator: _linearSeparators)
 			linearSeparator.separate();
 		
 		_skipped = 0;
@@ -127,6 +133,11 @@ public class Separator extends IloCplex.UserCutCallback
 		_skipFactor = skipFactor;
 	}
 	
+	public static void setStrategy(int strategy)
+	{
+		_strategy = strategy;
+	}
+	
 	public static boolean getCutAndBranch()
 	{
 		return _cutAndBranch;
@@ -141,10 +152,14 @@ public class Separator extends IloCplex.UserCutCallback
 	{
 		return _skipFactor;
 	}
+	
+	public static int getStrategy()
+	{
+		return _strategy;
+	}
 
 	public int getExecutions()
 	{
 		return _executions;
 	}
 }
-

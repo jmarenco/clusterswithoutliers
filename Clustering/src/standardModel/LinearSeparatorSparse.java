@@ -52,6 +52,8 @@ public class LinearSeparatorSparse implements SeparatorInterface
 		// The model should be feasible and bounded ...
 		if( cplex.getStatus() != IloCplex.Status.Optimal )
 		{
+			cplex.end();
+			
 			System.err.println("LinearSeparator: " + cplex.getStatus());
 			return;
 		}
@@ -75,6 +77,8 @@ public class LinearSeparatorSparse implements SeparatorInterface
 					addCut(i);
 			}
 		}
+
+		cplex.end();
 	}
 	
 	private void createModel() throws IloException

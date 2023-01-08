@@ -8,6 +8,7 @@ import ilog.concert.IloException;
 import popModel.POPModel;
 import repModel.RepModel;
 import standardModel.LinearSeparator;
+import standardModel.LinearSeparatorSparse;
 import standardModel.RectangularModel;
 import standardModel.Separator;
 
@@ -48,6 +49,8 @@ public class Test
 		int symmBreak = argmap.intArg("-symm", 0);
 		double threshold = argmap.doubleArg("-thr", 0.5);
 		int sepStrategy = argmap.intArg("-sstr", 0);
+		double lowerLimit = argmap.doubleArg("-llim", 0.1);
+		double upperLimit = argmap.doubleArg("-ulim", 0.9);
 
 		Instance instance = constructInstance(args);
 
@@ -60,6 +63,9 @@ public class Test
 		Separator.setCutAndBranch(cutAndBranch);
 		Separator.setStrategy(sepStrategy);
 		LinearSeparator.setThreshold(threshold);
+		LinearSeparatorSparse.setThreshold(threshold);
+		LinearSeparatorSparse.setLowerLimit(lowerLimit);
+		LinearSeparatorSparse.setUpperLimit(upperLimit);
 
 		if( symmBreak == 1 )
 			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
@@ -131,6 +137,8 @@ public class Test
 		System.out.println("    -sf <n>                  Skip factor for sm model [def: 0]");
 		System.out.println("    -cb [1|0]                Use cut and branch on sm model [def: 0]");
 		System.out.println("    -sstr [1|0]              Separation strategy on sm model [def: 0]");
+		System.out.println("    -llim <n>                Lower limit for sparse separation in sm moedl [def: 0.1]");
+		System.out.println("    -ulim <n>                Upper limit for sparse separation in sm moedl [def: 0.9]");
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");
 		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");

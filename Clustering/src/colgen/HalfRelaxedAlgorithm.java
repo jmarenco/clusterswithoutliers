@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import branchandprice.Solver;
 import general.Cluster;
 import general.Instance;
+import general.RectangularCluster;
 import general.Solution;
 import ilog.concert.IloException;
 
@@ -24,14 +25,36 @@ public class HalfRelaxedAlgorithm
 	{
 		long start = System.currentTimeMillis();
 
+		ArrayList<Cluster> clusters = new ArrayList<Cluster>();
+		List<Cluster> nuevos = new ArrayList<Cluster>();
+		nuevos.add(RectangularCluster.rectangularWithAllPoints(_instance));
+
+		while( !nuevos.isEmpty() )
+		{
+			clusters.addAll(nuevos);
+		
+			MasterCovering master = new MasterCovering(_instance, clusters);
+			master.solve(false);
+			
+			RectangularGenerator generator = new RectangularGenerator(_instance, master);
+			nuevos = generator.solve();
+		}
+
 		Solver.setVerbose(false);
 		Solver.showSummary(false);
 		Solver.setBrancher(Solver.Brancher.OnlyOutliers);
 		
 		Solver solver = new Solver(_instance);
-        solver.solve();
+		
+		try
+		{
+			solver.solve();
+		}
+		catch(Exception e)
+		{
+		}
         
-        List<Cluster> clusters = solver.getMaster().getColumns().stream().map(c -> c.getCluster()).collect(Collectors.toList());
+        clusters.addAll(solver.getMaster().getColumns().stream().map(c -> c.getCluster()).collect(Collectors.toList()));
         
 		MasterCovering master = new MasterCovering(_instance, new ArrayList<Cluster>(clusters));
 		master.solve(true);
@@ -63,4 +86,5 @@ public class HalfRelaxedAlgorithm
 	{
 		_summary = value;
 	}
+	
 }

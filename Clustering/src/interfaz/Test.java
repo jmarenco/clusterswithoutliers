@@ -135,8 +135,8 @@ public class Test
 		System.out.println("    -s <n>                   Seed for the random generator [def: 0]");
 		System.out.println("    -cr <n>                  Cutting rounds for sm model [def: 0]");
 		System.out.println("    -sf <n>                  Skip factor for sm model [def: 0]");
-		System.out.println("    -cb [1|0]                Use cut and branch on sm model [def: 0]");
-		System.out.println("    -sstr [1|0]              Separation strategy on sm model [def: 0]");
+		System.out.println("    -cb [0|1]                Use cut and branch on sm model [def: 0]");
+		System.out.println("    -sstr [0|1|2]            Separation strategy on sm model [def: 0]");
 		System.out.println("    -llim <n>                Lower limit for sparse separation in sm moedl [def: 0.1]");
 		System.out.println("    -ulim <n>                Upper limit for sparse separation in sm moedl [def: 0.9]");
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");

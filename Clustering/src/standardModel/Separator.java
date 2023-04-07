@@ -44,7 +44,7 @@ public class Separator extends IloCplex.UserCutCallback
 					_linearSeparators.add(new LinearSeparatorSparse(this, i, j));
 
 				if( _strategy == 2 )
-					_linearSeparators.add(new LinearSeparatorSparse(this, i, j));
+					_linearSeparators.add(new LinearSeparatorRestricted(this, i, j));
 			}
 		}
 		catch(Exception e)

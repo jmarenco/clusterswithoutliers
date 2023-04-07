@@ -18,7 +18,7 @@ public class LinearSeparatorRestricted implements SeparatorInterface
 	
 	private int _cluster;
 	private int _dimension;
-	private double[] _coordinates;
+	private int[] _orderedIndices;
 	
 	private static double _threshold = 0.5;
 	private static boolean _verbose = false;
@@ -40,8 +40,8 @@ public class LinearSeparatorRestricted implements SeparatorInterface
 
 		_cluster = cluster;
 		_dimension = dimension;
-		_coordinates = getCoordinates();
 		
+		calculateOrderedIndices();
 		createModel();
 	}
 	
@@ -65,7 +65,7 @@ public class LinearSeparatorRestricted implements SeparatorInterface
 		IloNumExpr fobj = cplex.linearNumExpr();
 		fobj = cplex.sum(fobj, cplex.prod(-1.0, delta));
 		fobj = cplex.sum(fobj, cplex.prod(-1.0, alpha));
-		fobj = cplex.sum(fobj, cplex.prod(1-0, beta));
+		fobj = cplex.sum(fobj, cplex.prod(1.0, beta));
 
 		for(int i=0; i<_instance.getPoints(); ++i)
 			fobj = cplex.sum(fobj, cplex.prod(1.0, gamma[i]));
@@ -73,23 +73,26 @@ public class LinearSeparatorRestricted implements SeparatorInterface
 		objective = cplex.addMaximize(fobj);
 
 		// Create constraints for each point
-		for(int i=0; i<_coordinates.length-1; ++i)
+		for(int t=0; t<_orderedIndices.length-1; ++t)
 		{
+			int i = _orderedIndices[t];
+			int ip1 = _orderedIndices[t+1];
+			
 			IloNumExpr lhs = cplex.linearNumExpr();
 			lhs = cplex.sum(lhs, cplex.prod(1.0, gamma[i]));
-			lhs = cplex.sum(lhs, cplex.prod(-_coordinates[i+1], beta));
-			lhs = cplex.sum(lhs, cplex.prod(_coordinates[i], beta));
+			lhs = cplex.sum(lhs, cplex.prod(-_instance.getPoint(ip1).get(_dimension), beta));
+			lhs = cplex.sum(lhs, cplex.prod(_instance.getPoint(i).get(_dimension), beta));
 			
 			cplex.addLe(lhs, 0, "c" + i);
 		}
 
-		for(int i=0; i<_coordinates.length; ++i)
+		for(int i=0; i<_instance.getPoints(); ++i)
 		{
 			IloNumExpr lhs = cplex.linearNumExpr();
 			lhs = cplex.sum(lhs, cplex.prod(1.0, gamma[i]));
 			lhs = cplex.sum(lhs, cplex.prod(-1.0, delta));
-			lhs = cplex.sum(lhs, cplex.prod(_coordinates[i], beta));
-			lhs = cplex.sum(lhs, cplex.prod(-_coordinates[i], alpha));
+			lhs = cplex.sum(lhs, cplex.prod(_instance.getPoint(i).get(_dimension), beta));
+			lhs = cplex.sum(lhs, cplex.prod(-_instance.getPoint(i).get(_dimension), alpha));
 			
 			cplex.addLe(lhs, 0, "r" + i);
 		}
@@ -206,6 +209,12 @@ public class LinearSeparatorRestricted implements SeparatorInterface
 			
 			if (lhs < -0.01)
 			{
+				printInequality();
+				
+				for(int t=0; t<_orderedIndices.length; ++t)
+					System.out.print(_orderedIndices[t] + " ");
+
+				System.out.println();
 				System.out.print("************** Not valid! a = ");
 				
 				for(int i=0; i<_instance.getPoints(); ++i)
@@ -234,20 +243,18 @@ public class LinearSeparatorRestricted implements SeparatorInterface
 			cplex.end();
 	}
 	
-	// Gets the coordinates in current dimension, with no repetitions and in ascending order
-	public double[] getCoordinates()
+	// Sort the poitns in the current dimension in ascending order
+	public void calculateOrderedIndices()
 	{
-		ArrayList<Double> coordinates = new ArrayList<Double>();
-		for(int i=0; i<_instance.getPoints(); ++i) if( !coordinates.contains(_instance.getPoint(i).get(_dimension)))
-			coordinates.add(_instance.getPoint(i).get(_dimension));
+		ArrayList<Integer> indices = new ArrayList<Integer>();
+		for(int i=0; i<_instance.getPoints(); ++i)
+			indices.add(i);
+
+		Collections.sort(indices, (i,j) -> (int)Math.signum(_instance.getPoint(i).get(_dimension) - _instance.getPoint(j).get(_dimension)));
 		
-		Collections.sort(coordinates);
-		
-		double[] ret = new double[coordinates.size()];
-		for(int i=0; i<coordinates.size(); ++i)
-			ret[i] = coordinates.get(i);
-		
-		return ret;
+		_orderedIndices = new int[_instance.getPoints()];
+		for(int i=0; i<_instance.getPoints(); ++i)
+			_orderedIndices[i] = indices.get(i);
 	}
 
 	// Current master solution

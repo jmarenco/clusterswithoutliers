@@ -25,6 +25,7 @@ public class RectangularModel
 	// Parameters
 	private boolean _integer = true;
 	private boolean _strongBinding = true;
+	private boolean _nonlinearObjective = false;
 	private int _maxTime = 3600;
 	
 	private static boolean _verbose = true;
@@ -268,6 +269,14 @@ public class RectangularModel
 
 	private void createObjective() throws IloException
 	{
+		if( _nonlinearObjective == false )
+			createLinearObjective();
+		else
+			createNonlinearObjective();
+	}
+			
+	private void createLinearObjective() throws IloException
+	{
 		IloNumExpr fobj = cplex.linearNumExpr();
 
 		for(int j=0; j<n; ++j)
@@ -277,6 +286,31 @@ public class RectangularModel
 			fobj = cplex.sum(fobj, cplex.prod(-1.0, l[j][t]));
 		}
 		
+		cplex.addMinimize(fobj);
+	}
+	
+	private void createNonlinearObjective() throws IloException
+	{
+		IloNumExpr fobj = cplex.linearNumExpr();
+
+		for(int j=0; j<n; ++j)
+		{
+			IloNumExpr area = cplex.linearNumExpr();
+			area = cplex.sum(area, cplex.prod(1.0, r[j][0]));
+			area = cplex.sum(area, cplex.prod(-1.0, l[j][0]));
+			
+			for(int t=1; t<d; ++t)
+			{
+				IloNumExpr resta = cplex.linearNumExpr();
+				resta = cplex.sum(resta, cplex.prod(1.0, r[j][t]));
+				resta = cplex.sum(resta, cplex.prod(-1.0, l[j][t]));
+				
+				area = cplex.prod(area, resta);
+			}
+			
+			fobj = cplex.sum(fobj, area);
+		}
+
 		cplex.addMinimize(fobj);
 	}
 	

@@ -25,14 +25,15 @@ public class RectangularModel
 	// Parameters
 	private boolean _integer = true;
 	private boolean _strongBinding = true;
-	private boolean _nonlinearObjective = false;
 	private int _maxTime = 3600;
 	
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
 	private static SymmetryBreaking _symmetryBreaking = SymmetryBreaking.None;
+	private static Objective _objective = Objective.Span;
 	
 	public static enum SymmetryBreaking { None, Size, IndexSum, OrderedStart }; 
+	public static enum Objective { Span, Area }; 
 	
 	// Model sizes
 	private int p; // Points
@@ -269,7 +270,7 @@ public class RectangularModel
 
 	private void createObjective() throws IloException
 	{
-		if( _nonlinearObjective == false )
+		if( _objective == Objective.Span )
 			createLinearObjective();
 		else
 			createNonlinearObjective();
@@ -312,6 +313,7 @@ public class RectangularModel
 		}
 
 		cplex.addMinimize(fobj);
+		cplex.setParam(IntParam.SolutionTarget, 3);
 	}
 	
 	private void solveModel() throws IloException
@@ -438,5 +440,10 @@ public class RectangularModel
 	public static void setSymmetryBreaking(SymmetryBreaking value)
 	{
 		_symmetryBreaking = value;
+	}
+	
+	public static void setObjective(Objective objective)
+	{
+		_objective = objective;
 	}
 }

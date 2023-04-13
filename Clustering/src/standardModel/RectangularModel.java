@@ -283,9 +283,13 @@ public class RectangularModel
 	private void solveModel() throws IloException
 	{
 		long start = System.currentTimeMillis();
-		
+
 		Separator separator = new Separator(this);
-		
+
+//		SeparatorThreaded separator = new SeparatorThreaded(this);
+//		cplex.setParam(IntParam.Threads, 1);
+//		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
+
 		cplex.use(separator);
 		cplex.setParam(IntParam.TimeLimit, _maxTime);
 		cplex.solve();

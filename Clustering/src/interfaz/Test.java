@@ -49,7 +49,7 @@ public class Test
 		double threshold = argmap.doubleArg("-thr", 0.5);
 		int sepStrategy = argmap.intArg("-sstr", 0);
 
-		Instance instance = constructInstance(args);
+		Instance instance = tostInstance(); // constructInstance(args);
 
 		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
 		RectangularModel.showSummary(!argmap.containsArg("-verbose"));

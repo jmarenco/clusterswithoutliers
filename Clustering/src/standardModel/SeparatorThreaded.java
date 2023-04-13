@@ -8,12 +8,12 @@ import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
-@Deprecated
 public class SeparatorThreaded extends IloCplex.UserCutCallback
 {
 	private RectangularModel _model;
 	private Instance _instance;
 	private ArrayList<LinearSeparatorThreaded> _threadedSeparators;
+	private int _executions = 0;
 	
 	private static boolean _active = true;
 	
@@ -61,6 +61,8 @@ public class SeparatorThreaded extends IloCplex.UserCutCallback
 		{
 			e.printStackTrace();
 		}
+		
+		_executions++;
 	}
 	
 	public RectangularModel getRectangularModel()
@@ -85,6 +87,11 @@ public class SeparatorThreaded extends IloCplex.UserCutCallback
 			lhs = master.sum(lhs, master.prod(-inequality.getAlpha(i), _model.zVar(i, inequality.getCluster())));
 				
 		this.add( master.ge(lhs, -inequality.getBeta()), IloCplex.CutManagement.UseCutForce );
+	}
+	
+	public int getExecutions()
+	{
+		return _executions;
 	}
 }
 

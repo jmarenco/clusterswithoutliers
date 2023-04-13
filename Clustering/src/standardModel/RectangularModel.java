@@ -313,7 +313,7 @@ public class RectangularModel
 		}
 
 		cplex.addMinimize(fobj);
-		cplex.setParam(IntParam.SolutionTarget, 3);
+//		cplex.setParam(IntParam.SolutionTarget, 3);
 	}
 	
 	private void solveModel() throws IloException

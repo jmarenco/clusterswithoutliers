@@ -30,8 +30,10 @@ public class RectangularModel
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
 	private static SymmetryBreaking _symmetryBreaking = SymmetryBreaking.None;
+	private static Objective _objective = Objective.Span;
 	
 	public static enum SymmetryBreaking { None, Size, IndexSum, OrderedStart }; 
+	public static enum Objective { Span, Area }; 
 	
 	// Model sizes
 	private int p; // Points
@@ -268,6 +270,14 @@ public class RectangularModel
 
 	private void createObjective() throws IloException
 	{
+		if( _objective == Objective.Span )
+			createLinearObjective();
+		else
+			createNonlinearObjective();
+	}
+			
+	private void createLinearObjective() throws IloException
+	{
 		IloNumExpr fobj = cplex.linearNumExpr();
 
 		for(int j=0; j<n; ++j)
@@ -278,6 +288,32 @@ public class RectangularModel
 		}
 		
 		cplex.addMinimize(fobj);
+	}
+	
+	private void createNonlinearObjective() throws IloException
+	{
+		IloNumExpr fobj = cplex.linearNumExpr();
+
+		for(int j=0; j<n; ++j)
+		{
+			IloNumExpr area = cplex.linearNumExpr();
+			area = cplex.sum(area, cplex.prod(1.0, r[j][0]));
+			area = cplex.sum(area, cplex.prod(-1.0, l[j][0]));
+			
+			for(int t=1; t<d; ++t)
+			{
+				IloNumExpr resta = cplex.linearNumExpr();
+				resta = cplex.sum(resta, cplex.prod(1.0, r[j][t]));
+				resta = cplex.sum(resta, cplex.prod(-1.0, l[j][t]));
+				
+				area = cplex.prod(area, resta);
+			}
+			
+			fobj = cplex.sum(fobj, area);
+		}
+
+		cplex.addMinimize(fobj);
+		cplex.setParam(IntParam.SolutionTarget, 3);
 	}
 	
 	private void solveModel() throws IloException
@@ -319,7 +355,7 @@ public class RectangularModel
 			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
 			System.out.print("MT: " + _maxTime + " | ");
 			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " | "); 
-			System.out.print("Thr: " + LinearSeparator.getThreshold() + " | ");
+			System.out.print("Thr: " + (Separator.getStrategy() == 0 ? LinearSeparator.getThreshold() : (Separator.getStrategy() == 1 ? LinearSeparatorSparse.getThreshold() : LinearSeparatorRestricted.getThreshold())) + " | ");
 			System.out.print("Ss: " + Separator.getStrategy() + " | ");
 			System.out.println();
 		}
@@ -408,5 +444,10 @@ public class RectangularModel
 	public static void setSymmetryBreaking(SymmetryBreaking value)
 	{
 		_symmetryBreaking = value;
+	}
+	
+	public static void setObjective(Objective objective)
+	{
+		_objective = objective;
 	}
 }

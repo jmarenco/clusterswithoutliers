@@ -53,7 +53,7 @@ public class Test
 		double lowerLimit = argmap.doubleArg("-llim", 0.1);
 		double upperLimit = argmap.doubleArg("-ulim", 0.9);
 
-		Instance instance = tostInstance(); // constructInstance(args);
+		Instance instance = testInstance(); // constructInstance(args);
 
 		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
 		RectangularModel.showSummary(!argmap.containsArg("-verbose"));

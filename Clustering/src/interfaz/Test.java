@@ -53,12 +53,12 @@ public class Test
 		double lowerLimit = argmap.doubleArg("-llim", 0.1);
 		double upperLimit = argmap.doubleArg("-ulim", 0.9);
 
-		Instance instance = testInstance(); // constructInstance(args);
+		Instance instance = constructInstance(args);
 
 		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
 		RectangularModel.showSummary(!argmap.containsArg("-verbose"));
 		RectangularModel.setObjective(objective == 1 ? RectangularModel.Objective.Area : RectangularModel.Objective.Span);
-
+		
 		Separator.setActive(cutRounds > 0);
 		Separator.setMaxRounds(cutRounds);
 		Separator.setSkipFactor(skipFactor);

@@ -138,7 +138,7 @@ public class Test
 		System.out.println("    -cr <n>                  Cutting rounds for sm model [def: 0]");
 		System.out.println("    -sf <n>                  Skip factor for sm model [def: 0]");
 		System.out.println("    -cb [0|1]                Use cut and branch on sm model [def: 0]");
-		System.out.println("    -sstr [0|1|2]            Separation strategy on sm model [def: 0]");
+		System.out.println("    -sstr [0|1|2|3]          Separation strategy on sm model [def: 0]");
 		System.out.println("    -fobj [0|1]              Objective function in sm model [def: 0]");
 		System.out.println("    -llim <n>                Lower limit for sparse separation in sm moedl [def: 0.1]");
 		System.out.println("    -ulim <n>                Upper limit for sparse separation in sm moedl [def: 0.9]");

@@ -46,6 +46,12 @@ public class Separator extends IloCplex.UserCutCallback
 				if( _strategy == 2 )
 					_linearSeparators.add(new LinearSeparatorRestricted(this, i, j));
 			}
+			
+			if( _strategy == 3 )
+			{
+				for(int i=0; i<_instance.getClusters(); ++i)
+					_linearSeparators.add(new SquareSeparator(this, i));
+			}
 		}
 		catch(Exception e)
 		{

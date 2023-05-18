@@ -67,7 +67,7 @@ public class MasterPacking
 	    // Create objective
 		IloNumExpr fobj = cplex.linearNumExpr();
 	    for(int j=0; j<n; ++j)
-			fobj = cplex.sum(fobj, cplex.prod(_clusters.get(j).objective(), variables[j]));
+			fobj = cplex.sum(fobj, cplex.prod(_clusters.get(j).totalDistanceToCentroid(), variables[j]));
 		
 		cplex.addMinimize(fobj);
 		
@@ -121,7 +121,7 @@ public class MasterPacking
 	
 	public double reducedCost(Cluster cluster)
 	{
-		double ret = cluster.objective() - this.getClustersDual() - cluster.size() * this.getOutliersDual();
+		double ret = cluster.totalDistanceToCentroid() - this.getClustersDual() - cluster.size() * this.getOutliersDual();
 		
 		for(int i=0; i<_instance.getPoints(); ++i) if( cluster.contains(_instance.getPoint(i)) )
 			ret -= this.getDual(i);

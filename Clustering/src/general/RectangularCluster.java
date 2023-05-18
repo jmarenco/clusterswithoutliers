@@ -50,7 +50,7 @@ public class RectangularCluster extends Cluster
 	}
 	
 	@Override
-	public double objective()
+	public double totalDistanceToCentroid()
 	{
 		double ret = 0;
 		for(int t=0; t<_max.length; ++t)

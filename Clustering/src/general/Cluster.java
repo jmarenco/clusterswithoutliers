@@ -52,7 +52,7 @@ public class Cluster
 		return _points.contains(point);
 	}
 	
-	public double objective()
+	public double totalDistanceToCentroid()
 	{
 		if( _points.size() == 0 )
 			return 0;

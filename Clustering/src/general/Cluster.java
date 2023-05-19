@@ -1,6 +1,7 @@
 package general;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class Cluster
@@ -13,6 +14,16 @@ public class Cluster
 	}
 	
 	public static Cluster fromArray(Instance instance, int... indexes)
+	{
+		Cluster ret = new Cluster();
+		
+		for(Integer i: indexes)
+			ret.add(instance.getPoint(i));
+		
+		return ret;
+	}
+	
+	public static Cluster fromSet(Instance instance, Set<Integer> indexes)
 	{
 		Cluster ret = new Cluster();
 		
@@ -61,6 +72,35 @@ public class Cluster
 		return _points.stream().mapToDouble(p -> p.distance(c)).sum();
 	}
 	
+	public double totalSpan()
+	{
+		if( _points.size() == 0 )
+			return 0;
+		
+		int dimension = _points.iterator().next().getDimension();
+
+		double ret = 0;
+		for(int t=0; t<dimension; ++t)
+			ret += span(t);
+		
+		return ret;
+	}
+	
+	public double span(int dimension)
+	{
+		return max(dimension) - min(dimension);
+	}
+	
+	public double max(int dimension)
+	{
+		return _points.stream().mapToDouble(p -> p.get(dimension)).max().orElse(0);
+	}
+	
+	public double min(int dimension)
+	{
+		return _points.stream().mapToDouble(p -> p.get(dimension)).max().orElse(0);
+	}
+	
 	private Point centroid()
 	{
 		Point ret = null;
@@ -79,6 +119,30 @@ public class Cluster
 		return ret;
 	}
 	
+	public Set<Point> getPoints()
+	{
+		return _points;
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(_points);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Cluster other = (Cluster) obj;
+		return Objects.equals(_points, other._points);
+	}
+
 	@Override public String toString()
 	{
 		String ret = "";

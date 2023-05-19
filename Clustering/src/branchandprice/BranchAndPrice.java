@@ -1,32 +1,5 @@
 package branchandprice;
 
-/* ==========================================
- * jORLib : a free Java OR library
- * ==========================================
- *
- * Project Info:  https://github.com/jkinable/jorlib
- * Project Creator:  Joris Kinable (https://github.com/jkinable)
- *
- * (C) Copyright 2015, by Joris Kinable and Contributors.
- *
- * This program and the accompanying materials are licensed under LGPLv2.1
- *
- */
-/* -----------------
- * BranchAndPrice.java
- * -----------------
- * (C) Copyright 2016, by Joris Kinable and Contributors.
- *
- * Original Author:  Joris Kinable
- * Contributor(s):   -
- *
- * $Id$
- *
- * Changes
- * -------
- *
- */
-
 import org.jorlib.frameworks.columnGeneration.branchAndPrice.AbstractBranchAndPrice;
 import org.jorlib.frameworks.columnGeneration.branchAndPrice.AbstractBranchCreator;
 import org.jorlib.frameworks.columnGeneration.branchAndPrice.BAPNode;
@@ -34,38 +7,37 @@ import org.jorlib.frameworks.columnGeneration.master.AbstractMaster;
 import org.jorlib.frameworks.columnGeneration.master.MasterData;
 import org.jorlib.frameworks.columnGeneration.pricing.AbstractPricingProblemSolver;
 
+import general.Cluster;
+import general.Point;
+import general.Instance;
+
 import java.util.*;
 
-/**
- * Branch-and-Price implementation
- * @author Joris Kinable
- * @version 29-6-2016
- */
-public final class BranchAndPrice extends AbstractBranchAndPrice<ColoringGraph, IndependentSet, ChromaticNumberPricingProblem> {
-
-    public BranchAndPrice(ColoringGraph dataModel,
-                          AbstractMaster<ColoringGraph, IndependentSet, ChromaticNumberPricingProblem, ? extends MasterData> master,
-                          ChromaticNumberPricingProblem pricingProblem,
-                          List<Class<? extends AbstractPricingProblemSolver<ColoringGraph, IndependentSet, ChromaticNumberPricingProblem>>> solvers,
-                          List<? extends AbstractBranchCreator<ColoringGraph, IndependentSet, ChromaticNumberPricingProblem>> abstractBranchCreators,
+// Branch-and-Price implementation
+public final class BranchAndPrice extends AbstractBranchAndPrice<InputData, PotentialCluster, ClusteringPricingProblem>
+{
+	private Instance _instance;
+	
+    public BranchAndPrice(InputData dataModel,
+                          AbstractMaster<InputData, PotentialCluster, ClusteringPricingProblem, ? extends MasterData> master,
+                          ClusteringPricingProblem pricingProblem,
+                          List<Class<? extends AbstractPricingProblemSolver<InputData, PotentialCluster, ClusteringPricingProblem>>> solvers,
+                          List<? extends AbstractBranchCreator<InputData, PotentialCluster, ClusteringPricingProblem>> abstractBranchCreators,
                           double lowerBoundOnObjective,
-                          double upperBoundOnObjective) {
+                          double upperBoundOnObjective)
+    {
         super(dataModel, master, pricingProblem, solvers, abstractBranchCreators, lowerBoundOnObjective, upperBoundOnObjective);
+        _instance = dataModel.getInstance();
     }
 
-    /**
-     * Generates an artificial solution. Columns in the artificial solution are of high cost such that they never end up in the final solution
-     * if a feasible solution exists, since any feasible solution is assumed to be cheaper than the artificial solution. The artificial solution is used
-     * to guarantee that the master problem has a feasible solution.
-     *
-     * @return artificial solution
-     */
+    // Generates an artificial solution. Columns in the artificial solution are of high cost such that they never end up in the final solution
+    // if a feasible solution exists, since any feasible solution is assumed to be cheaper than the artificial solution. The artificial solution is used
+    // to guarantee that the master problem has a feasible solution.
     @Override
-    protected List<IndependentSet> generateInitialFeasibleSolution(BAPNode<ColoringGraph, IndependentSet> node) {
-        List<IndependentSet> artificialSolution=new ArrayList<>();
-        for(int v=0; v<dataModel.getNrVertices(); v++){
-            artificialSolution.add(new IndependentSet(pricingProblems.get(0), true, "Artificial", new HashSet<>(Collections.singletonList(v)), objectiveIncumbentSolution));
-        }
+    protected List<PotentialCluster> generateInitialFeasibleSolution(BAPNode<InputData, PotentialCluster> node)
+    {
+        List<PotentialCluster> artificialSolution = new ArrayList<PotentialCluster>();
+        artificialSolution.add(new PotentialCluster(pricingProblems.get(0), true, "Artificial", Cluster.withAllPoints(_instance)));
         return artificialSolution;
     }
 
@@ -76,10 +48,14 @@ public final class BranchAndPrice extends AbstractBranchAndPrice<ColoringGraph, 
      * @return true if the solution is an integer solution
      */
     @Override
-    protected boolean isIntegerNode(BAPNode<ColoringGraph, IndependentSet> node) {
-        int vertexCount=0;
-        for(IndependentSet column : node.getSolution())
-            vertexCount+= column.vertices.size();
-        return vertexCount==dataModel.getNrVertices();
+    protected boolean isIntegerNode(BAPNode<InputData, PotentialCluster> node)
+    {
+    	// TODO: Esta bien este chequeo?
+    	Set<Point> puntos = new HashSet<Point>();
+
+    	for(PotentialCluster column: node.getSolution())
+        	puntos.addAll(column.getCluster().getPoints());
+        
+    	return puntos.size() >= _instance.getPoints() - _instance.getOutliers();
     }
 }

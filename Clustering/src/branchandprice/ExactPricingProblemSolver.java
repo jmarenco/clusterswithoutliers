@@ -11,156 +11,260 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import general.Cluster;
+import general.Instance;
+
 /**
  * Algorthm implementation which solves the pricing problem to optimality. This solver is based on an exact MIP implementation
  * using Cplex.
  */
-public final class ExactPricingProblemSolver extends AbstractPricingProblemSolver<ColoringGraph, IndependentSet, ChromaticNumberPricingProblem> {
+public final class ExactPricingProblemSolver extends AbstractPricingProblemSolver<InputData, PotentialCluster, ClusteringPricingProblem>
+{
+	// Input data
+	private Instance _instance;
+	private int p; // Points
+	private int d; // Dimension
 
-    private IloCplex cplex; //Cplex instance.
-    private IloObjective obj; //Objective function
-    private IloIntVar[] vars; //Variables
-    private Map<VertexPair<Integer>, IloConstraint> branchingConstraints; //Constraints added to enforce branching decisions
+	// Solver
+    private IloCplex cplex;
+    
+    // Objective function
+    private IloObjective obj;
 
-    /**
-     * Creates a new solver instance for a particular pricing problem
-     *
-     * @param dataModel      data model
-     * @param pricingProblem pricing problem
-     */
-    public ExactPricingProblemSolver(ColoringGraph dataModel, ChromaticNumberPricingProblem pricingProblem) {
+    // Branching constraints
+    private Map<ConstraintOnClusterSide, IloConstraint> branchingConstraints; //Constraints added to enforce branching decisions
+
+    // Variables
+	private IloNumVar[] z;
+	private IloNumVar[] r;
+	private IloNumVar[] l;
+
+	// Creates a new solver instance for a particular pricing problem
+    public ExactPricingProblemSolver(InputData dataModel, ClusteringPricingProblem pricingProblem)
+    {
         super(dataModel, pricingProblem);
-        this.name="ExactMaxWeightedIndependentSetSolver";
+
+        _instance = dataModel.getInstance();
+		p = _instance.getPoints();
+		d = _instance.getDimension();
+        
+        this.name = "ExactClusterFinder";
         this.buildModel();
     }
 
-    /**
-     * Build the MIP model. Essentially this model calculates maximum weight independent sets.
-     */
-    private void buildModel(){
-        try {
-            cplex=new IloCplex();
-            cplex.setParam(IloCplex.IntParam.AdvInd, 0);
-            cplex.setParam(IloCplex.IntParam.Threads, 1);
-            cplex.setOut(null);
+    // Build the MIP model
+    private void buildModel()
+    {
+        try
+        {
+        	createSolver();
+    		createVariables();
+    		createConstraints();
+    		createObjective();
 
-            //Create the variables (a single variable per edge)
-            vars=cplex.boolVarArray(dataModel.getNrVertices());
-
-            //Create the objective function
-            obj=cplex.addMaximize();
-
-            //Create the constraints z_i+z_j <= 1 for all (i,j)\in E:
-            // Omitted: Access to graph edges
-//            for(DefaultEdge edge : dataModel.edgeSet())
-//                cplex.addLe(cplex.sum(vars[dataModel.getEdgeSource(edge)], vars[dataModel.getEdgeTarget(edge)]), 1);
-
-            branchingConstraints=new HashMap<>();
-        } catch (IloException e) {
+            branchingConstraints = new HashMap<ConstraintOnClusterSide, IloConstraint>();
+        }
+        catch (IloException e)
+        {
             e.printStackTrace();
         }
     }
+    
+    private void createSolver() throws IloException
+    {
+        cplex = new IloCplex();
+        cplex.setParam(IloCplex.IntParam.AdvInd, 0);
+        cplex.setParam(IloCplex.IntParam.Threads, 1);
+        cplex.setOut(null);
+    }
+    
+	private void createVariables() throws IloException
+	{
+		z = new IloNumVar[p];
+		r = new IloNumVar[d];
+		l = new IloNumVar[d];
+		
+		for(int i=0; i<p; ++i)
+	    	z[i] = cplex.boolVar("z" + i);
 
-    /**
-     * Main method which solves the pricing problem.
-     * @return List of columns (independent sets) with negative reduced cost.
-     * @throws TimeLimitExceededException TimeLimitExceededException
-     */
+		for(int t=0; t<d; ++t)
+	    	r[t] = cplex.numVar(_instance.min(t), _instance.max(t), "r" + t);
+
+		for(int t=0; t<d; ++t)
+	    	l[t] = cplex.numVar(_instance.min(t), _instance.max(t), "l" + t);
+	}
+
+	private void createConstraints() throws IloException
+	{
+		for(int i=0; i<p; ++i)
+		for(int t=0; t<d; ++t)
+	    {
+			IloNumExpr lhs1 = cplex.linearIntExpr();
+			IloNumExpr lhs2 = cplex.linearIntExpr();
+			
+			lhs1 = cplex.sum(lhs1, l[t]);
+			lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(t) -_instance.getPoint(i).get(t), z[i]));
+			
+			lhs2 = cplex.sum(lhs2, r[t]);
+			lhs2 = cplex.sum(lhs2, cplex.prod(_instance.min(t) -_instance.getPoint(i).get(t), z[i]));
+
+		    cplex.addLe(lhs1, _instance.max(t), "l" + i + "_" + t);
+		    cplex.addGe(lhs2, _instance.min(t), "r" + i + "_" + t);
+	    }
+		
+		for(int t=0; t<d; ++t)
+		{
+			IloNumExpr lhs = cplex.linearIntExpr();
+			
+			lhs = cplex.sum(lhs, cplex.prod(1.0, l[t]));
+			lhs = cplex.sum(lhs, cplex.prod(-1.0, r[t]));
+			
+		    cplex.addLe(lhs, 0, "rel" + t);
+		}
+	}
+	
+	private void createObjective() throws IloException
+	{
+		obj = cplex.addMinimize();
+	}
+	
+	// Main method for solving the pricing problem
     @Override
-    protected List<IndependentSet> generateNewColumns() throws TimeLimitExceededException {
-        List<IndependentSet> newPatterns=new ArrayList<>();
-        try {
-            //Compute how much time we may take to solve the pricing problem
-            double timeRemaining=Math.max(1,(timeLimit-System.currentTimeMillis())/1000.0);
+    protected List<PotentialCluster> generateNewColumns() throws TimeLimitExceededException
+    {
+        List<PotentialCluster> newPatterns = new ArrayList<>();
+        try
+        {
+            // Compute how much time we may take to solve the pricing problem
+            double timeRemaining = Math.max(1, (timeLimit-System.currentTimeMillis()) / 1000.0);
             cplex.setParam(IloCplex.DoubleParam.TiLim, timeRemaining); //set time limit in seconds
 
-            //Solve the problem and check the solution nodeStatus
-            if(!cplex.solve() || cplex.getStatus()!=IloCplex.Status.Optimal){
-                if(cplex.getCplexStatus()==IloCplex.CplexStatus.AbortTimeLim){ //Aborted due to time limit
+            // Solve the problem and check the solution nodeStatus
+            if( !cplex.solve() || cplex.getStatus() != IloCplex.Status.Optimal )
+            {
+                if( cplex.getCplexStatus() == IloCplex.CplexStatus.AbortTimeLim ) // Aborted due to time limit
+                {
                     throw new TimeLimitExceededException();
-                }else if(cplex.getStatus()==IloCplex.Status.Infeasible) { //Pricing problem infeasible
-                    pricingProblemInfeasible=true;
-                    this.objective=Double.MAX_VALUE;
-                    throw new RuntimeException("Pricing problem infeasible");
-                }else{
-                    throw new RuntimeException("Pricing problem solve failed! Status: "+cplex.getStatus());
                 }
-            }else{ //Pricing problem solved to optimality.
-                this.pricingProblemInfeasible=false;
-                this.objective=cplex.getObjValue();
+                else if( cplex.getStatus() == IloCplex.Status.Infeasible ) // Pricing problem infeasible
+                {
+                    pricingProblemInfeasible = true;
+                    this.objective = Double.MAX_VALUE;
+                    throw new RuntimeException("Pricing problem infeasible");
+                }
+                else
+                {
+                    throw new RuntimeException("Pricing problem solve failed! Status: " + cplex.getStatus());
+                }
+            }
+            else // Pricing problem solved to optimality
+            {
+                this.pricingProblemInfeasible = false;
+                this.objective = cplex.getObjValue();
 
-                if(objective >= 1 + config.PRECISION){ //Generate new column if it has negative reduced cost
-                    double[] values=cplex.getValues(vars); //Get the variable values
-                    //Create an Independent Set using all vertices with value 1 in the pricing problem
-                    Set<Integer> vertices= IntStream.range(0, dataModel.getNrVertices()).filter(i->MathProgrammingUtil.doubleToBoolean(values[i])).boxed().collect(Collectors.toSet());
-                    IndependentSet column=new IndependentSet(pricingProblem, false, this.getName(), vertices, 1);
+                // Generate new column if it has negative reduced cost
+                if( objective >= 1 + config.PRECISION )
+                { 
+                    double[] values = cplex.getValues(z);
+                    Set<Integer> pointIndices = IntStream.range(0, _instance.getPoints()).filter(i -> MathProgrammingUtil.doubleToBoolean(values[i])).boxed().collect(Collectors.toSet());
+                    PotentialCluster column = new PotentialCluster(pricingProblem, false, this.getName(), Cluster.fromSet(_instance, pointIndices));
                     newPatterns.add(column);
                 }
             }
-
-        }catch (IloException e) {
+        }
+        catch (IloException e)
+        {
             e.printStackTrace();
         }
+        
         return newPatterns;
     }
 
-    /**
-     * Update the objective function of the pricing problem with the new dual information.
-     * The dual values are stored in the pricing problem.
-     */
+    // Update the objective function of the pricing problem with the new dual information. The dual values are stored in the pricing problem.
     @Override
-    protected void setObjective() {
-        try {
-            obj.setExpr(cplex.scalProd(pricingProblem.dualCosts, vars));
-        } catch (IloException e) {
+    protected void setObjective()
+    {
+        try
+        {
+            double[] dualCosts = pricingProblem.dualCosts;
+    		IloNumExpr fobj = cplex.linearNumExpr();
+
+    		for(int t=0; t<d; ++t)
+    		{
+    			fobj = cplex.sum(fobj, cplex.prod(1.0, r[t]));
+    			fobj = cplex.sum(fobj, cplex.prod(-1.0, l[t]));
+    		}
+    		
+    		for(int i=0; i<p; ++i)
+    			fobj = cplex.sum(fobj, cplex.prod(-dualCosts[i], z[i]));
+    		
+    		fobj = cplex.sum(fobj, dualCosts[p+1]);
+            obj.setExpr(fobj);
+        }
+        catch (IloException e)
+        {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Close the pricing problem
-     */
+    // Close the pricing problem
     @Override
-    public void close() {
+    public void close()
+    {
         cplex.end();
     }
 
-    /**
-     * Listen to branching decisions. The pricing problem is changed by the branching decisions.
-     * @param bd BranchingDecision
-     */
+    // Listen to branching decisions. The pricing problem is changed by the branching decisions.
     @Override
-    public void branchingDecisionPerformed(BranchingDecision bd) {
-        try {
-            if(bd instanceof SameColor){ //Ensure that two vertices appear together in an independent set
-                SameColor sameColorDecision = (SameColor) bd;
-                IloConstraint branchingConstraint=cplex.addEq(vars[sameColorDecision.vertexPair.getFirst()], vars[sameColorDecision.vertexPair.getSecond()]);
-                branchingConstraints.put(sameColorDecision.vertexPair, branchingConstraint);
-            }else if(bd instanceof DifferentColor){ //Ensure that two vertices do NOT appear together in an independent set.
-                DifferentColor differentColorDecision= (DifferentColor) bd;
-                IloConstraint branchingConstraint=cplex.addLe(cplex.sum(vars[differentColorDecision.vertexPair.getFirst()], vars[differentColorDecision.vertexPair.getSecond()]), 1);
-                branchingConstraints.put(differentColorDecision.vertexPair, branchingConstraint);
+    public void branchingDecisionPerformed(BranchingDecision bd)
+    {
+        try
+        {
+            if( bd instanceof ConstraintOnClusterSide )
+            {
+            	ConstraintOnClusterSide sc = (ConstraintOnClusterSide) bd;
+            	IloNumExpr lhs = cplex.linearIntExpr();
+
+            	if( sc.appliesToMaxSide() )
+            		lhs = cplex.sum(lhs, r[sc.getDimension()]);
+            	else
+            		lhs = cplex.sum(lhs, l[sc.getDimension()]);
+            	
+            	if( sc.isLowerBound() )
+            		lhs = cplex.sum(lhs, cplex.prod(sc.getThreshold() - _instance.min(sc.getDimension()), z[sc.getPoint()]));
+            	else
+            		lhs = cplex.sum(lhs, cplex.prod(sc.getThreshold() - _instance.max(sc.getDimension()), z[sc.getPoint()]));
+            	
+                IloConstraint branchingConstraint = null;
+                
+            	if( sc.isLowerBound() )
+            		branchingConstraint = cplex.addGe(_instance.min(sc.getDimension()), lhs);
+            	else
+            		branchingConstraint = cplex.addLe(_instance.max(sc.getDimension()), lhs);
+                
+                branchingConstraints.put(sc, branchingConstraint);
             }
-        } catch (IloException e) {
+        }
+        catch (IloException e)
+        {
             e.printStackTrace();
         }
     }
 
-    /**
-     * When the Branch-and-Price algorithm backtracks, branching decisions are reversed.
-     * @param bd BranchingDecision
-     */
+    // When the Branch-and-Price algorithm backtracks, branching decisions are reversed.
     @Override
-    public void branchingDecisionReversed(BranchingDecision bd) {
-        try {
-            if(bd instanceof SameColor){
-                SameColor sameColorDecision = (SameColor) bd;
-                cplex.remove(branchingConstraints.get(sameColorDecision.vertexPair));
-            }else if(bd instanceof DifferentColor){
-                DifferentColor differentColorDecision= (DifferentColor) bd;
-                cplex.remove(branchingConstraints.get(differentColorDecision.vertexPair));
+    public void branchingDecisionReversed(BranchingDecision bd)
+    {
+        try
+        {
+            if( bd instanceof ConstraintOnClusterSide )
+            {
+            	ConstraintOnClusterSide sc = (ConstraintOnClusterSide) bd;
+                cplex.remove(branchingConstraints.get(sc));
             }
-        } catch (IloException e) {
+        }
+        catch (IloException e)
+        {
             e.printStackTrace();
         }
     }

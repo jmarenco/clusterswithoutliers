@@ -2,32 +2,19 @@ package branchandprice;
 
 import org.jorlib.frameworks.columnGeneration.colgenMain.AbstractColumn;
 import general.Cluster;
-import java.util.Set;
 
 // Definition of a column
 public final class PotentialCluster extends AbstractColumn<InputData, ClusteringPricingProblem>
 {
-	@Deprecated
-    public final Set<Integer> vertices;
-    
-    private final Cluster _cluster;
-    public final double cost; // Cost of this column in the objective of the Master Problem
-
-    @Deprecated
-    public PotentialCluster(ClusteringPricingProblem associatedPricingProblem, boolean isArtificial, String creator, Set<Integer> vertices, double cost)
-    {
-        super(associatedPricingProblem, isArtificial, creator);
-        this.vertices=vertices;
-        this.cost=cost;
-        _cluster = null;
-    }
+    private Cluster _cluster;
+    private double _cost; // Cost of this column in the objective of the Master Problem
 
     public PotentialCluster(ClusteringPricingProblem associatedPricingProblem, boolean isArtificial, String creator, Cluster cluster)
     {
         super(associatedPricingProblem, isArtificial, creator);
-        vertices = null;
+
         _cluster = cluster;
-        this.cost = cluster.totalSpan();
+        _cost = cluster.totalSpan();
     }
     
     public Cluster getCluster()
@@ -50,6 +37,11 @@ public final class PotentialCluster extends AbstractColumn<InputData, Clustering
     public int hashCode()
     {
         return _cluster.hashCode();
+    }
+    
+    public double getCost()
+    {
+    	return _cost;
     }
 
     @Override

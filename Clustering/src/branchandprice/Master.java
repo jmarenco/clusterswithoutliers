@@ -38,9 +38,12 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
     @Override
     protected ClusteringMasterData buildModel()
     {
-        IloCplex cplex=null;
+    	// This method is called from super, so _instance is not initialized yet
+    	_instance = dataModel.getInstance();
 
-        try
+    	IloCplex cplex=null;
+
+    	try
         {
             cplex=new IloCplex(); // Create cplex instance
             cplex.setOut(null); // Disable cplex output
@@ -52,7 +55,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             // Create y variables
             _y = new IloNumVar[_instance.getPoints()];
             for(int i=0; i<_instance.getPoints(); i++)
-            	_y[i] = cplex.boolVar("y" + i);
+            	_y[i] = cplex.numVar(0, 1, "y" + i);
 
             // Define binding constraints
             _binding = new IloRange[_instance.getPoints()];
@@ -60,18 +63,18 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             {
             	IloNumExpr lhs = cplex.linearIntExpr();
             	lhs = cplex.sum(lhs, cplex.prod(-1, _y[i]));
-                _binding[i] = cplex.addGe(0, lhs);
+                _binding[i] = cplex.addGe(lhs, 0, "bind" + i);
             }
             
             // Define constraint on the number of clusters
-            _numberOfClusters = cplex.addGe(-_instance.getClusters(), cplex.linearIntExpr());
+            _numberOfClusters = cplex.addGe(cplex.linearIntExpr(), -_instance.getClusters(), "clus");
             
             // Define constraint on the number of outliers
             IloNumExpr lhs = cplex.linearIntExpr();
             for(int i=0; i<_instance.getPoints(); i++)
             	lhs = cplex.sum(lhs, _y[i]);
             
-            _numberOfOutliers = cplex.addGe(_instance.getPoints() - _instance.getOutliers(), lhs);
+            _numberOfOutliers = cplex.addGe(lhs, _instance.getPoints() - _instance.getOutliers(), "out");
             
             // Collects all constraints into a single array
             _allConstraints = new IloRange[_instance.getPoints() + 2];
@@ -108,6 +111,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             // Potentially export the model
             // if(config.EXPORT_MODEL)
             // 	masterData.cplex.exportModel(config.EXPORT_MASTER_DIR + "master_" + this.getIterationCount() + ".lp");
+            masterData.cplex.exportModel("master_" + this.getIterationCount() + ".lp");
 
             // Solve the model
             if( !masterData.cplex.solve() || masterData.cplex.getStatus() != IloCplex.Status.Optimal )
@@ -154,7 +158,8 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
         	Cluster cluster = column.getCluster();
         	
             // Register column with objective
-            IloColumn iloColumn = masterData.cplex.column(_obj, column.cost);
+        	System.out.println("Registering column - cost: " + column.getCost() + " - " + column.getCluster());
+            IloColumn iloColumn = masterData.cplex.column(_obj, column.getCost());
 
             // Register column with the constraints
             for(int i=0; i<_instance.getPoints(); ++i) if( cluster.contains(_instance.getPoint(i)) )

@@ -98,7 +98,7 @@ public class Cluster
 	
 	public double min(int dimension)
 	{
-		return _points.stream().mapToDouble(p -> p.get(dimension)).max().orElse(0);
+		return _points.stream().mapToDouble(p -> p.get(dimension)).min().orElse(0);
 	}
 	
 	private Point centroid()

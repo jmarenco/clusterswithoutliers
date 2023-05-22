@@ -1,5 +1,7 @@
 package interfaz;
 
+import branchandprice.ClusteringCalculator;
+import branchandprice.InputData;
 import colgen.Algorithm;
 import general.Instance;
 import general.Point;
@@ -34,6 +36,8 @@ public class Test
 			solveColGen(args);
 		else if(model.equals("rep"))
 			solveRep(args);
+		else if(model.equals("bap"))
+			solveBap(args);
 		else
 			showUsage();
 	}
@@ -125,10 +129,16 @@ public class Test
 		algorithm.run();
 	}
 	
+	private static void solveBap(String[] args) throws IloException
+	{
+        InputData coloringGraph = new InputData(interfaz.Test.testInstance());
+        new ClusteringCalculator(coloringGraph).solve();
+	}
+	
 	private static void showUsage()
 	{
 		System.out.println("Available configuration options: ");
-		System.out.println("    -m [sm|pop|cg]           Model to use [def:sm]");
+		System.out.println("    -m [sm|pop|cg|rep|bap]   Model to use [def:sm]");
 		System.out.println("    -d <n>                   Dimension for the instance [def: 2]");
 		System.out.println("    -n <n>                   Number of points [def: 10]");
 		System.out.println("    -c <n>                   Number of clusters [def: 3]");

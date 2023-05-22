@@ -1,30 +1,32 @@
 package branchandprice;
 
 import org.jorlib.frameworks.columnGeneration.branchAndPrice.AbstractBranchCreator;
-import org.jorlib.frameworks.columnGeneration.io.SimpleBAPLogger;
-import org.jorlib.frameworks.columnGeneration.io.SimpleDebugger;
 import org.jorlib.frameworks.columnGeneration.pricing.AbstractPricingProblemSolver;
 
 import general.Cluster;
 
-import java.io.IOException;
 import java.util.*;
 import general.Instance;;
 
 // Column generation procedure
 public final class ClusteringCalculator
 {
+	private InputData _inputData;
 	private Instance _instance;
 	
     public ClusteringCalculator(InputData inputData)
     {
+    	_inputData = inputData;
     	_instance = inputData.getInstance();
-    	
+    }
+    
+    public void solve()
+    {
         //Create Pricing problem
-        ClusteringPricingProblem pricingProblem = new ClusteringPricingProblem(inputData, "clusteringPricingProblem");
+        ClusteringPricingProblem pricingProblem = new ClusteringPricingProblem(_inputData, "clusteringPricingProblem");
 
         //Create the Master Problem
-        Master master = new Master(inputData, pricingProblem);
+        Master master = new Master(_inputData, pricingProblem);
 
         //Define which solvers to use for the pricing problem
         List<Class<? extends AbstractPricingProblemSolver<InputData, PotentialCluster, ClusteringPricingProblem>>> solvers = Collections.singletonList(ExactPricingProblemSolver.class);
@@ -37,10 +39,10 @@ public final class ClusteringCalculator
         double lowerBound=this.calculateLowerBound();
 
         //Define Branch creators
-        List<? extends AbstractBranchCreator<InputData, PotentialCluster, ClusteringPricingProblem>> branchCreators = Collections.singletonList(new BranchOnPointCoverings(inputData, pricingProblem));
+        List<? extends AbstractBranchCreator<InputData, PotentialCluster, ClusteringPricingProblem>> branchCreators = Collections.singletonList(new BranchOnPointCoverings(_inputData, pricingProblem));
 
         //Create a Branch-and-Price instance, and provide the initial solution as a warm-start
-        BranchAndPrice bap = new BranchAndPrice(inputData, master, pricingProblem, solvers, branchCreators, lowerBound, upperBound);
+        BranchAndPrice bap = new BranchAndPrice(_inputData, master, pricingProblem, solvers, branchCreators, lowerBound, upperBound);
         bap.warmStart(upperBound, initSolution);
 
         //OPTIONAL: Attach a debugger
@@ -71,12 +73,6 @@ public final class ClusteringCalculator
 
         //Clean up:
         bap.close(); //Close master and pricing problems
-    }
-
-    public static void main(String[] args) throws IOException
-    {
-        InputData coloringGraph=new InputData(interfaz.Test.tostInstance());
-        new ClusteringCalculator(coloringGraph);
     }
 
     // Initial solution through a greedy algorithm

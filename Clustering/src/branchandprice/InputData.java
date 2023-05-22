@@ -13,12 +13,6 @@ public final class InputData implements ModelInterface
 	{
 		_instance = instance;
 	}
-	
-	@Deprecated
-    public int getNrVertices()
-    {
-        return _instance.getPoints();
-    }
     
     public Instance getInstance()
     {

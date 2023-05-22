@@ -139,6 +139,9 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
             double timeRemaining = Math.max(1, (timeLimit-System.currentTimeMillis()) / 1000.0);
             cplex.setParam(IloCplex.DoubleParam.TiLim, timeRemaining); //set time limit in seconds
 
+//            System.out.println("*** Exporting pricing model ...");
+//            cplex.exportModel("pricing.lp");
+
             // Solve the problem and check the solution nodeStatus
             if( !cplex.solve() || cplex.getStatus() != IloCplex.Status.Optimal )
             {
@@ -161,9 +164,10 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
             {
                 this.pricingProblemInfeasible = false;
                 this.objective = cplex.getObjValue();
+                System.out.println("Pricing obj: " + objective);
 
                 // Generate new column if it has negative reduced cost
-                if( objective >= 1 + config.PRECISION )
+                if( objective <= -config.PRECISION )
                 { 
                     double[] values = cplex.getValues(z);
                     Set<Integer> pointIndices = IntStream.range(0, _instance.getPoints()).filter(i -> MathProgrammingUtil.doubleToBoolean(values[i])).boxed().collect(Collectors.toSet());
@@ -200,6 +204,8 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
     		
     		fobj = cplex.sum(fobj, dualCosts[p+1]);
             obj.setExpr(fobj);
+            
+            System.out.println("Pricing obj set: " + obj);
         }
         catch (IloException e)
         {

@@ -56,6 +56,11 @@ public final class BranchAndPrice extends AbstractBranchAndPrice<InputData, Pote
     	for(PotentialCluster column: node.getSolution())
         	puntos.addAll(column.getCluster().getPoints());
         
+    	if( puntos.size() >= _instance.getPoints() - _instance.getOutliers() )
+    		System.out.println("--- Integer point");
+    	else
+    		System.out.println("--- Fractional point");
+    	
     	return puntos.size() >= _instance.getPoints() - _instance.getOutliers();
     }
 }

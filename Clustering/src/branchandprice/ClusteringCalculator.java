@@ -33,7 +33,7 @@ public final class ClusteringCalculator
 
         //Optional: Get an initial solution
         List<PotentialCluster> initSolution = this.getInitialSolution(pricingProblem);
-        int upperBound=initSolution.size();
+        double upperBound=initSolution.stream().mapToDouble(p -> p.getCluster().totalSpan()).sum();
 
         //Optional: Get a lower bound on the optimum solution, e.g. largest clique in the graph
         double lowerBound=this.calculateLowerBound();
@@ -43,7 +43,7 @@ public final class ClusteringCalculator
 
         //Create a Branch-and-Price instance, and provide the initial solution as a warm-start
         BranchAndPrice bap = new BranchAndPrice(_inputData, master, pricingProblem, solvers, branchCreators, lowerBound, upperBound);
-        bap.warmStart(upperBound, initSolution);
+        bap.warmStart((int)Math.ceil(upperBound), initSolution);
 
         //OPTIONAL: Attach a debugger
         //new SimpleDebugger(bap, true);

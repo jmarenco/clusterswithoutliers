@@ -131,7 +131,11 @@ public class Test
 	
 	private static void solveBap(String[] args) throws IloException
 	{
-        InputData coloringGraph = new InputData(interfaz.Test.testInstance());
+		Instance instance = interfaz.Test.testInstance();
+		instance.scale(1000);
+		instance.integrize();
+		
+        InputData coloringGraph = new InputData(instance);
         new ClusteringCalculator(coloringGraph).solve();
 	}
 	

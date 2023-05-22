@@ -111,7 +111,9 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             // Potentially export the model
             // if(config.EXPORT_MODEL)
             // 	masterData.cplex.exportModel(config.EXPORT_MASTER_DIR + "master_" + this.getIterationCount() + ".lp");
-            masterData.cplex.exportModel("master_" + this.getIterationCount() + ".lp");
+            
+//            System.out.println("*** Exporting master model ...");
+//            masterData.cplex.exportModel("master_" + this.getIterationCount() + ".lp");
 
             // Solve the model
             if( !masterData.cplex.solve() || masterData.cplex.getStatus() != IloCplex.Status.Optimal )
@@ -189,8 +191,10 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             IloNumVar[] vars = masterData.getVarMap().getValuesAsArray(new IloNumVar[masterData.getNrColumns()]);
             double[] values = masterData.cplex.getValues(vars);
 
+            System.out.println("Retrieving master solution");
             for(int i=0; i<clusters.length; i++)
             {
+                System.out.println("  Cluster " + i + ", val = " + values[i]);
                 clusters[i].value = values[i];
                 if( values[i] >= config.PRECISION )
                     solution.add(clusters[i]);
@@ -201,6 +205,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             e.printStackTrace();
         }
         
+        System.out.println("Returning solution with " + solution.size() + " clusters");
         return solution;
     }
 

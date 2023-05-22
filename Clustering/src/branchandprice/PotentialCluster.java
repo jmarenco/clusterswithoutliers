@@ -14,7 +14,7 @@ public final class PotentialCluster extends AbstractColumn<InputData, Clustering
         super(associatedPricingProblem, isArtificial, creator);
 
         _cluster = cluster;
-        _cost = cluster.totalSpan();
+        _cost = cluster.totalSpan(); // Tiene que ser entero
     }
     
     public Cluster getCluster()

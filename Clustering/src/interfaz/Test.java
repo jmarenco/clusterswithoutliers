@@ -131,7 +131,7 @@ public class Test
 	
 	private static void solveBap(String[] args) throws IloException
 	{
-		Instance instance = interfaz.Test.tostInstance();
+		Instance instance = interfaz.Test.tustInstance();
 		instance.scale(1000);
 		instance.integrize();
 		
@@ -211,9 +211,6 @@ public class Test
 		instance.add(Point.fromVector(6, 5.0, 4.0));
 		instance.add(Point.fromVector(7, 2.0, 4.0));
 		instance.add(Point.fromVector(8, 2.0, 6.0));
-		instance.add(Point.fromVector(9, 3.0, 5.0));
-		instance.add(Point.fromVector(10, 4.0, 2.5));
-		instance.add(Point.fromVector(11, 3.5, 5.5));
 		
 		return instance;
 	}

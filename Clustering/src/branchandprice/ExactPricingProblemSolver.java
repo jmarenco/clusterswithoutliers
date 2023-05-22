@@ -202,7 +202,7 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
     		for(int i=0; i<p; ++i)
     			fobj = cplex.sum(fobj, cplex.prod(-dualCosts[i], z[i]));
     		
-    		fobj = cplex.sum(fobj, dualCosts[p+1]);
+    		fobj = cplex.sum(fobj, dualCosts[p]);
             obj.setExpr(fobj);
             
             System.out.println("Pricing obj set: " + obj);

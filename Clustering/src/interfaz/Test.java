@@ -131,12 +131,20 @@ public class Test
 	
 	private static void solveBap(String[] args) throws IloException
 	{
-		Instance instance = interfaz.Test.testInstance();
+		Instance instance = interfaz.Test.tostInstance();
 		instance.scale(1000);
 		instance.integrize();
 		
         InputData coloringGraph = new InputData(instance);
         new ClusteringCalculator(coloringGraph).solve();
+
+        System.out.println("============= Rectangular model ==============");
+        RectangularModel model = new RectangularModel(instance);
+        model.setVerbose(false);
+        model.solve();
+        
+        for(general.Cluster cluster: model.getClusters())
+        	System.out.println(cluster);
 	}
 	
 	private static void showUsage()
@@ -188,6 +196,24 @@ public class Test
 		instance.add(Point.fromVector(5, 5.0, 3.0));
 		instance.add(Point.fromVector(6, 5.0, 4.0));
 		instance.add(Point.fromVector(7, 2.0, 4.0));
+		
+		return instance;
+	}
+	
+	public static Instance tustInstance()
+	{
+		Instance instance = new Instance(2, 1);
+		instance.add(Point.fromVector(1, 1.0, 1.0));
+		instance.add(Point.fromVector(2, 1.0, 2.0));
+		instance.add(Point.fromVector(3, 1.5, 1.5));
+		instance.add(Point.fromVector(4, 4.0, 4.0));
+		instance.add(Point.fromVector(5, 5.0, 3.0));
+		instance.add(Point.fromVector(6, 5.0, 4.0));
+		instance.add(Point.fromVector(7, 2.0, 4.0));
+		instance.add(Point.fromVector(8, 2.0, 6.0));
+		instance.add(Point.fromVector(9, 3.0, 5.0));
+		instance.add(Point.fromVector(10, 4.0, 2.5));
+		instance.add(Point.fromVector(11, 3.5, 5.5));
 		
 		return instance;
 	}

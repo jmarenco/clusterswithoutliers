@@ -208,6 +208,28 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
         System.out.println("Returning solution with " + solution.size() + " clusters");
         return solution;
     }
+    
+    public boolean isIntegerSolution()
+    {
+        try
+        {
+            PotentialCluster[] clusters = masterData.getColumnsForPricingProblemAsList().toArray(new PotentialCluster[masterData.getNrColumns()]);
+            IloNumVar[] vars = masterData.getVarMap().getValuesAsArray(new IloNumVar[masterData.getNrColumns()]);
+            double[] values = masterData.cplex.getValues(vars);
+
+            for(int i=0; i<clusters.length; i++)
+            {
+                if( Math.abs(values[i] - (int)values[i]) > 0.05 )
+                	return false;
+            }
+        }
+        catch (IloException e)
+        {
+            e.printStackTrace();
+        }
+        
+        return true;
+    }
 
     // Prints the solution
     @Override

@@ -50,6 +50,16 @@ public final class BranchAndPrice extends AbstractBranchAndPrice<InputData, Pote
     @Override
     protected boolean isIntegerNode(BAPNode<InputData, PotentialCluster> node)
     {
+    	if( master instanceof Master )
+    	{
+        	if( ((Master)master).isIntegerSolution() )
+        		System.out.println("--- Integer point (by master)");
+        	else
+        		System.out.println("--- Fractional point (by master)");
+
+        	return ((Master)master).isIntegerSolution();
+    	}
+    	
     	// TODO: Esta bien este chequeo?
     	Set<Point> puntos = new HashSet<Point>();
 

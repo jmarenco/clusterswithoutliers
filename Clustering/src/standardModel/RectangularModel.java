@@ -335,6 +335,7 @@ public class RectangularModel
 		if( _summary == false )
 		{
 			System.out.println("Status: " + cplex.getStatus());
+			System.out.println("Objective: " + String.format("%6.4f", cplex.getObjValue()));
 			System.out.println("Time: " + String.format("%6.2f", time));
 			System.out.println("Nodes: " + cplex.getNnodes());
 			System.out.println("Gap: " + ((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) : "  ****"));

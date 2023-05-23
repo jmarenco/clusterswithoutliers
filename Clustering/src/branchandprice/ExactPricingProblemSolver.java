@@ -14,10 +14,8 @@ import java.util.stream.IntStream;
 import general.Cluster;
 import general.Instance;
 
-/**
- * Algorthm implementation which solves the pricing problem to optimality. This solver is based on an exact MIP implementation
- * using Cplex.
- */
+// Algorithm implementation which solves the pricing problem to optimality.
+// This solver is based on an exact MIP implementation using Cplex.
 public final class ExactPricingProblemSolver extends AbstractPricingProblemSolver<InputData, PotentialCluster, ClusteringPricingProblem>
 {
 	// Input data
@@ -230,6 +228,7 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
             {
             	ConstraintOnClusterSide sc = (ConstraintOnClusterSide) bd;
             	IloNumExpr lhs = cplex.linearIntExpr();
+                IloConstraint branchingConstraint = null;
 
             	if( sc.appliesToMaxSide() )
             		lhs = cplex.sum(lhs, r[sc.getDimension()]);
@@ -237,16 +236,15 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
             		lhs = cplex.sum(lhs, l[sc.getDimension()]);
             	
             	if( sc.isLowerBound() )
-            		lhs = cplex.sum(lhs, cplex.prod(sc.getThreshold() - _instance.min(sc.getDimension()), z[sc.getPoint()]));
-            	else
-            		lhs = cplex.sum(lhs, cplex.prod(sc.getThreshold() - _instance.max(sc.getDimension()), z[sc.getPoint()]));
-            	
-                IloConstraint branchingConstraint = null;
-                
-            	if( sc.isLowerBound() )
+            	{
+            		lhs = cplex.sum(lhs, cplex.prod(-sc.getThreshold() + _instance.min(sc.getDimension()), z[sc.getPoint()]));
             		branchingConstraint = cplex.addGe(_instance.min(sc.getDimension()), lhs);
+            	}
             	else
+            	{
+            		lhs = cplex.sum(lhs, cplex.prod(-sc.getThreshold() + _instance.max(sc.getDimension()), z[sc.getPoint()]));
             		branchingConstraint = cplex.addLe(_instance.max(sc.getDimension()), lhs);
+            	}
                 
                 branchingConstraints.put(sc, branchingConstraint);
             }

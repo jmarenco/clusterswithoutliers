@@ -57,7 +57,11 @@ public final class ConstraintOnClusterSide implements BranchingDecision<InputDat
     public boolean columnIsCompatibleWithBranchingDecision(PotentialCluster column)
     {
     	double side = _max ? column.getCluster().max(_dimension) : column.getCluster().min(_dimension);
-    	return _lowerBound ? side >= _threshold - _tolerance : side <= _threshold + _tolerance;
+    	boolean ret = _lowerBound ? side >= _threshold - _tolerance : side <= _threshold + _tolerance;
+    	
+//    	System.out.println("Compat " + column.getCluster() + " BC: " + this + " = " + ret);
+    	
+    	return ret;
     }
 
     // Determine whether the given inequality remains feasible for the child node
@@ -91,6 +95,6 @@ public final class ConstraintOnClusterSide implements BranchingDecision<InputDat
     @Override
     public String toString()
     {
-        return "Branch on point " + _point + ", dim: " + _dimension + (_max ? " - Max " : " - Min ") + (_lowerBound ? "<= " : ">= ") + _threshold;
+        return "Branch on point " + _point + ", dim: " + _dimension + (_max ? ", Max " : ", Min ") + (_lowerBound ? ">= " : "<= ") + _threshold;
     }
 }

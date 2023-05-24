@@ -210,7 +210,7 @@ public class Test
 		instance.add(Point.fromVector(5, 5.0, 3.0));
 		instance.add(Point.fromVector(6, 5.0, 4.0));
 		instance.add(Point.fromVector(7, 2.0, 4.0));
-		instance.add(Point.fromVector(8, 2.0, 6.0));
+		instance.add(Point.fromVector(8, 2.0, 5.0));
 		
 		return instance;
 	}

@@ -162,7 +162,8 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
             {
                 this.pricingProblemInfeasible = false;
                 this.objective = cplex.getObjValue();
-                System.out.println("Pricing obj: " + objective);
+                
+                System.out.print("P Pricing obj: " + objective);
 
                 // Generate new column if it has negative reduced cost
                 if( objective <= -config.PRECISION )
@@ -171,7 +172,11 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
                     Set<Integer> pointIndices = IntStream.range(0, _instance.getPoints()).filter(i -> MathProgrammingUtil.doubleToBoolean(values[i])).boxed().collect(Collectors.toSet());
                     PotentialCluster column = new PotentialCluster(pricingProblem, false, this.getName(), Cluster.fromSet(_instance, pointIndices));
                     newPatterns.add(column);
+                    
+                    System.out.print(" -> " + column.getCluster());
                 }
+                
+                System.out.println();
             }
         }
         catch (IloException e)
@@ -238,15 +243,19 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
             	if( sc.isLowerBound() )
             	{
             		lhs = cplex.sum(lhs, cplex.prod(-sc.getThreshold() + _instance.min(sc.getDimension()), z[sc.getPoint()]));
-            		branchingConstraint = cplex.addGe(_instance.min(sc.getDimension()), lhs);
+            		branchingConstraint = cplex.addGe(lhs, _instance.min(sc.getDimension()));
             	}
             	else
             	{
             		lhs = cplex.sum(lhs, cplex.prod(-sc.getThreshold() + _instance.max(sc.getDimension()), z[sc.getPoint()]));
-            		branchingConstraint = cplex.addLe(_instance.max(sc.getDimension()), lhs);
+            		branchingConstraint = cplex.addLe(lhs, _instance.max(sc.getDimension()));
             	}
                 
                 branchingConstraints.put(sc, branchingConstraint);
+
+                System.out.println(">>> Branching constraint added: ");
+                System.out.println("    " + sc);
+                System.out.println("    " + branchingConstraint);
             }
         }
         catch (IloException e)
@@ -265,6 +274,9 @@ public final class ExactPricingProblemSolver extends AbstractPricingProblemSolve
             {
             	ConstraintOnClusterSide sc = (ConstraintOnClusterSide) bd;
                 cplex.remove(branchingConstraints.get(sc));
+
+                System.out.println(">>> Branching decision reversed: ");
+                System.out.println("    " + sc);
             }
         }
         catch (IloException e)

@@ -92,7 +92,9 @@ public final class BranchOnPointCoverings extends AbstractBranchCreator<InputDat
     @Override
     protected List<BAPNode<InputData, PotentialCluster>> getBranches(BAPNode<InputData, PotentialCluster> parentNode)
     {
-        // Branch 1: cluster side >= threshold
+    	// TODO: parentNode.getSolution() o todas las columnas?
+
+    	// Branch 1: cluster side >= threshold
         ConstraintOnClusterSide branchingDecision1 = new ConstraintOnClusterSide(_instance.getPoint(_pointIndex), _pointIndex, _dimension, _threshold, _max, true);
         BAPNode<InputData,PotentialCluster> node2 = this.createBranch(parentNode, branchingDecision1, parentNode.getSolution(), parentNode.getInequalities());
 

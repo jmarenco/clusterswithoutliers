@@ -50,7 +50,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             cplex.setParam(IloCplex.IntParam.Threads,config.MAXTHREADS); // Set number of threads that may be used by the master
 
             // Define objective
-            _obj=cplex.addMinimize();
+            _obj = cplex.addMinimize();
 
             // Create y variables
             _y = new IloNumVar[_instance.getPoints()];
@@ -105,7 +105,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
         try
         {
             // Set time limit
-            double timeRemaining=Math.max(1,(timeLimit-System.currentTimeMillis())/1000.0);
+            double timeRemaining = Math.max(1, (timeLimit-System.currentTimeMillis()) / 1000.0);
             masterData.cplex.setParam(IloCplex.DoubleParam.TiLim, timeRemaining); // set time limit in seconds
 
             // Potentially export the model
@@ -126,6 +126,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             else
             {
                 masterData.objectiveValue = masterData.cplex.getObjValue();
+                System.out.println("Master solved - obj: " + masterData.objectiveValue);
             }
         }
         catch (IloException e)
@@ -142,7 +143,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
     {
         try
         {
-            double[] dualValues=masterData.cplex.getDuals(_allConstraints);
+            double[] dualValues = masterData.cplex.getDuals(_allConstraints);
             pricingProblem.initPricingProblem(dualValues);
         }
         catch (IloException e)
@@ -184,7 +185,7 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
     @Override
     public List<PotentialCluster> getSolution()
     {
-        List<PotentialCluster> solution=new ArrayList<>();
+        List<PotentialCluster> solution = new ArrayList<>();
         try
         {
             PotentialCluster[] clusters = masterData.getColumnsForPricingProblemAsList().toArray(new PotentialCluster[masterData.getNrColumns()]);
@@ -194,8 +195,9 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             System.out.println("Retrieving master solution");
             for(int i=0; i<clusters.length; i++)
             {
-                System.out.println("  Cluster " + i + ", val = " + values[i]);
+                System.out.println("  Cluster " + i + ", val = " + values[i] + " " + clusters[i].getCluster());
                 clusters[i].value = values[i];
+
                 if( values[i] >= config.PRECISION )
                     solution.add(clusters[i]);
             }

@@ -50,27 +50,26 @@ public final class BranchAndPrice extends AbstractBranchAndPrice<InputData, Pote
     @Override
     protected boolean isIntegerNode(BAPNode<InputData, PotentialCluster> node)
     {
-    	if( master instanceof Master )
+//    	if( master instanceof Master )
+//    	{
+//        	if( ((Master)master).isIntegerSolution() )
+//        		System.out.println("--- Integer point (by master)");
+//        	else
+//        		System.out.println("--- Fractional point (by master)");
+//
+//        	return ((Master)master).isIntegerSolution();
+//    	}
+    	
+    	for(PotentialCluster column: node.getSolution())
     	{
-        	if( ((Master)master).isIntegerSolution() )
-        		System.out.println("--- Integer point (by master)");
-        	else
-        		System.out.println("--- Fractional point (by master)");
-
-        	return ((Master)master).isIntegerSolution();
+    		if( column.value > 0.05 || column.value < 0.95 )
+    		{
+        		System.out.println("--- Fractional point");
+    			return false;
+    		}
     	}
     	
-    	// TODO: Esta bien este chequeo?
-    	Set<Point> puntos = new HashSet<Point>();
-
-    	for(PotentialCluster column: node.getSolution())
-        	puntos.addAll(column.getCluster().getPoints());
-        
-    	if( puntos.size() >= _instance.getPoints() - _instance.getOutliers() )
-    		System.out.println("--- Integer point");
-    	else
-    		System.out.println("--- Fractional point");
-    	
-    	return puntos.size() >= _instance.getPoints() - _instance.getOutliers();
+		System.out.println("--- Integer point");
+    	return true;
     }
 }

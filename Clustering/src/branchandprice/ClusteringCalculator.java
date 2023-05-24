@@ -32,8 +32,9 @@ public final class ClusteringCalculator
         List<Class<? extends AbstractPricingProblemSolver<InputData, PotentialCluster, ClusteringPricingProblem>>> solvers = Collections.singletonList(ExactPricingProblemSolver.class);
 
         //Optional: Get an initial solution
-        List<PotentialCluster> initSolution = this.getInitialSolution(pricingProblem);
-        double upperBound=initSolution.stream().mapToDouble(p -> p.getCluster().totalSpan()).sum();
+//        List<PotentialCluster> initSolution = this.getInitialSolution(pricingProblem);
+//        double upperBound=initSolution.stream().mapToDouble(p -> p.getCluster().totalSpan()).sum();
+        double upperBound=10000;
 
         //Optional: Get a lower bound on the optimum solution, e.g. largest clique in the graph
         double lowerBound=this.calculateLowerBound();
@@ -43,7 +44,7 @@ public final class ClusteringCalculator
 
         //Create a Branch-and-Price instance, and provide the initial solution as a warm-start
         BranchAndPrice bap = new BranchAndPrice(_inputData, master, pricingProblem, solvers, branchCreators, lowerBound, upperBound);
-        bap.warmStart((int)Math.ceil(upperBound), initSolution);
+//        bap.warmStart((int)Math.ceil(upperBound), initSolution);
 
         //OPTIONAL: Attach a debugger
         //new SimpleDebugger(bap, true);

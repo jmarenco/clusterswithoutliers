@@ -1,15 +1,16 @@
 package branchandprice;
 
 import java.util.Objects;
-
 import org.jorlib.frameworks.columnGeneration.branchAndPrice.branchingDecisions.BranchingDecision;
 import org.jorlib.frameworks.columnGeneration.master.cutGeneration.AbstractInequality;
+import general.Point;
 
 // Branching constraint
 public final class ConstraintOnClusterSide implements BranchingDecision<InputData, PotentialCluster>
 {
 	// Branching data
-	private int _point;
+	private Point _point;
+	private int _pointIndex;
 	private int _dimension;
 	private double _threshold;
 	private boolean _max;
@@ -18,9 +19,10 @@ public final class ConstraintOnClusterSide implements BranchingDecision<InputDat
 	// Tolerance for comparisons
 	private static double _tolerance = 0.01;
 
-    public ConstraintOnClusterSide(int point, int dimension, double threshold, boolean max, boolean lowerBound)
+    public ConstraintOnClusterSide(Point point, int pointIndex, int dimension, double threshold, boolean max, boolean lowerBound)
     {
     	_point = point;
+    	_pointIndex = pointIndex;
     	_dimension = dimension;
     	_threshold = threshold;
     	_max = max;
@@ -29,7 +31,7 @@ public final class ConstraintOnClusterSide implements BranchingDecision<InputDat
     
     public int getPoint()
     {
-    	return _point;
+    	return _pointIndex;
     }
     
     public int getDimension()
@@ -56,11 +58,14 @@ public final class ConstraintOnClusterSide implements BranchingDecision<InputDat
     @Override
     public boolean columnIsCompatibleWithBranchingDecision(PotentialCluster column)
     {
-    	double side = _max ? column.getCluster().max(_dimension) : column.getCluster().min(_dimension);
-    	boolean ret = _lowerBound ? side >= _threshold - _tolerance : side <= _threshold + _tolerance;
+    	boolean ret = true;
+    	if( column.getCluster().contains(_point) == true )
+    	{
+    		double side = _max ? column.getCluster().max(_dimension) : column.getCluster().min(_dimension);
+    		ret = _lowerBound ? side >= _threshold - _tolerance : side <= _threshold + _tolerance;
+    	}
     	
-//    	System.out.println("Compat " + column.getCluster() + " BC: " + this + " = " + ret);
-    	
+    	System.out.println("Compat " + column.getCluster() + " BC: " + this + " = " + ret);
     	return ret;
     }
 
@@ -95,6 +100,6 @@ public final class ConstraintOnClusterSide implements BranchingDecision<InputDat
     @Override
     public String toString()
     {
-        return "Branch on point " + _point + ", dim: " + _dimension + (_max ? ", Max " : ", Min ") + (_lowerBound ? ">= " : "<= ") + _threshold;
+        return "Branch on point " + _pointIndex + ", dim: " + _dimension + (_max ? ", Max " : ", Min ") + (_lowerBound ? ">= " : "<= ") + _threshold;
     }
 }

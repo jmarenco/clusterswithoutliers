@@ -9,12 +9,12 @@ public final class PotentialCluster extends AbstractColumn<InputData, Clustering
     private Cluster _cluster;
     private double _cost; // Cost of this column in the objective of the Master Problem
 
-    public PotentialCluster(ClusteringPricingProblem associatedPricingProblem, boolean isArtificial, String creator, Cluster cluster)
+    public PotentialCluster(ClusteringPricingProblem associatedPricingProblem, boolean artificial, String creator, Cluster cluster)
     {
-        super(associatedPricingProblem, isArtificial, creator);
+        super(associatedPricingProblem, artificial, creator);
 
         _cluster = cluster;
-        _cost = cluster.totalSpan(); // Tiene que ser entero
+        _cost = artificial ? 10000 : cluster.totalSpan(); // Tiene que ser entero
     }
     
     public Cluster getCluster()

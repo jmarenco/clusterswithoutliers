@@ -18,7 +18,7 @@ public final class BranchOnPointCoverings extends AbstractBranchCreator<InputDat
 	private Instance _instance;
 	
 	// Branching candidate
-	private int _point;
+	private int _pointIndex;
 	private int _dimension;
 	private double _threshold;
 	private boolean _max;
@@ -43,7 +43,7 @@ public final class BranchOnPointCoverings extends AbstractBranchCreator<InputDat
     	for(int i=0; i<_instance.getPoints(); ++i)
     	{
     		Point point = _instance.getPoint(i);
-    		List<Cluster> including = solution.stream().map(c -> c.getCluster()).filter(c -> c.contains(point)).collect((Collectors.toList()));
+    		List<Cluster> including = solution.stream().filter(c -> !c.isArtificialColumn).map(c -> c.getCluster()).filter(c -> c.contains(point)).collect((Collectors.toList()));
     		
 //        	System.out.println("B Point: " + point);
 //        	for(Cluster c: including)
@@ -62,7 +62,7 @@ public final class BranchOnPointCoverings extends AbstractBranchCreator<InputDat
     			{
     				if( Math.abs(primero.max(t) - segundo.max(t)) > _tolerance )
 	    			{
-	    				_point = i;
+	    				_pointIndex = i;
 	    				_dimension = t;
 	    				_threshold = (primero.max(t) + segundo.max(t)) / 2;
 	    				_max = true;
@@ -73,7 +73,7 @@ public final class BranchOnPointCoverings extends AbstractBranchCreator<InputDat
 
     				if( Math.abs(primero.min(t) - segundo.min(t)) > _tolerance )
 	    			{
-	    				_point = i;
+	    				_pointIndex = i;
 	    				_dimension = t;
 	    				_threshold = (primero.min(t) + segundo.min(t)) / 2;
 	    				_max = false;
@@ -93,11 +93,11 @@ public final class BranchOnPointCoverings extends AbstractBranchCreator<InputDat
     protected List<BAPNode<InputData, PotentialCluster>> getBranches(BAPNode<InputData, PotentialCluster> parentNode)
     {
         // Branch 1: cluster side >= threshold
-        ConstraintOnClusterSide branchingDecision1 = new ConstraintOnClusterSide(_point, _dimension, _threshold, _max, true);
+        ConstraintOnClusterSide branchingDecision1 = new ConstraintOnClusterSide(_instance.getPoint(_pointIndex), _pointIndex, _dimension, _threshold, _max, true);
         BAPNode<InputData,PotentialCluster> node2 = this.createBranch(parentNode, branchingDecision1, parentNode.getSolution(), parentNode.getInequalities());
 
         // Branch 2: cluster side <= threshold
-        ConstraintOnClusterSide branchingDecision2 = new ConstraintOnClusterSide(_point, _dimension, _threshold, _max, false);
+        ConstraintOnClusterSide branchingDecision2 = new ConstraintOnClusterSide(_instance.getPoint(_pointIndex), _pointIndex, _dimension, _threshold, _max, false);
         BAPNode<InputData,PotentialCluster> node1 = this.createBranch(parentNode, branchingDecision2, parentNode.getSolution(), parentNode.getInequalities());
 
         return Arrays.asList(node1, node2);

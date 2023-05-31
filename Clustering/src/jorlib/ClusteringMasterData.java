@@ -1,4 +1,4 @@
-package branchandprice;
+package jorlib;
 
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;

@@ -1,4 +1,4 @@
-package branchandprice;
+package jorlib;
 
 import java.util.Objects;
 import org.jorlib.frameworks.columnGeneration.branchAndPrice.branchingDecisions.BranchingDecision;

@@ -1,4 +1,4 @@
-package branchandprice;
+package jorlib;
 
 import ilog.concert.*;
 import ilog.cplex.IloCplex;

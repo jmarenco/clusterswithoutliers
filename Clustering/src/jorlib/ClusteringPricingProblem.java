@@ -1,4 +1,4 @@
-package branchandprice;
+package jorlib;
 
 import org.jorlib.frameworks.columnGeneration.pricing.AbstractPricingProblem;
 

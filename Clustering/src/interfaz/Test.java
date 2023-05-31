@@ -1,12 +1,12 @@
 package interfaz;
 
-import branchandprice.ClusteringCalculator;
-import branchandprice.InputData;
 import colgen.Algorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
 import ilog.concert.IloException;
+import jorlib.ClusteringCalculator;
+import jorlib.InputData;
 import popModel.POPModel;
 import repModel.RepModel;
 import standardModel.LinearSeparator;

@@ -112,8 +112,8 @@ public final class Master extends AbstractMaster<InputData, PotentialCluster, Cl
             // if(config.EXPORT_MODEL)
             // 	masterData.cplex.exportModel(config.EXPORT_MASTER_DIR + "master_" + this.getIterationCount() + ".lp");
             
-//            System.out.println("*** Exporting master model ...");
-//            masterData.cplex.exportModel("master_" + this.getIterationCount() + ".lp");
+            System.out.println("*** Exporting master model ...");
+            masterData.cplex.exportModel("master_" + this.getIterationCount() + ".lp");
 
             // Solve the model
             if( !masterData.cplex.solve() || masterData.cplex.getStatus() != IloCplex.Status.Optimal )

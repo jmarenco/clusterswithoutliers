@@ -1,12 +1,11 @@
 package interfaz;
 
+import branchandprice.Solver;
 import colgen.Algorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
 import ilog.concert.IloException;
-import jorlib.ClusteringCalculator;
-import jorlib.InputData;
 import popModel.POPModel;
 import repModel.RepModel;
 import standardModel.LinearSeparator;
@@ -131,20 +130,28 @@ public class Test
 	
 	private static void solveBap(String[] args) throws IloException
 	{
-		Instance instance = interfaz.Test.tustInstance();
-		instance.scale(1000);
-		instance.integrize();
+//		Instance instance = interfaz.Test.testInstance();
+//		instance.scale(1000);
+//		instance.integrize();
+//		
+//		jorlib.InputData id = new jorlib.InputData(instance);
+//		new jorlib.ClusteringCalculator(id).solve();
 		
-        InputData coloringGraph = new InputData(instance);
-        new ClusteringCalculator(coloringGraph).solve();
-
-        System.out.println("============= Rectangular model ==============");
-        RectangularModel model = new RectangularModel(instance);
-        model.setVerbose(false);
-        model.solve();
-        
-        for(general.Cluster cluster: model.getClusters())
+		Instance instance = interfaz.Test.testInstance();
+		Solver solver = new Solver(instance, 3600);
+		solver.solve();
+		
+        for(general.Cluster cluster: solver.getSolution())
         	System.out.println(cluster);
+        
+//        ilog.cplex.IloCplex cplex = new ilog.cplex.IloCplex();
+//        cplex.importModel("/home/jmarenco/Desktop/master.lp");
+//        cplex.solve();
+//        java.util.Iterator it = cplex.getModel().iterator();
+//        System.out.println(it.next().getClass().getName());
+//        ilog.cplex.CpxLPMatrix c = (ilog.cplex.CpxLPMatrix)it.next();
+//        for(ilog.concert.IloRange range: c.getRanges())
+//        	System.out.println(range + " " + cplex.getDual(range));
 	}
 	
 	private static void showUsage()

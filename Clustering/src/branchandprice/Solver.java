@@ -63,7 +63,9 @@ public class Solver
 			boolean newColumns = true;
 			while( newColumns == true )
 			{
+//				_master.buildModel();
 				_master.solve(remainingTime());
+				_pricing.updateObjective();
 
 				List<Cluster> added = _pricing.generateColumns(remainingTime());
 				for(Cluster cluster: added)
@@ -101,8 +103,8 @@ public class Solver
 			else
 				System.out.println("Node fathomed!");
 			
-			System.out.println("LB: " + getDualBound() + ", UB: " + _ub + " - " + _nodes.size() + " nodes, " + _openNodes.size() + " open nodes");
 			_openNodes.remove(current);
+			System.out.println("LB: " + getDualBound() + ", UB: " + _ub + " - " + _nodes.size() + " nodes, " + _openNodes.size() + " open nodes");
 		}
 	}
 	

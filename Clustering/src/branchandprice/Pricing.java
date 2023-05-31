@@ -129,12 +129,14 @@ public class Pricing
         try
         {
             cplex.setParam(IloCplex.DoubleParam.TiLim, timeLimit); //set time limit in seconds
+            cplex.exportModel("/home/jmarenco/Desktop/pricing.lp");
 
             // Solve the problem and check the solution nodeStatus
             if( !cplex.solve() || cplex.getStatus() != IloCplex.Status.Optimal )
             {
                 if( cplex.getCplexStatus() == IloCplex.CplexStatus.AbortTimeLim ) // Aborted due to time limit
                 {
+                	System.out.println("Pricing aborted due to time limit");
                 	return newPatterns;
                 }
                 else if( cplex.getStatus() == IloCplex.Status.Infeasible ) // Pricing problem infeasible
@@ -148,7 +150,9 @@ public class Pricing
             }
             else // Pricing problem solved to optimality
             {
-                // Generate new column if it has negative reduced cost
+            	System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
+
+            	// Generate new column if it has negative reduced cost
                 if( cplex.getObjValue() <= -0.01 )
                 { 
                     Cluster cluster = new Cluster();
@@ -172,11 +176,14 @@ public class Pricing
             e.printStackTrace();
         }
         
+//        if( newPatterns.get(0).contains(_instance.getPoint(6)) && newPatterns.get(0).contains(_instance.getPoint(3)) && newPatterns.get(0).size() == 2)
+//        	System.exit(1);
+        
         return newPatterns;
     }
 
     // Update the objective function of the pricing problem with the new dual information. The dual values are stored in the pricing problem.
-    public void setObjective()
+    public void updateObjective()
     {
         try
         {

@@ -47,7 +47,7 @@ public class Solver
 		_ub = Double.MAX_VALUE;
 		
 		// Creates root node
-		Node root = new Node();
+		Node root = new Node(0);
 		Node last = null;
 		root.addColumns(_master.getColumns());
 		
@@ -58,6 +58,8 @@ public class Solver
 		while( _openNodes.size() > 0 && elapsedTime() < _timeLimit )
 		{
 			Node current = nextNode();
+			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision());
+
 			updateSubproblems(last, current);
 			
 			boolean newColumns = true;
@@ -65,13 +67,18 @@ public class Solver
 			{
 //				_master.buildModel();
 				_master.solve(remainingTime());
-				_pricing.updateObjective();
-
-				List<Cluster> added = _pricing.generateColumns(remainingTime());
-				for(Cluster cluster: added)
-					_master.addColumn(cluster);
-
-				newColumns = added.size() > 0;
+				newColumns = false;
+				
+				if( _master.isOptimal() == true )
+				{
+					_pricing.updateObjective();
+	
+					List<Cluster> added = _pricing.generateColumns(remainingTime());
+					for(Cluster cluster: added)
+						_master.addColumn(cluster);
+	
+					newColumns = added.size() > 0;
+				}
 			}
 			
 			if( _master.isIntegerSolution() == true )
@@ -91,7 +98,7 @@ public class Solver
 				System.out.println("Fractional solution - Branching ...");
 				for(BranchingDecision bd: _branching.getBranches(_master.getSolution()))
 				{
-					Node node = new Node(current, bd);
+					Node node = new Node(_nodes.size(), current, bd);
 
 					_nodes.add(node);
 					_openNodes.add(node);
@@ -104,6 +111,8 @@ public class Solver
 				System.out.println("Node fathomed!");
 			
 			_openNodes.remove(current);
+			last = current;
+			
 			System.out.println("LB: " + getDualBound() + ", UB: " + _ub + " - " + _nodes.size() + " nodes, " + _openNodes.size() + " open nodes");
 		}
 	}
@@ -123,6 +132,13 @@ public class Solver
 		ArrayList<Node> fromLast = last.pathToRoot();
 		ArrayList<Node> fromCurrent = current.pathToRoot();
 
+//		System.out.println("From last (" + last.getId() + "):");
+//		for(Node n: fromLast)
+//			System.out.println(n.getId());
+//		System.out.println("From current (" + current.getId() + "):");
+//		for(Node n: fromCurrent)
+//			System.out.println(n.getId());
+
 		int i = 0;
 		while( fromCurrent.contains(fromLast.get(i)) == false )
 		{
@@ -132,6 +148,8 @@ public class Solver
 			++i;
 		}
 		
+//		System.out.println("Int: " + fromLast.get(i).getId());
+
 		int j = fromCurrent.indexOf(fromLast.get(i)) - 1;
 		while( j >= 0 )
 		{

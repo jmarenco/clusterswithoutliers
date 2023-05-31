@@ -2,26 +2,32 @@ package branchandprice;
 
 import java.util.ArrayList;
 
-import general.Cluster;
-
 public class Node
 {
+	private int _id;
 	private Node _parent;
 	private BranchingDecision _branchingDecision;
-	private ArrayList<Cluster> _newColumns;
+	private ArrayList<Column> _newColumns;
 	
-	public Node()
+	public Node(int id)
 	{
-		_newColumns = new ArrayList<Cluster>();
+		_id = id;
+		_newColumns = new ArrayList<Column>();
 	}
 
-	public Node(Node parent, BranchingDecision branchingDecision)
+	public Node(int id, Node parent, BranchingDecision branchingDecision)
 	{
+		_id = id;
 		_parent = parent;
 		_branchingDecision = branchingDecision;
-		_newColumns = new ArrayList<Cluster>();
+		_newColumns = new ArrayList<Column>();
 	}
 	
+	public int getId()
+	{
+		return _id;
+	}
+
 	public Node getParent()
 	{
 		return _parent;
@@ -32,23 +38,23 @@ public class Node
 		return _branchingDecision;
 	}
 	
-	public ArrayList<Cluster> getNewColumns()
+	public ArrayList<Column> getNewColumns()
 	{
 		return _newColumns;
 	}
 	
-	public void addColumn(Cluster cluster)
+	public void addColumn(Column column)
 	{
-		if( _newColumns.contains(cluster) )
-			throw new RuntimeException("Duplicated column added to node! " + cluster);
+		if( _newColumns.stream().anyMatch(c -> !c.isArtificial() && c.getCluster().equals(column.getCluster())) )
+			throw new RuntimeException("Duplicated column added to node! " + column.getCluster());
 		
-		_newColumns.add(cluster);
+		_newColumns.add(column);
 	}
 	
-	public void addColumns(ArrayList<Cluster> clusters)
+	public void addColumns(ArrayList<Column> columns)
 	{
-		for(Cluster cluster: clusters)
-			addColumn(cluster);
+		for(Column column: columns)
+			addColumn(column);
 	}
 	
 	public ArrayList<Node> pathToRoot()

@@ -18,14 +18,14 @@ public class Master
     private IloRange _numberOfOutliers;
     private IloRange[] _allConstraints;
     private IloNumVar[] _y;
-    private ArrayList<Cluster> _columns;
-    private Map<IloNumVar, Cluster> _variables;
+    private ArrayList<Column> _columns;
+    private Map<IloNumVar, Column> _variables;
     private ArrayList<BranchingDecision> _branchings;
 
     public Master(Instance instance)
     {
     	_instance = instance;
-    	_columns = new ArrayList<Cluster>();
+    	_columns = new ArrayList<Column>();
     	_branchings = new ArrayList<BranchingDecision>();
     	
     	this.buildModel();
@@ -38,7 +38,7 @@ public class Master
 
     	try
         {
-        	_variables = new HashMap<IloNumVar, Cluster>();
+        	_variables = new HashMap<IloNumVar, Column>();
 
         	// Create Cplex
             _cplex = new IloCplex();
@@ -82,10 +82,10 @@ public class Master
             
             // Adds all variables from existing columns
             int i = 0;
-            for(Cluster cluster: _columns)
+            for(Column column: _columns)
             {
-            	if( _branchings.stream().allMatch(b -> b.isCompatible(cluster)) )
-            		addColumnToModel(cluster, i++);
+            	if( _branchings.stream().allMatch(b -> b.isCompatible(column)) )
+            		addColumnToModel(column, i++);
             }
         }
         catch (IloException e)
@@ -102,7 +102,7 @@ public class Master
             // Set time limit
             double timeRemaining = Math.max(1, (timeLimit-System.currentTimeMillis()) / 1000.0);
             _cplex.setParam(IloCplex.DoubleParam.TiLim, timeRemaining); // set time limit in seconds
-            _cplex.exportModel("/home/jmarenco/Desktop/master.lp");
+//            _cplex.exportModel("/home/jmarenco/Desktop/master.lp");
 
             // Solve the model
             if( !_cplex.solve() || _cplex.getStatus() != IloCplex.Status.Optimal )
@@ -117,8 +117,8 @@ public class Master
                 System.out.println("Master solved - obj: " + _cplex.getObjValue());
             	for(IloNumVar var: _variables.keySet())
             		System.out.println("  " + var.getName() + " = " + _cplex.getValue(var) + " " + _variables.get(var));
-            	for(IloRange range: _allConstraints)
-            		System.out.println(range + " = " + _cplex.getDual(range));
+//            	for(IloRange range: _allConstraints)
+//            		System.out.println(range + " = " + _cplex.getDual(range));
 //              java.util.Iterator it = _cplex.getModel().iterator();
 //              while( it.hasNext() )
 //              {
@@ -127,8 +127,8 @@ public class Master
 //            	  if( obj instanceof IloRange)
 //            	  System.out.println(obj + " " + _cplex.getDual((IloRange)obj));
 //              }
-            	for(IloNumVar var: _variables.keySet())
-            		System.out.println(var.getName() + " RC = " + _cplex.getReducedCost(var));
+//            	for(IloNumVar var: _variables.keySet())
+//            		System.out.println(var.getName() + " RC = " + _cplex.getReducedCost(var));
             }
         }
         catch (IloException e)
@@ -159,19 +159,29 @@ public class Master
     // Adds columns ensuring that a feasible solution exists
     public void addFeasibleColumns()
     {
-    	addColumn(Cluster.withAllPoints(_instance));
+		try
+        {
+			Column column = Column.artificial(_instance);
+	    	addColumnToModel(column, _columns.size());
+	        _columns.add(column);
+        }
+        catch (IloException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     // Adds a new column to the master problem
     public void addColumn(Cluster cluster)
     {
-		if( _columns.contains(cluster) )
+		if( _columns.stream().anyMatch(c -> !c.isArtificial() && c.getCluster().equals(cluster)) )
 			throw new RuntimeException("Duplicated column added to master! " + cluster);
 
 		try
         {
-        	addColumnToModel(cluster, _columns.size());
-            _columns.add(cluster);
+			Column column = Column.regular(cluster);
+        	addColumnToModel(column, _columns.size());
+            _columns.add(column);
         }
         catch (IloException e)
         {
@@ -179,14 +189,14 @@ public class Master
         }
     }
     
-    private void addColumnToModel(Cluster cluster, int index) throws IloException
+    private void addColumnToModel(Column column, int index) throws IloException
     {
 		// Register column with objective
-    	System.out.println("Registering column - cost: " + cluster.totalSpan() + " - " + cluster);
-        IloColumn iloColumn = _cplex.column(_obj, cluster.totalSpan());
+    	System.out.println("Registering column - cost: " + column.getCost() + " - " + column.getCluster());
+        IloColumn iloColumn = _cplex.column(_obj, column.getCost());
 
         // Register column with the constraints
-        for(int i=0; i<_instance.getPoints(); ++i) if( cluster.contains(_instance.getPoint(i)) )
+        for(int i=0; i<_instance.getPoints(); ++i) if( column.contains(_instance.getPoint(i)) )
             iloColumn = iloColumn.and(_cplex.column(_binding[i], 1));
         
         iloColumn = iloColumn.and(_cplex.column(_numberOfClusters, -1));
@@ -195,7 +205,7 @@ public class Master
         IloNumVar var = _cplex.numVar(iloColumn, 0, Double.MAX_VALUE, "x" + index);
         _cplex.add(var);
         
-        _variables.put(var, cluster);
+        _variables.put(var, column);
     }
 
     // Gets the solution from the master problem. Returns all non-zero valued columns from the master problem
@@ -208,7 +218,7 @@ public class Master
         	{
         		double value = _cplex.getValue(var);
         		if( value > 0.01 )
-        			ret.put(_variables.get(var), value);
+        			ret.put(_variables.get(var).getCluster(), value);
             }
         }
         catch (IloException e)
@@ -222,10 +232,16 @@ public class Master
     
     public boolean isIntegerSolution()
     {
+    	if( this.isFeasible() == false )
+    		return false;
+    	
         try
         {
         	for(IloNumVar var: _variables.keySet())
         	{
+        		if( _variables.get(var).isArtificial() )
+        			continue;
+        		
         		double value = _cplex.getValue(var);
         		if( Math.abs(value - (int)value) > 0.01 )
         			return false;
@@ -253,11 +269,34 @@ public class Master
     	return Double.MAX_VALUE;
     }
     
+    public boolean isOptimal()
+    {
+       	try
+       	{
+       		return _cplex.getStatus() == IloCplex.Status.Optimal;
+       	}
+       	catch(Exception e)
+       	{
+       		e.printStackTrace();
+       	}
+       	
+       	return false;
+    }
+    
     public boolean isFeasible()
     {
     	try
     	{
-    		return _cplex.getStatus() == IloCplex.Status.Optimal || _cplex.getStatus() == IloCplex.Status.Feasible;
+    		if( _cplex.getStatus() != IloCplex.Status.Optimal)
+    			return false;
+    		
+        	for(IloNumVar var: _variables.keySet())
+        	{
+        		if( _variables.get(var).isArtificial() && _cplex.getValue(var) > 0.01 )
+        			return false;
+            }
+        	
+        	return true;
     	}
     	catch(Exception e)
     	{
@@ -296,7 +335,7 @@ public class Master
     	return _instance;
     }
     
-    public ArrayList<Cluster> getColumns()
+    public ArrayList<Column> getColumns()
     {
     	return _columns;
     }

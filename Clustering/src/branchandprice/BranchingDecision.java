@@ -53,16 +53,21 @@ public class BranchingDecision
     }
     
     // Determine whether the given column remains feasible for the child node
-    public boolean isCompatible(Cluster cluster)
+    public boolean isCompatible(Column column)
     {
+    	if( column.isArtificial() )
+    		return true;
+
     	boolean ret = true;
+    	Cluster cluster = column.getCluster();
+    	
     	if( cluster.contains(_point) == true )
     	{
     		double side = _max ? cluster.max(_dimension) : cluster.min(_dimension);
     		ret = _lowerBound ? side >= _threshold - _tolerance : side <= _threshold + _tolerance;
     	}
     	
-    	System.out.println("Compat " + cluster + " BC: " + this + " = " + ret);
+//    	System.out.println("Compat " + cluster + " BC: " + this + " = " + ret);
     	return ret;
     }
 
@@ -90,6 +95,6 @@ public class BranchingDecision
     @Override
     public String toString()
     {
-        return "Branch on point " + _pointIndex + ", dim: " + _dimension + (_max ? ", Max " : ", Min ") + (_lowerBound ? ">= " : "<= ") + _threshold;
+        return "Branch on point " + (_pointIndex+1) + ", dim: " + _dimension + (_max ? ", Max " : ", Min ") + (_lowerBound ? ">= " : "<= ") + _threshold;
     }
 }

@@ -95,6 +95,8 @@ public class Pricing
 	    {
 			IloNumExpr lhs1 = cplex.linearIntExpr();
 			IloNumExpr lhs2 = cplex.linearIntExpr();
+			IloNumExpr lhs3 = cplex.linearIntExpr();
+			IloNumExpr lhs4 = cplex.linearIntExpr();
 			
 			lhs1 = cplex.sum(lhs1, l[t]);
 			lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(t) -_instance.getPoint(i).get(t), z[i]));
@@ -102,8 +104,22 @@ public class Pricing
 			lhs2 = cplex.sum(lhs2, r[t]);
 			lhs2 = cplex.sum(lhs2, cplex.prod(_instance.min(t) -_instance.getPoint(i).get(t), z[i]));
 
-		    cplex.addLe(lhs1, _instance.max(t), "l" + i + "_" + t);
+			lhs3 = cplex.sum(lhs3, l[t]);
+			lhs3 = cplex.sum(lhs3, cplex.prod(_instance.min(t) -_instance.getPoint(i).get(t), z[i]));
+			
+			lhs4 = cplex.sum(lhs4, r[t]);
+			lhs4 = cplex.sum(lhs4, cplex.prod(_instance.max(t) -_instance.getPoint(i).get(t), z[i]));
+
+			for(int j=0; j<p; ++j) if( _instance.getPoint(j).get(t) < _instance.getPoint(i).get(t) )
+				lhs3 = cplex.sum(lhs3, cplex.prod(-_instance.min(t) +_instance.getPoint(i).get(t), z[j]));
+
+			for(int j=0; j<p; ++j) if( _instance.getPoint(j).get(t) > _instance.getPoint(i).get(t) )
+				lhs4 = cplex.sum(lhs4, cplex.prod(-_instance.max(t) +_instance.getPoint(i).get(t), z[j]));
+				
+			cplex.addLe(lhs1, _instance.max(t), "l" + i + "_" + t);
 		    cplex.addGe(lhs2, _instance.min(t), "r" + i + "_" + t);
+			cplex.addGe(lhs3, _instance.min(t), "ls" + i + "_" + t);
+		    cplex.addLe(lhs4, _instance.max(t), "rs" + i + "_" + t);
 	    }
 		
 		for(int t=0; t<d; ++t)

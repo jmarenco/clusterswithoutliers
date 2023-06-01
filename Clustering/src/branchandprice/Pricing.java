@@ -237,6 +237,9 @@ public class Pricing
     {
     	if( sc instanceof BranchOnSide )
     		performBranchingOnSide((BranchOnSide)sc);
+    	
+    	if (sc instanceof BranchOnOutlier )
+    		performBranchingOnOutlier((BranchOnOutlier)sc);
     }
     
     private void performBranchingOnSide(BranchOnSide sc)
@@ -276,6 +279,29 @@ public class Pricing
         }
     }
 
+    
+    private void performBranchingOnOutlier(BranchOnOutlier sc)
+    {
+        try
+        {
+        	System.out.println("Pricing: Perform branching " + sc);
+        	
+           	IloNumExpr lhs = cplex.linearIntExpr();
+           	lhs = cplex.sum(lhs, z[sc.getPoint()]);
+
+           	IloConstraint branchingConstraint = sc.mustBeOutlier() ? cplex.addEq(lhs, 0) : cplex.addLe(lhs, 1);
+            branchingConstraints.put(sc, branchingConstraint);
+
+            System.out.println(">>> Branching constraint added: ");
+            System.out.println("    " + sc);
+            System.out.println("    " + branchingConstraint);
+        }
+        catch (IloException e)
+        {
+            e.printStackTrace();
+        }
+    }
+    
     // When the Branch-and-Price algorithm backtracks, branching decisions are reversed.
     public void reverseBranching(BranchingDecision sc)
     {

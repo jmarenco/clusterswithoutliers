@@ -24,14 +24,19 @@ public class Branching
     }
 
     // Create the branches
-    public List<BranchingDecision> getBranches(Map<Cluster, Double> solution)
+    public List<BranchingDecision> getBranches(Map<Cluster, Double> solution, double[] outlier)
     {
     	List<BranchingDecision> ret = branchOnSide(solution);
     	
     	if( ret != null )
     		return ret;
     	
-		throw new RuntimeException("Cannot perform branching although the solution is fractional!");
+    	ret = branchOnOutliers(outlier);
+    	
+    	if( ret != null )
+    		return ret;
+
+    	throw new RuntimeException("Cannot perform branching although the solution is fractional!");
     }
 
     // Determine on which point, dimension, threshold, and cluster side we are going to branch.
@@ -73,4 +78,21 @@ public class Branching
     		
  		return null;
     }
+    
+    // Determine on which point we are going to branch.
+    private List<BranchingDecision> branchOnOutliers(double[] outlier)
+    {
+    	for(int i=0; i<_instance.getPoints(); ++i)
+    	{
+    		if( outlier[i] >= _tolerance && outlier[i] <= 1 - _tolerance )
+    		{
+    			BranchOnOutlier branch1 = new BranchOnOutlier(_instance.getPoint(i), i, false);
+    			BranchOnOutlier branch2 = new BranchOnOutlier(_instance.getPoint(i), i, true);
+
+   				return Arrays.asList(branch1, branch2);
+    		}
+    	}
+    		
+ 		return null;
+    }    
 }

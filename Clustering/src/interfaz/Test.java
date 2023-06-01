@@ -138,7 +138,7 @@ public class Test
         for(general.Cluster cluster: solver.getSolution())
         	System.out.println(cluster);
 
-        new RectangularModel(instance).solve();
+//        new RectangularModel(instance).solve();
 	}
 	
 	private static void showUsage()

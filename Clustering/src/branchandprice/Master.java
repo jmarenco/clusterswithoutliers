@@ -80,12 +80,21 @@ public class Master
             _allConstraints[_instance.getPoints()] = _numberOfClusters;
             _allConstraints[_instance.getPoints() + 1] = _numberOfOutliers;
             
-            // Adds all variables from existing columns
+            // Adds all variables from existing columns. Must be eliminated is master is not rebuilt at each node
             int i = 0;
             for(Column column: _columns)
             {
             	if( _branchings.stream().allMatch(b -> b.isCompatible(column)) )
             		addColumnToModel(column, i++);
+            }
+            
+            // Adds all constraints from branching decisions. Must be eliminated is master is not rebuilt at each node
+            for(BranchingDecision bd: _branchings) if( bd instanceof BranchOnOutlier )
+            {
+            	BranchOnOutlier branch = (BranchOnOutlier)bd;
+                IloNumExpr lhs2 = _cplex.linearIntExpr();
+            	lhs2 = _cplex.sum(lhs2, _y[branch.getPoint()]);
+            	_cplex.addEq(lhs2, branch.mustBeOutlier() ? 0 : 1);
             }
         }
         catch (IloException e)
@@ -237,6 +246,22 @@ public class Master
         return ret;
     }
     
+    public double[] getOutliers()
+    {
+    	double[] ret = null;
+    	
+    	try
+    	{
+    		ret = _cplex.getValues(_y);
+    	}
+    	catch(Exception e)
+    	{
+    		e.printStackTrace();
+    	}
+    	
+    	return ret;
+    }
+    
     public boolean isIntegerSolution()
     {
     	if( this.isFeasible() == false )
@@ -325,7 +350,7 @@ public class Master
     	System.out.println("Master: Perform branching " + bd);
     	_branchings.add(bd);
     	
-    	// TODO: Update the model instead of rebuilding it!
+    	// TODO: Update the model instead of rebuilding it! This changes the construction in this.buildModel()
         this.close();
         this.buildModel();
     }

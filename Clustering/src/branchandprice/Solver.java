@@ -96,7 +96,7 @@ public class Solver
 			else if( _master.isFeasible() == true && _master.getObjValue() < _ub )
 			{
 				System.out.println("Fractional solution - Branching ...");
-				for(BranchingDecision bd: _branching.getBranches(_master.getSolution()))
+				for(BranchingDecision bd: _branching.getBranches(_master.getSolution(), _master.getOutliers()))
 				{
 					Node node = new Node(_nodes.size(), current, bd);
 

@@ -115,10 +115,16 @@ public class Master
             else
             {
                 System.out.println("Master solved - obj: " + _cplex.getObjValue());
-            	for(IloNumVar var: _variables.keySet())
+
+                for(IloNumVar var: _variables.keySet()) if( _cplex.getValue(var) > 0 )
             		System.out.println("  " + var.getName() + " = " + _cplex.getValue(var) + " " + _variables.get(var));
+                
+                for(IloNumVar var: _y)
+            		System.out.println("  " + var.getName() + " = " + _cplex.getValue(var));
+                	
 //            	for(IloRange range: _allConstraints)
 //            		System.out.println(range + " = " + _cplex.getDual(range));
+
 //              java.util.Iterator it = _cplex.getModel().iterator();
 //              while( it.hasNext() )
 //              {
@@ -127,6 +133,7 @@ public class Master
 //            	  if( obj instanceof IloRange)
 //            	  System.out.println(obj + " " + _cplex.getDual((IloRange)obj));
 //              }
+
 //            	for(IloNumVar var: _variables.keySet())
 //            		System.out.println(var.getName() + " RC = " + _cplex.getReducedCost(var));
             }

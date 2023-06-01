@@ -130,7 +130,7 @@ public class Test
 	
 	private static void solveBap(String[] args) throws IloException
 	{
-        Instance instance = interfaz.Test.tustInstance();
+        Instance instance = interfaz.Test.tostInstance();
 
         Solver solver = new Solver(instance, 3600);
 		solver.solve();

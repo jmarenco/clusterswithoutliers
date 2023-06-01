@@ -235,6 +235,12 @@ public class Pricing
     // Listen to branching decisions. The pricing problem is changed by the branching decisions.
     public void performBranching(BranchingDecision sc)
     {
+    	if( sc instanceof BranchOnSide )
+    		performBranchingOnSide((BranchOnSide)sc);
+    }
+    
+    private void performBranchingOnSide(BranchOnSide sc)
+    {
         try
         {
         	System.out.println("Pricing: Perform branching " + sc);

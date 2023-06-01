@@ -166,7 +166,7 @@ public class Pricing
             }
             else // Pricing problem solved to optimality
             {
-            	System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
+//            	System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
 
             	// Generate new column if it has negative reduced cost
                 if( cplex.getObjValue() <= -0.01 )
@@ -181,10 +181,10 @@ public class Pricing
                     }
                     	
                     newPatterns.add(cluster);
-                    System.out.print(" -> " + cluster);
+//                    System.out.print(" -> " + cluster);
                 }
                 
-                System.out.println();
+//                System.out.println();
             }
         }
         catch (IloException e)
@@ -218,7 +218,7 @@ public class Pricing
     		fobj = cplex.sum(fobj, dualCosts[p]);
             obj.setExpr(fobj);
             
-            System.out.println("Pricing obj set: " + obj);
+//            System.out.println("Pricing obj set: " + obj);
         }
         catch (IloException e)
         {
@@ -246,7 +246,7 @@ public class Pricing
     {
         try
         {
-        	System.out.println("Pricing: Perform branching " + sc);
+//        	System.out.println("Pricing: Perform branching " + sc);
         	
            	IloNumExpr lhs = cplex.linearIntExpr();
             IloConstraint branchingConstraint = null;
@@ -269,9 +269,9 @@ public class Pricing
                 
             branchingConstraints.put(sc, branchingConstraint);
 
-            System.out.println(">>> Branching constraint added: ");
-            System.out.println("    " + sc);
-            System.out.println("    " + branchingConstraint);
+//            System.out.println(">>> Branching constraint added: ");
+//            System.out.println("    " + sc);
+//            System.out.println("    " + branchingConstraint);
         }
         catch (IloException e)
         {
@@ -284,7 +284,7 @@ public class Pricing
     {
         try
         {
-        	System.out.println("Pricing: Perform branching " + sc);
+//        	System.out.println("Pricing: Perform branching " + sc);
         	
            	IloNumExpr lhs = cplex.linearIntExpr();
            	lhs = cplex.sum(lhs, z[sc.getPoint()]);
@@ -292,9 +292,9 @@ public class Pricing
            	IloConstraint branchingConstraint = sc.mustBeOutlier() ? cplex.addEq(lhs, 0) : cplex.addLe(lhs, 1);
             branchingConstraints.put(sc, branchingConstraint);
 
-            System.out.println(">>> Branching constraint added: ");
-            System.out.println("    " + sc);
-            System.out.println("    " + branchingConstraint);
+//            System.out.println(">>> Branching constraint added: ");
+//            System.out.println("    " + sc);
+//            System.out.println("    " + branchingConstraint);
         }
         catch (IloException e)
         {
@@ -307,11 +307,11 @@ public class Pricing
     {
         try
         {
-        	System.out.println("Pricing: Reverse branching " + sc);
+//        	System.out.println("Pricing: Reverse branching " + sc);
             cplex.remove(branchingConstraints.get(sc));
 
-            System.out.println(">>> Branching decision reversed: ");
-            System.out.println("    " + sc);
+//            System.out.println(">>> Branching decision reversed: ");
+//            System.out.println("    " + sc);
         }
         catch (IloException e)
         {

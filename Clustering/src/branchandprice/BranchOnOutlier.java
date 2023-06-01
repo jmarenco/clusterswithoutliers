@@ -67,6 +67,6 @@ public class BranchOnOutlier implements BranchingDecision
 	@Override
     public String toString()
     {
-        return "Branch on outlier " + (_pointIndex+1) + ", outlier: " + _mustBeOutlier;
+        return "BO(" + (_pointIndex+1) + ", " + (_mustBeOutlier ? "Out" : "Free") + ")";
     }
 }

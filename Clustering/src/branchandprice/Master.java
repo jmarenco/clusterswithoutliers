@@ -34,7 +34,7 @@ public class Master
     // Builds the master model
     public void buildModel()
     {
-    	System.out.println("Rebuilding master");
+//    	System.out.println("Rebuilding master");
 
     	try
         {
@@ -123,13 +123,13 @@ public class Master
             }
             else
             {
-                System.out.println("Master solved - obj: " + _cplex.getObjValue());
+//                System.out.println("Master solved - obj: " + _cplex.getObjValue());
 
-                for(IloNumVar var: _variables.keySet()) if( _cplex.getValue(var) > 0 )
-            		System.out.println("  " + var.getName() + " = " + _cplex.getValue(var) + " " + _variables.get(var));
-                
-                for(IloNumVar var: _y)
-            		System.out.println("  " + var.getName() + " = " + _cplex.getValue(var));
+//                for(IloNumVar var: _variables.keySet()) if( _cplex.getValue(var) > 0 )
+//            		System.out.println("  " + var.getName() + " = " + _cplex.getValue(var) + " " + _variables.get(var));
+//                
+//                for(IloNumVar var: _y)
+//            		System.out.println("  " + var.getName() + " = " + _cplex.getValue(var));
                 	
 //            	for(IloRange range: _allConstraints)
 //            		System.out.println(range + " = " + _cplex.getDual(range));
@@ -208,7 +208,7 @@ public class Master
     private void addColumnToModel(Column column, int index) throws IloException
     {
 		// Register column with objective
-    	System.out.println("Registering column - cost: " + column.getCost() + " - " + column.getCluster());
+//    	System.out.println("Registering column - cost: " + column.getCost() + " - " + column.getCluster());
         IloColumn iloColumn = _cplex.column(_obj, column.getCost());
 
         // Register column with the constraints
@@ -242,7 +242,7 @@ public class Master
             e.printStackTrace();
         }
         
-        System.out.println("Returning solution with " + ret.size() + " clusters");
+//        System.out.println("Returning solution with " + ret.size() + " clusters");
         return ret;
     }
     
@@ -347,7 +347,7 @@ public class Master
     // Listen to branching decisions
     public void performBranching(BranchingDecision bd)
     {
-    	System.out.println("Master: Perform branching " + bd);
+//    	System.out.println("Master: Perform branching " + bd);
     	_branchings.add(bd);
     	
     	// TODO: Update the model instead of rebuilding it! This changes the construction in this.buildModel()
@@ -358,7 +358,7 @@ public class Master
     // Undo branching decisions during backtracking in the Branch-and-Price tree
     public void reverseBranching(BranchingDecision bd)
     {
-    	System.out.println("Master: Reverse branching " + bd);
+//    	System.out.println("Master: Reverse branching " + bd);
     	_branchings.remove(bd);
     }
     

@@ -96,6 +96,6 @@ public class BranchOnSide implements BranchingDecision
     @Override
     public String toString()
     {
-        return "Branch on point " + (_pointIndex+1) + ", dim: " + _dimension + (_max ? ", Max " : ", Min ") + (_lowerBound ? ">= " : "<= ") + _threshold;
+        return "BS(" + (_pointIndex+1) + ", " + _dimension + (_max ? ", Max " : ", Min ") + (_lowerBound ? ">= " : "<= ") + String.format("%.2f", _threshold) + ")";
     }
 }

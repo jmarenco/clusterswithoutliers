@@ -131,14 +131,13 @@ public class Test
 	private static void solveBap(String[] args) throws IloException
 	{
         Instance instance = interfaz.Test.tostInstance();
+//        new RectangularModel(instance).solve();
 
         Solver solver = new Solver(instance, 3600);
 		solver.solve();
 		
         for(general.Cluster cluster: solver.getSolution())
         	System.out.println(cluster);
-
-//        new RectangularModel(instance).solve();
 	}
 	
 	private static void showUsage()

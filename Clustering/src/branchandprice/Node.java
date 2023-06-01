@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class Node
 {
 	private int _id;
+	private int _height;
 	private Node _parent;
 	private BranchingDecision _branchingDecision;
 	private ArrayList<Column> _newColumns;
@@ -12,12 +13,14 @@ public class Node
 	public Node(int id)
 	{
 		_id = id;
+		_height = 0;
 		_newColumns = new ArrayList<Column>();
 	}
 
 	public Node(int id, Node parent, BranchingDecision branchingDecision)
 	{
 		_id = id;
+		_height = parent.getHeight() + 1;
 		_parent = parent;
 		_branchingDecision = branchingDecision;
 		_newColumns = new ArrayList<Column>();
@@ -26,6 +29,11 @@ public class Node
 	public int getId()
 	{
 		return _id;
+	}
+	
+	public int getHeight()
+	{
+		return _height;
 	}
 
 	public Node getParent()

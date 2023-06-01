@@ -3,6 +3,7 @@ package branchandprice;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.HashMap;
 
 import general.Cluster;
@@ -44,7 +45,7 @@ public class Solver
 		// Initializes variables
 		_master.addFeasibleColumns();
 		_incumbent = null;
-		_ub = Double.MAX_VALUE;
+		_ub = Math.max(1000, 2 * IntStream.range(0, _instance.getDimension()).mapToDouble(t -> _instance.max(t) - _instance.min(t)).sum());
 		
 		// Creates root node
 		Node root = new Node(0);
@@ -58,10 +59,11 @@ public class Solver
 		while( _openNodes.size() > 0 && elapsedTime() < _timeLimit )
 		{
 			Node current = nextNode();
-			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision());
+//			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision());
 
 			updateSubproblems(last, current);
 			
+			boolean incumbentUpdated = false;
 			boolean newColumns = true;
 			while( newColumns == true )
 			{
@@ -83,19 +85,20 @@ public class Solver
 			
 			if( _master.isIntegerSolution() == true )
 			{
-				System.out.println("Integer solution!");
+//				System.out.println("Integer solution!");
 
 				if( _master.getObjValue() < _ub )
 				{
 					_incumbent = new ArrayList<Cluster>(_master.getSolution().keySet());
 					_ub = _master.getObjValue();
-					
-					System.out.println("Incumbent updated! Obj = " + _master.getObjValue());
+
+					incumbentUpdated = true;
+//					System.out.println("Incumbent updated! Obj = " + _master.getObjValue());
 				}
 			}
 			else if( _master.isFeasible() == true && _master.getObjValue() < _ub )
 			{
-				System.out.println("Fractional solution - Branching ...");
+//				System.out.println("Fractional solution - Branching ...");
 				for(BranchingDecision bd: _branching.getBranches(_master.getSolution(), _master.getOutliers()))
 				{
 					Node node = new Node(_nodes.size(), current, bd);
@@ -104,16 +107,19 @@ public class Solver
 					_openNodes.add(node);
 					_dualBound.put(node, _master.getObjValue());
 					
-					System.out.println(" - Branch created: " + bd);
+//					System.out.println(" - Branch created: " + bd);
 				}
 			}
-			else
-				System.out.println("Node fathomed!");
+//			else
+//				System.out.println("Node fathomed!");
 			
 			_openNodes.remove(current);
 			last = current;
 			
-			System.out.println("LB: " + getDualBound() + ", UB: " + _ub + " - " + _nodes.size() + " nodes, " + _openNodes.size() + " open nodes");
+			double dualBound = getDualBound();
+			double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
+			
+			System.out.println((incumbentUpdated ? "* " : "  ") + "LB: " + String.format("%6.2f", dualBound) + ", UB: " + String.format("%7.2f", _ub) + " (" + String.format("%5.2f", gap) + "%) - " + _nodes.size() + " nodes, " + _openNodes.size() + " open - Cur: " + current.getId() + ", H: " + current.getHeight() + " - " + current.getBranchingDecision());
 		}
 	}
 	
@@ -162,7 +168,7 @@ public class Solver
 	
 	public double getDualBound()
 	{
-		return _openNodes.stream().mapToDouble(n -> _dualBound.get(n)).min().orElse(0);
+		return _openNodes.stream().mapToDouble(n -> _dualBound.get(n)).min().orElse(_ub);
 	}
 	
 	public double elapsedTime()

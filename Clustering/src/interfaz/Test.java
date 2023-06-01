@@ -124,20 +124,14 @@ public class Test
 	{
 		Instance instance = constructInstance(args);
 		Algorithm algorithm = new Algorithm(instance);
-
 		algorithm.run();
 	}
 	
 	private static void solveBap(String[] args) throws IloException
 	{
-        Instance instance = interfaz.Test.tostInstance();
-//        new RectangularModel(instance).solve();
-
+		Instance instance = constructInstance(args);
         Solver solver = new Solver(instance, 3600);
-		solver.solve();
-		
-        for(general.Cluster cluster: solver.getSolution())
-        	System.out.println(cluster);
+        solver.solve();
 	}
 	
 	private static void showUsage()

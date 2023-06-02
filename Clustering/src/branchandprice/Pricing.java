@@ -34,6 +34,10 @@ public class Pricing
 	private IloNumVar[] z;
 	private IloNumVar[] r;
 	private IloNumVar[] l;
+	
+	// Parameters
+	private static double _reducedCostThreshold = -0.0001; // Threshold for considering the objective as negative
+	private static double _variableThreshold = 0.05; // Threshold for considering a variable as null
 
 	// Creates a new solver instance for a particular pricing problem
     public Pricing(Master master)
@@ -169,14 +173,14 @@ public class Pricing
 //            	System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
 
             	// Generate new column if it has negative reduced cost
-                if( cplex.getObjValue() <= -0.01 )
+                if( cplex.getObjValue() <= _reducedCostThreshold )
                 { 
                     Cluster cluster = new Cluster();
                     double[] values = cplex.getValues(z);
 
                     for(int i=0; i<_instance.getPoints(); ++i)
                     {
-                    	if( Math.abs(values[i] - 1) < 0.05 )
+                    	if( Math.abs(values[i] - 1) < _variableThreshold )
                     		cluster.add(_instance.getPoint(i));
                     }
                     	

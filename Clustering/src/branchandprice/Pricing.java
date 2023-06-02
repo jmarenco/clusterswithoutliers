@@ -145,6 +145,11 @@ public class Pricing
 	// Main method for solving the pricing problem
     public List<Cluster> generateColumns(double timeLimit)
     {
+    	// TODO: Test with cplex.uppercutoff = 0 and MIP integer solution limit = 1
+    	// This makes Cplex stop as soon as it finds a solution with objective function < 0,
+    	// but may degrade the performance since heuristics are not employed from nodes with
+    	// relaxation objective >= 0, which are pruned
+    	
         List<Cluster> newPatterns = new ArrayList<>();
         try
         {

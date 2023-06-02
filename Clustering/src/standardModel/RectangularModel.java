@@ -348,7 +348,7 @@ public class RectangularModel
 			System.out.print("Obj: " + String.format("%6.4f", cplex.getObjValue()) + " | ");
 			System.out.print(String.format("%6.2f", time) + " sec. | ");
 			System.out.print(cplex.getNnodes() + " nodes | ");
-			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | ": "  **** | "));
+			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | " : "  **** | "));
 			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
 			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
 			System.out.print("SF: " + Separator.getSkipFactor() + " | ");

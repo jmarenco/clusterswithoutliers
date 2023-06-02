@@ -16,7 +16,6 @@ public class Solver
 	private Pricing _pricing;
 	private Branching _branching;
 	
-	private long _timeLimit;
 	private long _start;
 	private double _ub;
 	
@@ -25,12 +24,13 @@ public class Solver
 	private ArrayList<Cluster> _incumbent;
 	private Map<Node, Double> _dualBound;
 	
-	private static boolean _verbose = false;
+	private static long _timeLimit = 3600;
+	private static boolean _verbose = true;
+	private static boolean _summary = false;
 
-	public Solver(Instance instance, long timeLimit)
+	public Solver(Instance instance)
 	{
 		_instance = instance;
-		_timeLimit = timeLimit;
 	}
 	
 	public void solve()
@@ -124,31 +124,8 @@ public class Solver
 				showStatistics(current, addedColumns, incumbentUpdated);
 		}
 
-		showStatistics(null, 0, false);
-	}
-	
-	private void showStatistics(Node current, int addedColumns, boolean incumbentUpdated)
-	{
-		double dualBound = getDualBound();
-		double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
-		
-		System.out.print("LB: " + String.format("%8.4f", dualBound));
-		System.out.print(incumbentUpdated ? "*| " : " | ");
-		System.out.print("UB: " + String.format("%9.4f", _ub));
-		System.out.print(" (" + String.format("%5.2f", gap) + "%) | ");
-		System.out.print("Nodes: " + _nodes.size() + " | ");
-		System.out.print("Open: " + _openNodes.size() + " | ");
-		System.out.print(String.format("%7.2f", elapsedTime()) + " sec | ");
-		System.out.print("Cols: " + _master.getColumns().size());
-		
-		if( current != null )
-		{
-			System.out.print(" (" + addedColumns + " new ) | ");
-			System.out.print("Cur: " + current.getId() + ", H: " + current.getHeight() + " - ");
-			System.out.print(current.getBranchingDecision());
-		}
-		
-		System.out.println();
+		if( _summary == true )
+			showSummary();
 	}
 	
 	// Node selection rule
@@ -209,13 +186,67 @@ public class Solver
 		return _timeLimit - (System.currentTimeMillis() - _start) / 1000;
 	}
 	
+	private void showStatistics(Node current, int addedColumns, boolean incumbentUpdated)
+	{
+		double dualBound = getDualBound();
+		double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
+		
+		System.out.print("LB: " + String.format("%8.4f", dualBound));
+		System.out.print(incumbentUpdated ? "*| " : " | ");
+		System.out.print("UB: " + String.format("%9.4f", _ub));
+		System.out.print(" (" + String.format("%5.2f", gap) + "%) | ");
+		System.out.print("Nodes: " + _nodes.size() + " | ");
+		System.out.print("Open: " + _openNodes.size() + " | ");
+		System.out.print(String.format("%7.2f", elapsedTime()) + " sec | ");
+		System.out.print("Cols: " + _master.getColumns().size());
+		
+		if( current != null )
+		{
+			System.out.print(" (" + addedColumns + " new) | ");
+			System.out.print("Cur: " + current.getId() + ", H: " + current.getHeight() + " - ");
+			System.out.print(current.getBranchingDecision());
+		}
+		
+		System.out.println();
+	}
+	
+	private void showSummary()
+	{
+		double dualBound = getDualBound();
+		double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
+		
+		System.out.print(_instance.getName() + " | B&P | ");
+		System.out.print(_openNodes.size() == 0 ? "Optimal | " : "Feasible | ");
+		System.out.print("Obj: " + String.format("%6.4f", _ub) + " | ");
+		System.out.print(String.format("%6.2f", elapsedTime()) + " sec. | ");
+		System.out.print(_nodes.size() + " nodes | ");
+		System.out.print(String.format("%6.2f", gap) + " % | ");
+		System.out.print(" 0 cuts | ");
+		System.out.print(_master.getColumns().size() + " cols | ");
+		System.out.print("     | ");
+		System.out.print("     | ");
+		System.out.print("     | ");
+		System.out.print("MT: " + _timeLimit + " | ");
+		System.out.println();
+	}	
+
 	public ArrayList<Cluster> getSolution()
 	{
 		return _incumbent;
 	}
 	
+	public static void setTimeLimit(long timeLimit)
+	{
+		_timeLimit = timeLimit;
+	}
+	
 	public static void setVerbose(boolean verbose)
 	{
 		_verbose = verbose;
+	}
+	
+	public static void showSummary(boolean summary)
+	{
+		_summary = summary;
 	}
 }

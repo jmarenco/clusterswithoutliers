@@ -132,8 +132,11 @@ public class Test
 		ArgMap argmap = new ArgMap(args);
 		Instance instance = constructInstance(args);
 
+		Solver.setTimeLimit(argmap.intArg("-tl", 3600));
 		Solver.setVerbose(argmap.containsArg("-verbose"));
-        Solver solver = new Solver(instance, 3600);
+		Solver.showSummary(!argmap.containsArg("-verbose"));
+
+		Solver solver = new Solver(instance);
         solver.solve();
 	}
 	

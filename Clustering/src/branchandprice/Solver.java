@@ -25,6 +25,8 @@ public class Solver
 	private ArrayList<Cluster> _incumbent;
 	private Map<Node, Double> _dualBound;
 	
+	private static boolean _verbose = false;
+
 	public Solver(Instance instance, long timeLimit)
 	{
 		_instance = instance;
@@ -50,7 +52,6 @@ public class Solver
 		// Creates root node
 		Node root = new Node(0);
 		Node last = null;
-		root.addColumns(_master.getColumns());
 		
 		_nodes.add(root);
 		_openNodes.add(root);
@@ -65,6 +66,8 @@ public class Solver
 			
 			boolean incumbentUpdated = false;
 			boolean newColumns = true;
+			int addedColumns = 0;
+			
 			while( newColumns == true )
 			{
 //				_master.buildModel();
@@ -80,6 +83,7 @@ public class Solver
 						_master.addColumn(cluster);
 	
 					newColumns = added.size() > 0;
+					addedColumns += added.size();
 				}
 			}
 			
@@ -116,11 +120,35 @@ public class Solver
 			_openNodes.remove(current);
 			last = current;
 			
-			double dualBound = getDualBound();
-			double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
-			
-			System.out.println((incumbentUpdated ? "* " : "  ") + "LB: " + String.format("%6.2f", dualBound) + ", UB: " + String.format("%7.2f", _ub) + " (" + String.format("%5.2f", gap) + "%) - " + _nodes.size() + " nodes, " + _openNodes.size() + " open - Cur: " + current.getId() + ", H: " + current.getHeight() + " - " + current.getBranchingDecision());
+			if( _verbose == true )
+				showStatistics(current, addedColumns, incumbentUpdated);
 		}
+
+		showStatistics(null, 0, false);
+	}
+	
+	private void showStatistics(Node current, int addedColumns, boolean incumbentUpdated)
+	{
+		double dualBound = getDualBound();
+		double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
+		
+		System.out.print("LB: " + String.format("%8.4f", dualBound));
+		System.out.print(incumbentUpdated ? "*| " : " | ");
+		System.out.print("UB: " + String.format("%9.4f", _ub));
+		System.out.print(" (" + String.format("%5.2f", gap) + "%) | ");
+		System.out.print("Nodes: " + _nodes.size() + " | ");
+		System.out.print("Open: " + _openNodes.size() + " | ");
+		System.out.print(String.format("%7.2f", elapsedTime()) + " sec | ");
+		System.out.print("Cols: " + _master.getColumns().size());
+		
+		if( current != null )
+		{
+			System.out.print(" (" + addedColumns + " new ) | ");
+			System.out.print("Cur: " + current.getId() + ", H: " + current.getHeight() + " - ");
+			System.out.print(current.getBranchingDecision());
+		}
+		
+		System.out.println();
 	}
 	
 	// Node selection rule
@@ -184,5 +212,10 @@ public class Solver
 	public ArrayList<Cluster> getSolution()
 	{
 		return _incumbent;
+	}
+	
+	public static void setVerbose(boolean verbose)
+	{
+		_verbose = verbose;
 	}
 }

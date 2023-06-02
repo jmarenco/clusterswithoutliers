@@ -129,7 +129,10 @@ public class Test
 	
 	private static void solveBap(String[] args) throws IloException
 	{
+		ArgMap argmap = new ArgMap(args);
 		Instance instance = constructInstance(args);
+
+		Solver.setVerbose(argmap.containsArg("-verbose"));
         Solver solver = new Solver(instance, 3600);
         solver.solve();
 	}

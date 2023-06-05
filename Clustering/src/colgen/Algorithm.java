@@ -12,7 +12,8 @@ import ilog.concert.IloException;
 public class Algorithm
 {
 	private Instance _instance;
-	private boolean _summary = true;
+	private static boolean _summary = true;
+	private static boolean _relaxation = false;
 	
 	public Algorithm(Instance instance)
 	{
@@ -54,7 +55,7 @@ public class Algorithm
 //		System.out.println();
 
 		MasterCovering master = new MasterCovering(_instance, clusters);
-		master.solve(true);
+		master.solve(!_relaxation);
 		
 //		System.out.println("Obj = " + master.getObjective());
 //		System.out.println();
@@ -84,5 +85,15 @@ public class Algorithm
 		
 
 		return new Solution(master);
+	}
+	
+	public static void showSummary(boolean value)
+	{
+		_summary = value;
+	}
+	
+	public static void solveRelaxation(boolean value)
+	{
+		_relaxation = value;
 	}
 }

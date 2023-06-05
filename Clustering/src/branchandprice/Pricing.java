@@ -19,4 +19,7 @@ public interface Pricing
     
     // When the Branch-and-Price algorithm backtracks, branching decisions are reversed.
     public void reverseBranching(BranchingDecision sc);
+    
+    // Gets total solving time
+    public double getSolvingTime();
 }

@@ -21,6 +21,7 @@ public class MasterWithRebuild implements Master
     private ArrayList<Column> _columns;
     private Map<IloNumVar, Column> _variables;
     private ArrayList<BranchingDecision> _branchings;
+    private double _solvingTime = 0;
 
     public MasterWithRebuild(Instance instance)
     {
@@ -38,6 +39,7 @@ public class MasterWithRebuild implements Master
 
     	try
         {
+    		long start = System.currentTimeMillis();
         	_variables = new HashMap<IloNumVar, Column>();
 
         	// Create Cplex
@@ -96,6 +98,8 @@ public class MasterWithRebuild implements Master
             	lhs2 = _cplex.sum(lhs2, _y[branch.getPoint()]);
             	_cplex.addEq(lhs2, branch.mustBeOutlier() ? 0 : 1);
             }
+            
+            _solvingTime += (System.currentTimeMillis() - start) / 1000.0;
         }
         catch (IloException e)
         {
@@ -109,12 +113,17 @@ public class MasterWithRebuild implements Master
         try
         {
             // Set time limit
+        	long start = System.currentTimeMillis();
             double timeRemaining = Math.max(1, (timeLimit-System.currentTimeMillis()) / 1000.0);
+            
             _cplex.setParam(IloCplex.DoubleParam.TiLim, timeRemaining); // set time limit in seconds
 //            _cplex.exportModel("/home/jmarenco/Desktop/master.lp");
 
+            boolean solved = _cplex.solve();
+            _solvingTime += (System.currentTimeMillis() - start) / 1000.0;
+
             // Solve the model
-            if( !_cplex.solve() || _cplex.getStatus() != IloCplex.Status.Optimal )
+            if( solved == false || _cplex.getStatus() != IloCplex.Status.Optimal )
             {
                 if( _cplex.getCplexStatus() == IloCplex.CplexStatus.AbortTimeLim ) //Aborted due to time limit
                     return false;
@@ -370,5 +379,10 @@ public class MasterWithRebuild implements Master
     public ArrayList<Column> getColumns()
     {
     	return _columns;
+    }
+    
+    public double getSolvingTime()
+    {
+    	return _solvingTime;
     }
 }

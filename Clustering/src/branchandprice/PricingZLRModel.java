@@ -40,6 +40,9 @@ public class PricingZLRModel implements Pricing
 	private static double _variableThreshold = 0.05; // Threshold for considering a variable as null
 	private static boolean _stopWhenNegative = false;
 
+	// Statistics
+	private double _solvingTime = 0;
+	
 	// Creates a new solver instance for a particular pricing problem
     public PricingZLRModel(Master master)
     {
@@ -164,7 +167,10 @@ public class PricingZLRModel implements Pricing
 //            cplex.exportModel("/home/jmarenco/Desktop/pricing.lp");
 
        		// Solve the problem and check the solution status
+            double start = System.currentTimeMillis();
             boolean solved = cplex.solve();
+            
+            _solvingTime += (System.currentTimeMillis() - start) / 1000.0;
 
        		if( cplex.getCplexStatus() == IloCplex.CplexStatus.AbortTimeLim ) // Aborted due to time limit
        			return newPatterns;
@@ -342,5 +348,10 @@ public class PricingZLRModel implements Pricing
     public static boolean stopWhenNegative()
     {
     	return _stopWhenNegative;
+    }
+    
+    public double getSolvingTime()
+    {
+    	return _solvingTime;
     }
 }

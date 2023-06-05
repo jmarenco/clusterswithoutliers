@@ -51,4 +51,7 @@ public interface Master
 
     // Gets all columns
     public ArrayList<Column> getColumns();
+    
+    // Gets total solving time
+    public double getSolvingTime();
 }

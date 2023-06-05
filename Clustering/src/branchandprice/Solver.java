@@ -223,9 +223,9 @@ public class Solver
 		System.out.print(String.format("%6.2f", gap) + " % | ");
 		System.out.print(" 0 cuts | ");
 		System.out.print(_master.getColumns().size() + " cols | ");
+		System.out.print("M: " + String.format("%6.2f", _master.getSolvingTime()) + " sec. | ");
+		System.out.print("P: " + String.format("%6.2f", _pricing.getSolvingTime()) + " sec. | ");
 		System.out.print(PricingZLRModel.stopWhenNegative() ? "NegPr | " : "      | ");
-		System.out.print("     | ");
-		System.out.print("     | ");
 		System.out.print("MT: " + _timeLimit + " | ");
 		System.out.println();
 	}	

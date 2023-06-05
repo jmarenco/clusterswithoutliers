@@ -36,7 +36,7 @@ public class Solver
 	public void solve()
 	{
 		// Initializes components
-		_master = new Master(_instance);
+		_master = new MasterWithRebuild(_instance);
 		_pricing = new Pricing(_master);
 		_branching = new Branching(_instance);
 		_nodes = new ArrayList<Node>();

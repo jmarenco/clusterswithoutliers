@@ -37,7 +37,7 @@ public class Solver
 	{
 		// Initializes components
 		_master = new MasterWithRebuild(_instance);
-		_pricing = new Pricing(_master);
+		_pricing = new PricingZLRModel(_master);
 		_branching = new Branching(_instance);
 		_nodes = new ArrayList<Node>();
 		_openNodes = new ArrayList<Node>();

@@ -1,5 +1,6 @@
 package interfaz;
 
+import branchandprice.PricingZLRModel;
 import branchandprice.Solver;
 import colgen.Algorithm;
 import general.Instance;
@@ -131,6 +132,8 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 		Instance instance = constructInstance(args);
+		
+		PricingZLRModel.stopWhenNegative(argmap.containsArg("-negpr"));
 
 		Solver.setTimeLimit(argmap.intArg("-tl", 3600));
 		Solver.setVerbose(argmap.containsArg("-verbose"));
@@ -160,6 +163,7 @@ public class Test
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");
 		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
+		System.out.println("    -negpr                   Stop pricing with negative objective in bap model");
 		System.out.println("    -verbose                 Verbose output");
 		System.out.println("    -?                       Displays this help");
 		System.out.println();

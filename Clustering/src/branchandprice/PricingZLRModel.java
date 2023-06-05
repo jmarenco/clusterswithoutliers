@@ -38,6 +38,7 @@ public class PricingZLRModel implements Pricing
 	// Parameters
 	private static double _reducedCostThreshold = -0.0001; // Threshold for considering the objective as negative
 	private static double _variableThreshold = 0.05; // Threshold for considering a variable as null
+	private static boolean _stopWhenNegative = false;
 
 	// Creates a new solver instance for a particular pricing problem
     public PricingZLRModel(Master master)
@@ -74,6 +75,17 @@ public class PricingZLRModel implements Pricing
         cplex.setParam(IloCplex.IntParam.AdvInd, 0);
         cplex.setParam(IloCplex.IntParam.Threads, 1);
         cplex.setOut(null);
+        
+    	// The parameters cplex.uppercutoff = 0 and MIP integer solution limit = 1
+    	// make Cplex stop as soon as it finds a solution with objective function < 0,
+    	// but may degrade the performance since heuristics are not employed from nodes with
+    	// relaxation objective >= 0, which are pruned
+    	
+        if( _stopWhenNegative == true )
+        {
+        	cplex.setParam(IloCplex.Param.MIP.Tolerances.UpperCutoff, _reducedCostThreshold);
+        	cplex.setParam(IloCplex.Param.MIP.Limits.Solutions, 1);
+        }
     }
     
 	private void createVariables() throws IloException
@@ -145,56 +157,51 @@ public class PricingZLRModel implements Pricing
 	// Main method for solving the pricing problem
     public List<Cluster> generateColumns(double timeLimit)
     {
-    	// TODO: Test with cplex.uppercutoff = 0 and MIP integer solution limit = 1
-    	// This makes Cplex stop as soon as it finds a solution with objective function < 0,
-    	// but may degrade the performance since heuristics are not employed from nodes with
-    	// relaxation objective >= 0, which are pruned
-    	
         List<Cluster> newPatterns = new ArrayList<>();
         try
         {
             cplex.setParam(IloCplex.DoubleParam.TiLim, timeLimit); //set time limit in seconds
 //            cplex.exportModel("/home/jmarenco/Desktop/pricing.lp");
 
-            // Solve the problem and check the solution nodeStatus
-            if( !cplex.solve() || cplex.getStatus() != IloCplex.Status.Optimal )
+       		// Solve the problem and check the solution status
+            boolean solved = cplex.solve();
+
+       		if( cplex.getCplexStatus() == IloCplex.CplexStatus.AbortTimeLim ) // Aborted due to time limit
+       			return newPatterns;
+
+            if( _stopWhenNegative == false )
             {
-                if( cplex.getCplexStatus() == IloCplex.CplexStatus.AbortTimeLim ) // Aborted due to time limit
-                {
-                	System.out.println("Pricing aborted due to time limit");
-                	return newPatterns;
-                }
-                else if( cplex.getStatus() == IloCplex.Status.Infeasible ) // Pricing problem infeasible
-                {
-                    throw new RuntimeException("Pricing problem infeasible");
-                }
-                else
-                {
-                    throw new RuntimeException("Pricing problem solve failed! Status: " + cplex.getStatus());
-                }
+           		if( cplex.getStatus() == IloCplex.Status.Infeasible ) // Pricing problem infeasible
+           			throw new RuntimeException("Pricing problem infeasible");
+           		
+            	if( solved == false || cplex.getStatus() != IloCplex.Status.Optimal )
+           			throw new RuntimeException("Pricing problem solve failed! Status: " + cplex.getStatus() + ", obj: " + cplex.getObjValue());
             }
-            else // Pricing problem solved to optimality
+            else
             {
-//            	System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
+           		if( cplex.getStatus() != IloCplex.Status.Infeasible && cplex.getObjValue() > -_reducedCostThreshold )
+           			throw new RuntimeException("Pricing problem solve failed! Status: " + cplex.getStatus() + ", obj: " + cplex.getObjValue());
+            }
+            
+//            System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
 
-            	// Generate new column if it has negative reduced cost
-                if( cplex.getObjValue() <= _reducedCostThreshold )
-                { 
-                    Cluster cluster = new Cluster();
-                    double[] values = cplex.getValues(z);
+            // Generate new column if it has negative reduced cost
+            if( cplex.getStatus() != IloCplex.Status.Infeasible && cplex.getObjValue() <= _reducedCostThreshold )
+            { 
+                Cluster cluster = new Cluster();
+                double[] values = cplex.getValues(z);
 
-                    for(int i=0; i<_instance.getPoints(); ++i)
-                    {
-                    	if( Math.abs(values[i] - 1) < _variableThreshold )
-                    		cluster.add(_instance.getPoint(i));
-                    }
+                for(int i=0; i<_instance.getPoints(); ++i)
+                {
+                  	if( Math.abs(values[i] - 1) < _variableThreshold )
+                   		cluster.add(_instance.getPoint(i));
+                }
                     	
-                    newPatterns.add(cluster);
-//                    System.out.print(" -> " + cluster);
-                }
-                
-//                System.out.println();
+                newPatterns.add(cluster);
+//              System.out.print(" -> " + cluster);
             }
+                
+//          System.out.println();
         }
         catch (IloException e)
         {
@@ -325,5 +332,15 @@ public class PricingZLRModel implements Pricing
         {
             e.printStackTrace();
         }
+    }
+    
+    public static void stopWhenNegative(boolean value)
+    {
+    	_stopWhenNegative = value;
+    }
+    
+    public static boolean stopWhenNegative()
+    {
+    	return _stopWhenNegative;
     }
 }

@@ -223,7 +223,7 @@ public class Solver
 		System.out.print(String.format("%6.2f", gap) + " % | ");
 		System.out.print(" 0 cuts | ");
 		System.out.print(_master.getColumns().size() + " cols | ");
-		System.out.print("     | ");
+		System.out.print(PricingZLRModel.stopWhenNegative() ? "NegPr | " : "      | ");
 		System.out.print("     | ");
 		System.out.print("     | ");
 		System.out.print("MT: " + _timeLimit + " | ");

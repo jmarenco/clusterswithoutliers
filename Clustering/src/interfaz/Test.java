@@ -1,5 +1,6 @@
 package interfaz;
 
+import branchandprice.PricingFLZModel;
 import branchandprice.PricingZLRModel;
 import branchandprice.Solver;
 import colgen.Algorithm;
@@ -137,6 +138,7 @@ public class Test
 		Instance instance = constructInstance(args);
 		
 		PricingZLRModel.stopWhenNegative(argmap.containsArg("-negpr"));
+		PricingFLZModel.stopWhenNegative(argmap.containsArg("-negpr"));
 
 		Solver.setTimeLimit(argmap.intArg("-tl", 3600));
 		Solver.setVerbose(argmap.containsArg("-verbose"));

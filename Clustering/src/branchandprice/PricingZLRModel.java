@@ -204,10 +204,8 @@ public class PricingZLRModel implements Pricing
                 }
                     	
                 newPatterns.add(cluster);
-//              System.out.print(" -> " + cluster);
+//                System.out.println(" -> " + cluster);
             }
-                
-//          System.out.println();
         }
         catch (IloException e)
         {

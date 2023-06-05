@@ -111,15 +111,20 @@ public class PricingFLZModel implements Pricing
 
 	private void createConstraints() throws IloException
 	{
-		// One first point per dimension
+		// One first and last point per dimension
 		for(int t=0; t<d; ++t)
 		{
-			IloNumExpr lhs = cplex.linearIntExpr();
+			IloNumExpr lhs1 = cplex.linearIntExpr();
+			IloNumExpr lhs2 = cplex.linearIntExpr();
 
 			for(int i=0; i<p; ++i)
-				lhs = cplex.sum(lhs, f[i][t]);
+			{
+				lhs1 = cplex.sum(lhs1, f[i][t]);
+				lhs2 = cplex.sum(lhs2, l[i][t]);
+			}
 			
-			cplex.addEq(lhs, 1, "sf" + t);
+			cplex.addEq(lhs1, 1, "sf" + t);
+			cplex.addEq(lhs1, 1, "sl" + t);
 		}
 
 		// One last point per dimension
@@ -127,14 +132,12 @@ public class PricingFLZModel implements Pricing
 		for(int i=0; i<p; ++i)
 		{
 			IloNumExpr lhs = cplex.linearIntExpr();
+			lhs = cplex.sum(lhs, f[i][t]);
 
-			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) >= _instance.getPoint(i).get(t) )
-				lhs = cplex.sum(lhs, l[i][t]);
+			for(int j=0; j<p; ++j) if( _instance.getPoint(j).get(t) >= _instance.getPoint(i).get(t) )
+				lhs = cplex.sum(lhs, cplex.prod(-1, l[j][t]));
 			
-			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) <= _instance.getPoint(i).get(t) )
-				lhs = cplex.sum(lhs, cplex.prod(-1, f[i][t]));
-			
-			cplex.addEq(lhs, 0, "sl" + t + "_" + i);
+			cplex.addLe(lhs, 0, "lf" + t + "_" + i);
 		}
 		
 		// A point is not selected if it is located before the first point
@@ -144,8 +147,8 @@ public class PricingFLZModel implements Pricing
 			IloNumExpr lhs = cplex.linearIntExpr();
 			lhs = cplex.sum(lhs, z[i]);
 			
-			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) <= _instance.getPoint(i).get(t) )
-				lhs = cplex.sum(lhs, cplex.prod(-1, f[i][t]));
+			for(int j=0; j<p; ++j) if( _instance.getPoint(j).get(t) <= _instance.getPoint(i).get(t) )
+				lhs = cplex.sum(lhs, cplex.prod(-1, f[j][t]));
 			
 			cplex.addLe(lhs, 0, "zf" + t + "_" + i);
 		}
@@ -157,8 +160,8 @@ public class PricingFLZModel implements Pricing
 			IloNumExpr lhs = cplex.linearIntExpr();
 			lhs = cplex.sum(lhs, z[i]);
 			
-			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) >= _instance.getPoint(i).get(t) )
-				lhs = cplex.sum(lhs, cplex.prod(-1, l[i][t]));
+			for(int j=0; j<p; ++j) if( _instance.getPoint(j).get(t) >= _instance.getPoint(i).get(t) )
+				lhs = cplex.sum(lhs, cplex.prod(-1, l[j][t]));
 			
 			cplex.addLe(lhs, 0, "zl" + t + "_" + i);
 		}
@@ -176,7 +179,7 @@ public class PricingFLZModel implements Pricing
         try
         {
             cplex.setParam(IloCplex.DoubleParam.TiLim, timeLimit); //set time limit in seconds
-//            cplex.exportModel("/home/jmarenco/Desktop/pricing.lp");
+            cplex.exportModel("/home/jmarenco/Desktop/pricing.lp");
 
        		// Solve the problem and check the solution status
             double start = System.currentTimeMillis();
@@ -201,7 +204,7 @@ public class PricingFLZModel implements Pricing
            			throw new RuntimeException("Pricing problem solve failed! Status: " + cplex.getStatus() + ", obj: " + cplex.getObjValue());
             }
             
-//            System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
+            System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
 
             // Generate new column if it has negative reduced cost
             if( cplex.getStatus() != IloCplex.Status.Infeasible && cplex.getObjValue() <= _reducedCostThreshold )
@@ -216,10 +219,8 @@ public class PricingFLZModel implements Pricing
                 }
                     	
                 newPatterns.add(cluster);
-//              System.out.print(" -> " + cluster);
+                System.out.println(" -> " + cluster);
             }
-                
-//          System.out.println();
         }
         catch (IloException e)
         {
@@ -303,7 +304,7 @@ public class PricingFLZModel implements Pricing
                		lhs = cplex.sum(lhs, f[i][t]);
          	}
 
-         	if( sc.appliesToMaxSide() && sc.isUpperBound() )
+         	if( sc.appliesToMinSide() && sc.isUpperBound() )
          	{
          		for(int i=0; i<p; ++i) if( _instance.getPoint(i).get(t) > sc.getThreshold() )
                		lhs = cplex.sum(lhs, f[i][t]);

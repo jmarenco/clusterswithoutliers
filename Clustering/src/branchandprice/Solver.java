@@ -24,9 +24,12 @@ public class Solver
 	private ArrayList<Cluster> _incumbent;
 	private Map<Node, Double> _dualBound;
 	
+	public static enum Pricer { ZLR, FLZ };
+	
 	private static long _timeLimit = 3600;
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
+	private static Pricer _pricer = Pricer.ZLR;
 
 	public Solver(Instance instance)
 	{
@@ -37,13 +40,17 @@ public class Solver
 	{
 		// Initializes components
 		_master = new MasterWithRebuild(_instance);
-		_pricing = new PricingZLRModel(_master);
 		_branching = new Branching(_instance);
 		_nodes = new ArrayList<Node>();
 		_openNodes = new ArrayList<Node>();
 		_dualBound = new HashMap<Node, Double>();
 		_start = System.currentTimeMillis();
 		
+		if( _pricer == Pricer.ZLR )
+			_pricing = new PricingZLRModel(_master);
+		else
+			_pricing = new PricingFLZModel(_master);
+
 		// Initializes variables
 		_master.addFeasibleColumns();
 		_incumbent = null;
@@ -62,6 +69,13 @@ public class Solver
 			Node current = nextNode();
 //			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision());
 
+//			Node aux = current;
+//			while( aux != null )
+//			{
+//				System.out.println(aux.getBranchingDecision());
+//				aux = aux.getParent();
+//			}
+			
 			updateSubproblems(last, current);
 			
 			boolean incumbentUpdated = false;
@@ -73,7 +87,7 @@ public class Solver
 //				_master.buildModel();
 				_master.solve(remainingTime());
 				newColumns = false;
-				
+
 				if( _master.isOptimal() == true )
 				{
 					_pricing.updateObjective();
@@ -227,6 +241,7 @@ public class Solver
 		System.out.print("P: " + String.format("%6.2f", _pricing.getSolvingTime()) + " sec. | ");
 		System.out.print(PricingZLRModel.stopWhenNegative() ? "NegPr | " : "      | ");
 		System.out.print("MT: " + _timeLimit + " | ");
+		System.out.print("Pr: " + (_pricer == Pricer.ZLR ? "ZLR" : "FLZ")  + " | ");
 		System.out.println();
 	}	
 
@@ -248,5 +263,10 @@ public class Solver
 	public static void showSummary(boolean summary)
 	{
 		_summary = summary;
+	}
+	
+	public static void setPricer(Pricer pricer)
+	{
+		_pricer = pricer;
 	}
 }

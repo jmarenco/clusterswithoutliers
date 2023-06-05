@@ -135,7 +135,7 @@ public class Test
 	private static void solveBap(String[] args) throws IloException
 	{
 		ArgMap argmap = new ArgMap(args);
-		Instance instance = constructInstance(args);
+		Instance instance = tustInstance(); // constructInstance(args);
 		
 		PricingZLRModel.stopWhenNegative(argmap.containsArg("-negpr"));
 		PricingFLZModel.stopWhenNegative(argmap.containsArg("-negpr"));
@@ -143,6 +143,7 @@ public class Test
 		Solver.setTimeLimit(argmap.intArg("-tl", 3600));
 		Solver.setVerbose(argmap.containsArg("-verbose"));
 		Solver.showSummary(!argmap.containsArg("-verbose"));
+		Solver.setPricer(argmap.intArg("-pr", 0) == 0 ? Solver.Pricer.ZLR : Solver.Pricer.FLZ);
 
 		Solver solver = new Solver(instance);
         solver.solve();
@@ -168,6 +169,7 @@ public class Test
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");
 		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
+		System.out.println("    -pr [0|1]                Pricing strategy in bap model [def: 0]");
 		System.out.println("    -negpr                   Stop pricing with negative objective in bap model");
 		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
 		System.out.println("    -verbose                 Verbose output");

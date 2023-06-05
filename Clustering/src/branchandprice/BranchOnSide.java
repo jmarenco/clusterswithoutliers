@@ -48,9 +48,19 @@ public class BranchOnSide implements BranchingDecision
     	return _max;
     }
     
+    public boolean appliesToMinSide()
+    {
+    	return !_max;
+    }
+    
     public boolean isLowerBound()
     {
     	return _lowerBound;
+    }
+    
+    public boolean isUpperBound()
+    {
+    	return !_lowerBound;
     }
     
     // Determine whether the given column remains feasible for the child node

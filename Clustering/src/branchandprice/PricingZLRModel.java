@@ -214,9 +214,6 @@ public class PricingZLRModel implements Pricing
             e.printStackTrace();
         }
         
-//        if( newPatterns.get(0).contains(_instance.getPoint(6)) && newPatterns.get(0).contains(_instance.getPoint(3)) && newPatterns.get(0).size() == 2)
-//        	System.exit(1);
-        
         return newPatterns;
     }
 

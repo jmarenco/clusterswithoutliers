@@ -32,8 +32,8 @@ public class PricingFLZModel implements Pricing
 
     // Variables
 	private IloNumVar[] z;
-	private IloNumVar[] r;
-	private IloNumVar[] l;
+	private IloNumVar[][] f;
+	private IloNumVar[][] l;
 	
 	// Parameters
 	private static double _reducedCostThreshold = -0.0001; // Threshold for considering the objective as negative
@@ -94,61 +94,73 @@ public class PricingFLZModel implements Pricing
 	private void createVariables() throws IloException
 	{
 		z = new IloNumVar[p];
-		r = new IloNumVar[d];
-		l = new IloNumVar[d];
+		f = new IloNumVar[p][d];
+		l = new IloNumVar[p][d];
 		
 		for(int i=0; i<p; ++i)
 	    	z[i] = cplex.boolVar("z" + i);
 
+		for(int i=0; i<p; ++i)
 		for(int t=0; t<d; ++t)
-	    	r[t] = cplex.numVar(_instance.min(t), _instance.max(t), "r" + t);
+	    	f[i][t] = cplex.boolVar("f" + i + "_" + t);
 
+		for(int i=0; i<p; ++i)
 		for(int t=0; t<d; ++t)
-	    	l[t] = cplex.numVar(_instance.min(t), _instance.max(t), "l" + t);
+	    	l[i][t] = cplex.boolVar("l" + i + "_" + t);
 	}
 
 	private void createConstraints() throws IloException
 	{
-		for(int i=0; i<p; ++i)
-		for(int t=0; t<d; ++t)
-	    {
-			IloNumExpr lhs1 = cplex.linearIntExpr();
-			IloNumExpr lhs2 = cplex.linearIntExpr();
-			IloNumExpr lhs3 = cplex.linearIntExpr();
-			IloNumExpr lhs4 = cplex.linearIntExpr();
-			
-			lhs1 = cplex.sum(lhs1, l[t]);
-			lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(t) -_instance.getPoint(i).get(t), z[i]));
-			
-			lhs2 = cplex.sum(lhs2, r[t]);
-			lhs2 = cplex.sum(lhs2, cplex.prod(_instance.min(t) -_instance.getPoint(i).get(t), z[i]));
-
-			lhs3 = cplex.sum(lhs3, l[t]);
-			lhs3 = cplex.sum(lhs3, cplex.prod(_instance.min(t) -_instance.getPoint(i).get(t), z[i]));
-			
-			lhs4 = cplex.sum(lhs4, r[t]);
-			lhs4 = cplex.sum(lhs4, cplex.prod(_instance.max(t) -_instance.getPoint(i).get(t), z[i]));
-
-			for(int j=0; j<p; ++j) if( _instance.getPoint(j).get(t) < _instance.getPoint(i).get(t) )
-				lhs3 = cplex.sum(lhs3, cplex.prod(-_instance.min(t) +_instance.getPoint(i).get(t), z[j]));
-
-			for(int j=0; j<p; ++j) if( _instance.getPoint(j).get(t) > _instance.getPoint(i).get(t) )
-				lhs4 = cplex.sum(lhs4, cplex.prod(-_instance.max(t) +_instance.getPoint(i).get(t), z[j]));
-				
-			cplex.addLe(lhs1, _instance.max(t), "l" + i + "_" + t);
-		    cplex.addGe(lhs2, _instance.min(t), "r" + i + "_" + t);
-			cplex.addGe(lhs3, _instance.min(t), "ls" + i + "_" + t);
-		    cplex.addLe(lhs4, _instance.max(t), "rs" + i + "_" + t);
-	    }
-		
+		// One first point per dimension
 		for(int t=0; t<d; ++t)
 		{
 			IloNumExpr lhs = cplex.linearIntExpr();
+
+			for(int i=0; i<p; ++i)
+				lhs = cplex.sum(lhs, f[i][t]);
 			
-			lhs = cplex.sum(lhs, cplex.prod(1.0, l[t]));
-			lhs = cplex.sum(lhs, cplex.prod(-1.0, r[t]));
+			cplex.addEq(lhs, 1, "sf" + t);
+		}
+
+		// One last point per dimension
+		for(int t=0; t<d; ++t)
+		for(int i=0; i<p; ++i)
+		{
+			IloNumExpr lhs = cplex.linearIntExpr();
+
+			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) >= _instance.getPoint(i).get(t) )
+				lhs = cplex.sum(lhs, l[i][t]);
 			
-		    cplex.addLe(lhs, 0, "rel" + t);
+			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) <= _instance.getPoint(i).get(t) )
+				lhs = cplex.sum(lhs, cplex.prod(-1, f[i][t]));
+			
+			cplex.addEq(lhs, 0, "sl" + t + "_" + i);
+		}
+		
+		// A point is not selected if it is located before the first point
+		for(int t=0; t<d; ++t)
+		for(int i=0; i<p; ++i)
+		{
+			IloNumExpr lhs = cplex.linearIntExpr();
+			lhs = cplex.sum(lhs, z[i]);
+			
+			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) <= _instance.getPoint(i).get(t) )
+				lhs = cplex.sum(lhs, cplex.prod(-1, f[i][t]));
+			
+			cplex.addLe(lhs, 0, "zf" + t + "_" + i);
+		}
+		
+		// A point is not selected if it is located after the first point
+		for(int t=0; t<d; ++t)
+		for(int i=0; i<p; ++i)
+		{
+			IloNumExpr lhs = cplex.linearIntExpr();
+			lhs = cplex.sum(lhs, z[i]);
+			
+			for(int j=0; i<p; ++i) if( _instance.getPoint(j).get(t) >= _instance.getPoint(i).get(t) )
+				lhs = cplex.sum(lhs, cplex.prod(-1, l[i][t]));
+			
+			cplex.addLe(lhs, 0, "zl" + t + "_" + i);
 		}
 	}
 	
@@ -214,9 +226,6 @@ public class PricingFLZModel implements Pricing
             e.printStackTrace();
         }
         
-//        if( newPatterns.get(0).contains(_instance.getPoint(6)) && newPatterns.get(0).contains(_instance.getPoint(3)) && newPatterns.get(0).size() == 2)
-//        	System.exit(1);
-        
         return newPatterns;
     }
 
@@ -228,10 +237,11 @@ public class PricingFLZModel implements Pricing
             double[] dualCosts = _master.getDuals();
     		IloNumExpr fobj = cplex.linearNumExpr();
 
+    		for(int i=0; i<p; ++i)
     		for(int t=0; t<d; ++t)
     		{
-    			fobj = cplex.sum(fobj, cplex.prod(1.0, r[t]));
-    			fobj = cplex.sum(fobj, cplex.prod(-1.0, l[t]));
+    			fobj = cplex.sum(fobj, cplex.prod(_instance.getPoint(i).get(t), l[i][t]));
+    			fobj = cplex.sum(fobj, cplex.prod(-_instance.getPoint(i).get(t), f[i][t]));
     		}
     		
     		for(int i=0; i<p; ++i)
@@ -270,25 +280,36 @@ public class PricingFLZModel implements Pricing
         {
 //        	System.out.println("Pricing: Perform branching " + sc);
         	
-           	IloNumExpr lhs = cplex.linearIntExpr();
-            IloConstraint branchingConstraint = null;
+       		int t = sc.getDimension();
 
-         	if( sc.appliesToMaxSide() )
-           		lhs = cplex.sum(lhs, r[sc.getDimension()]);
-           	else
-           		lhs = cplex.sum(lhs, l[sc.getDimension()]);
-            	
-           	if( sc.isLowerBound() )
-           	{
-           		lhs = cplex.sum(lhs, cplex.prod(-sc.getThreshold() + _instance.min(sc.getDimension()), z[sc.getPoint()]));
-           		branchingConstraint = cplex.addGe(lhs, _instance.min(sc.getDimension()));
-           	}
-           	else
-           	{
-           		lhs = cplex.sum(lhs, cplex.prod(-sc.getThreshold() + _instance.max(sc.getDimension()), z[sc.getPoint()]));
-           		branchingConstraint = cplex.addLe(lhs, _instance.max(sc.getDimension()));
-           	}
-                
+       		IloNumExpr lhs = cplex.linearIntExpr();
+       		lhs = cplex.sum(lhs, z[sc.getPoint()]);
+
+         	if( sc.appliesToMaxSide() && sc.isLowerBound() )
+         	{
+         		for(int i=0; i<p; ++i) if( _instance.getPoint(i).get(t) < sc.getThreshold() )
+               		lhs = cplex.sum(lhs, l[i][t]);
+         	}
+
+         	if( sc.appliesToMaxSide() && sc.isUpperBound() )
+         	{
+         		for(int i=0; i<p; ++i) if( _instance.getPoint(i).get(t) > sc.getThreshold() )
+               		lhs = cplex.sum(lhs, l[i][t]);
+         	}
+
+         	if( sc.appliesToMinSide() && sc.isLowerBound() )
+         	{
+         		for(int i=0; i<p; ++i) if( _instance.getPoint(i).get(t) < sc.getThreshold() )
+               		lhs = cplex.sum(lhs, f[i][t]);
+         	}
+
+         	if( sc.appliesToMaxSide() && sc.isUpperBound() )
+         	{
+         		for(int i=0; i<p; ++i) if( _instance.getPoint(i).get(t) > sc.getThreshold() )
+               		lhs = cplex.sum(lhs, f[i][t]);
+         	}
+
+            IloConstraint branchingConstraint = cplex.addLe(lhs, 1);
             branchingConstraints.put(sc, branchingConstraint);
 
 //            System.out.println(">>> Branching constraint added: ");

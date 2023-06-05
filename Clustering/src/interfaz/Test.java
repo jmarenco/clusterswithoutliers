@@ -32,7 +32,7 @@ public class Test
 			solveStandard(args);
 		else if(model.equals("pop"))
 			solvePop(args);
-		else if(model.equals("cg") || model.equals("cgr"))
+		else if(model.equals("cg"))
 			solveColGen(args);
 		else if(model.equals("rep"))
 			solveRep(args);
@@ -125,9 +125,8 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 		Instance instance = constructInstance(args);
-		String model = argmap.stringArg("-m", "");
 
-		Algorithm.solveRelaxation(model.equals("cgr"));
+		Algorithm.solveRelaxation(argmap.containsArg("-relaxation"));
 		Algorithm algorithm = new Algorithm(instance);
 		algorithm.run();
 	}
@@ -150,26 +149,27 @@ public class Test
 	private static void showUsage()
 	{
 		System.out.println("Available configuration options: ");
-		System.out.println("    -m [sm|pop|cg|cgr|rep|bap]   Model to use [def:sm]");
-		System.out.println("    -d <n>                       Dimension for the instance [def: 2]");
-		System.out.println("    -n <n>                       Number of points [def: 10]");
-		System.out.println("    -c <n>                       Number of clusters [def: 3]");
-		System.out.println("    -o <n>                       Max number of outliers [def: 2]");
-		System.out.println("    -disp <f>                    Dispersion [def: 0.5]");
-		System.out.println("    -s <n>                       Seed for the random generator [def: 0]");
-		System.out.println("    -cr <n>                      Cutting rounds for sm model [def: 0]");
-		System.out.println("    -sf <n>                      Skip factor for sm model [def: 0]");
-		System.out.println("    -cb [0|1]                    Use cut and branch on sm model [def: 0]");
-		System.out.println("    -sstr [0|1|2|3]              Separation strategy on sm model [def: 0]");
-		System.out.println("    -fobj [0|1]                  Objective function in sm model [def: 0]");
-		System.out.println("    -llim <n>                    Lower limit for sparse separation in sm model [def: 0.1]");
-		System.out.println("    -ulim <n>                    Upper limit for sparse separation in sm model [def: 0.9]");
-		System.out.println("    -tl <n>                      Timelimit [def: 300]");
-		System.out.println("    -symm <n>                    Symmetry-breaking constraints [def: 0]");
-		System.out.println("    -thr <f>                     Threshold for adding cuts [def: 0.5]");
-		System.out.println("    -negpr                       Stop pricing with negative objective in bap model");
-		System.out.println("    -verbose                     Verbose output");
-		System.out.println("    -?                           Displays this help");
+		System.out.println("    -m [sm|pop|cg|rep|bap]   Model to use [def:sm]");
+		System.out.println("    -d <n>                   Dimension for the instance [def: 2]");
+		System.out.println("    -n <n>                   Number of points [def: 10]");
+		System.out.println("    -c <n>                   Number of clusters [def: 3]");
+		System.out.println("    -o <n>                   Max number of outliers [def: 2]");
+		System.out.println("    -disp <f>                Dispersion [def: 0.5]");
+		System.out.println("    -s <n>                   Seed for the random generator [def: 0]");
+		System.out.println("    -cr <n>                  Cutting rounds for sm model [def: 0]");
+		System.out.println("    -sf <n>                  Skip factor for sm model [def: 0]");
+		System.out.println("    -cb [0|1]                Use cut and branch on sm model [def: 0]");
+		System.out.println("    -sstr [0|1|2|3]          Separation strategy on sm model [def: 0]");
+		System.out.println("    -fobj [0|1]              Objective function in sm model [def: 0]");
+		System.out.println("    -llim <n>                Lower limit for sparse separation in sm model [def: 0.1]");
+		System.out.println("    -ulim <n>                Upper limit for sparse separation in sm model [def: 0.9]");
+		System.out.println("    -tl <n>                  Timelimit [def: 300]");
+		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
+		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
+		System.out.println("    -negpr                   Stop pricing with negative objective in bap model");
+		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
+		System.out.println("    -verbose                 Verbose output");
+		System.out.println("    -?                       Displays this help");
 		System.out.println();
 	}
 	

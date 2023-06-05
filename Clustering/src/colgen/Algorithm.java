@@ -67,7 +67,7 @@ public class Algorithm
 
 		if( _summary == true)
 		{
-			System.out.print(_instance.getName() + " | CG  | ");
+			System.out.print(_instance.getName() + (_relaxation ? " | CGR | " : " | CG  | "));
 			System.out.print(" | ");
 			System.out.print("Obj: " + String.format("%6.4f", master.getObjective()) + " | ");
 			System.out.print(String.format("%6.2f", time) + " sec. | ");

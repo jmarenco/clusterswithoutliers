@@ -67,7 +67,7 @@ public class Solver
 		while( _openNodes.size() > 0 && elapsedTime() < _timeLimit )
 		{
 			Node current = nextNode();
-//			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision());
+//			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision() + (current.getParent() != null ? " - Parent: Node " + current.getParent().getId() : ""));
 
 //			Node aux = current;
 //			while( aux != null )

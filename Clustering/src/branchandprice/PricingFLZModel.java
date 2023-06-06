@@ -124,7 +124,7 @@ public class PricingFLZModel implements Pricing
 			}
 			
 			cplex.addEq(lhs1, 1, "sf" + t);
-			cplex.addEq(lhs1, 1, "sl" + t);
+			cplex.addEq(lhs2, 1, "sl" + t);
 		}
 
 		// One last point per dimension
@@ -165,6 +165,23 @@ public class PricingFLZModel implements Pricing
 			
 			cplex.addLe(lhs, 0, "zl" + t + "_" + i);
 		}
+		
+		// The first and last points are always selected
+		for(int t=0; t<d; ++t)
+		for(int i=0; i<p; ++i)
+		{
+			IloNumExpr lhs1 = cplex.linearIntExpr();
+			IloNumExpr lhs2 = cplex.linearIntExpr();
+			
+			lhs1 = cplex.sum(lhs1, f[i][t]);
+			lhs2 = cplex.sum(lhs2, l[i][t]);
+			
+			lhs1 = cplex.sum(lhs1, cplex.prod(-1, z[i]));
+			lhs2 = cplex.sum(lhs2, cplex.prod(-1, z[i]));
+			
+			cplex.addLe(lhs1, 0, "pf" + t + "_" + i);
+			cplex.addLe(lhs2, 0, "pl" + t + "_" + i);
+		}
 	}
 	
 	private void createObjective() throws IloException
@@ -204,7 +221,20 @@ public class PricingFLZModel implements Pricing
            			throw new RuntimeException("Pricing problem solve failed! Status: " + cplex.getStatus() + ", obj: " + cplex.getObjValue());
             }
             
-            System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
+//            System.out.println("Pricing problem solved - Obj = " + cplex.getObjValue());
+//            
+//            for(IloNumVar var: z) if( cplex.getValue(var) != 0 )
+//            	System.out.println("  " + var.getName() + " = " + cplex.getValue(var));
+//            
+//            for(int i=0; i<_instance.getPoints(); ++i)
+//            for(int t=0; t<_instance.getDimension(); ++t)
+//            {
+//            	if( cplex.getValue(f[i][t]) != 0 )
+//            		System.out.println("  " + f[i][t].getName() + " = " + cplex.getValue(f[i][t]));
+//
+//            	if( cplex.getValue(l[i][t]) != 0 )
+//            		System.out.println("  " + l[i][t].getName() + " = " + cplex.getValue(l[i][t]));
+//            }
 
             // Generate new column if it has negative reduced cost
             if( cplex.getStatus() != IloCplex.Status.Infeasible && cplex.getObjValue() <= _reducedCostThreshold )
@@ -219,7 +249,7 @@ public class PricingFLZModel implements Pricing
                 }
                     	
                 newPatterns.add(cluster);
-                System.out.println(" -> " + cluster);
+//                System.out.println(" -> " + cluster);
             }
         }
         catch (IloException e)

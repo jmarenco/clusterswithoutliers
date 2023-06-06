@@ -135,7 +135,7 @@ public class Test
 	private static void solveBap(String[] args) throws IloException
 	{
 		ArgMap argmap = new ArgMap(args);
-		Instance instance = tustInstance(); // constructInstance(args);
+		Instance instance = constructInstance(args);
 		
 		PricingZLRModel.stopWhenNegative(argmap.containsArg("-negpr"));
 		PricingFLZModel.stopWhenNegative(argmap.containsArg("-negpr"));

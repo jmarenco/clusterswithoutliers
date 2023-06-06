@@ -117,7 +117,7 @@ public class MasterWithRebuild implements Master
             double timeRemaining = Math.max(1, (timeLimit-System.currentTimeMillis()) / 1000.0);
             
             _cplex.setParam(IloCplex.DoubleParam.TiLim, timeRemaining); // set time limit in seconds
-            _cplex.exportModel("/home/jmarenco/Desktop/master.lp");
+//            _cplex.exportModel("/home/jmarenco/Desktop/master.lp");
 
             boolean solved = _cplex.solve();
             _solvingTime += (System.currentTimeMillis() - start) / 1000.0;

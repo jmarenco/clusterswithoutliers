@@ -196,7 +196,7 @@ public class PricingFLZModel implements Pricing
         try
         {
             cplex.setParam(IloCplex.DoubleParam.TiLim, timeLimit); //set time limit in seconds
-            cplex.exportModel("/home/jmarenco/Desktop/pricing.lp");
+//            cplex.exportModel("/home/jmarenco/Desktop/pricing.lp");
 
        		// Solve the problem and check the solution status
             double start = System.currentTimeMillis();

@@ -35,6 +35,12 @@ public class Branching
     	
     	if( ret != null )
     		return ret;
+    	
+//    	for(Cluster cluster: solution.keySet())
+//    		System.out.println(cluster + " = " + solution.get(cluster));
+//    	
+//    	for(int i=0; i<outlier.length; ++i) if( outlier[i] != 0 )
+//    		System.out.println("y[" + i + "] = " + outlier[i]);
 
     	throw new RuntimeException("Cannot perform branching although the solution is fractional!");
     }

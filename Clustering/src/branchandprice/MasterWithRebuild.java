@@ -284,7 +284,7 @@ public class MasterWithRebuild implements Master
         			continue;
         		
         		double value = _cplex.getValue(var);
-        		if( Math.abs(value - (int)value) > 0.01 )
+        		if( Math.abs(value - (int)(value + 0.5)) > 0.01 )
         			return false;
             }
         }

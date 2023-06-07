@@ -48,6 +48,11 @@ public class Cluster
 		_points.add(point);
 	}
 	
+	public void remove(Point point)
+	{
+		_points.remove(point);
+	}
+	
 	public Set<Point> asSet()
 	{
 		return _points;

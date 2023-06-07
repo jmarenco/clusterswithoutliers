@@ -14,6 +14,7 @@ public class Solver
 	private Instance _instance;
 	private Master _master;
 	private Pricing _pricing;
+	private Pricing _rootPricing;
 	private Branching _branching;
 	
 	private long _start;
@@ -24,12 +25,13 @@ public class Solver
 	private ArrayList<Cluster> _incumbent;
 	private Map<Node, Double> _dualBound;
 	
-	public static enum Pricer { ZLR, FLZ };
+	public static enum Pricer { ZLR, FLZ, Heuristic, None };
 	
 	private static long _timeLimit = 3600;
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
 	private static Pricer _pricer = Pricer.ZLR;
+	private static Pricer _rootPricer = Pricer.None;
 
 	public Solver(Instance instance)
 	{
@@ -50,6 +52,9 @@ public class Solver
 			_pricing = new PricingZLRModel(_master);
 		else
 			_pricing = new PricingFLZModel(_master);
+		
+		if( _rootPricer == Pricer.Heuristic )
+			_rootPricing = new PricingHeuristic(_master);
 
 		// Initializes variables
 		_master.addFeasibleColumns();
@@ -90,9 +95,20 @@ public class Solver
 
 				if( _master.isOptimal() == true )
 				{
-					_pricing.updateObjective();
+					List<Cluster> added = null;
+
+					if( _nodes.size() == 1 && _rootPricing != null )
+					{
+						_rootPricing.updateObjective();
+						added = _rootPricing.generateColumns(remainingTime());
+					}
+					
+					if( added == null || added.size() == 0 )
+					{
+						_pricing.updateObjective();
+						added = _pricing.generateColumns(remainingTime());
+					}
 	
-					List<Cluster> added = _pricing.generateColumns(remainingTime());
 					for(Cluster cluster: added)
 						_master.addColumn(cluster);
 	
@@ -228,6 +244,7 @@ public class Solver
 	{
 		double dualBound = getDualBound();
 		double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
+		double pricingTime = _pricing.getSolvingTime() + (_rootPricing != null ? _rootPricing.getSolvingTime() : 0);
 		
 		System.out.print(_instance.getName() + " | B&P | ");
 		System.out.print(_openNodes.size() == 0 ? "Optimal | " : "Feasible | ");
@@ -238,10 +255,11 @@ public class Solver
 		System.out.print(" 0 cuts | ");
 		System.out.print(_master.getColumns().size() + " cols | ");
 		System.out.print("M: " + String.format("%6.2f", _master.getSolvingTime()) + " sec. | ");
-		System.out.print("P: " + String.format("%6.2f", _pricing.getSolvingTime()) + " sec. | ");
+		System.out.print("P: " + String.format("%6.2f", pricingTime) + " sec. | ");
 		System.out.print(PricingZLRModel.stopWhenNegative() ? "NegPr | " : "      | ");
 		System.out.print("MT: " + _timeLimit + " | ");
 		System.out.print("Pr: " + (_pricer == Pricer.ZLR ? "ZLR" : "FLZ")  + " | ");
+		System.out.print(_rootPricer == Pricer.Heuristic ? "HC: " + _rootPricing.getGeneratedColumns() + " | " : " | ");
 		System.out.println();
 	}	
 
@@ -268,5 +286,10 @@ public class Solver
 	public static void setPricer(Pricer pricer)
 	{
 		_pricer = pricer;
+	}
+	
+	public static void setRootPricer(boolean heuristic)
+	{
+		_rootPricer = heuristic ? Pricer.Heuristic : Pricer.None;
 	}
 }

@@ -144,6 +144,7 @@ public class Test
 		Solver.setVerbose(argmap.containsArg("-verbose"));
 		Solver.showSummary(!argmap.containsArg("-verbose"));
 		Solver.setPricer(argmap.intArg("-pr", 0) == 0 ? Solver.Pricer.ZLR : Solver.Pricer.FLZ);
+		Solver.setRootPricer(argmap.containsArg("-hrp"));
 
 		Solver solver = new Solver(instance);
         solver.solve();
@@ -171,6 +172,7 @@ public class Test
 		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
 		System.out.println("    -pr [0|1]                Pricing strategy in bap model [def: 0]");
 		System.out.println("    -negpr                   Stop pricing with negative objective in bap model");
+		System.out.println("    -hrp                     Heuristic for pricing at root node");
 		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
 		System.out.println("    -verbose                 Verbose output");
 		System.out.println("    -?                       Displays this help");

@@ -42,6 +42,7 @@ public class PricingZLRModel implements Pricing
 
 	// Statistics
 	private double _solvingTime = 0;
+	private int _generatedColumns = 0;
 	
 	// Creates a new solver instance for a particular pricing problem
     public PricingZLRModel(Master master)
@@ -212,6 +213,7 @@ public class PricingZLRModel implements Pricing
             e.printStackTrace();
         }
         
+        _generatedColumns += newPatterns.size();
         return newPatterns;
     }
 
@@ -348,5 +350,10 @@ public class PricingZLRModel implements Pricing
     public double getSolvingTime()
     {
     	return _solvingTime;
+    }
+    
+    public int getGeneratedColumns()
+    {
+    	return _generatedColumns;
     }
 }

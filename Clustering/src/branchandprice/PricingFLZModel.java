@@ -42,6 +42,7 @@ public class PricingFLZModel implements Pricing
 
 	// Statistics
 	private double _solvingTime = 0;
+	private int _generatedColumns = 0;
 	
 	// Creates a new solver instance for a particular pricing problem
     public PricingFLZModel(Master master)
@@ -257,6 +258,7 @@ public class PricingFLZModel implements Pricing
             e.printStackTrace();
         }
         
+        _generatedColumns += newPatterns.size();
         return newPatterns;
     }
 
@@ -405,5 +407,10 @@ public class PricingFLZModel implements Pricing
     public double getSolvingTime()
     {
     	return _solvingTime;
+    }
+    
+    public int getGeneratedColumns()
+    {
+    	return _generatedColumns;
     }
 }

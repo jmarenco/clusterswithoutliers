@@ -22,4 +22,7 @@ public interface Pricing
     
     // Gets total solving time
     public double getSolvingTime();
+    
+    // Gets number of generated columns
+    public int getGeneratedColumns();
 }

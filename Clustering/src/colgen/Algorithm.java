@@ -74,7 +74,7 @@ public class Algorithm
 			System.out.print(" | ");
 			System.out.print(" | ");
 			System.out.print(" | ");
-			System.out.print("MR: " + 0 + " | ");
+			System.out.print(clusters.size() + " cols | ");
 			System.out.print("SF: " + 0 + " | ");
 			System.out.print("Cut execs: " + 0 + " | ");
 			System.out.print("    | ");

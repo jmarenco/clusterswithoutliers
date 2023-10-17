@@ -67,9 +67,14 @@ public class PricingHeuristic implements Pricing
 
     		double newDual = ret.totalSpan() - pointDuals - dualCosts[j];
     		if( currentDual > newDual )
+    		{
     			currentDual = newDual;
+    			pointDuals += dualCosts[j];
+    		}
     		else
+    		{
     			ret.remove(_instance.getPoint(j));
+    		}
     	}
     	
     	return ret.totalSpan() - pointDuals + dualCosts[p] < -0.01 ? ret : null;

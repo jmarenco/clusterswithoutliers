@@ -203,7 +203,7 @@ public class Solver
 	
 	public double getDualBound()
 	{
-		return _openNodes.stream().mapToDouble(n -> _dualBound.get(n)).min().orElse(_ub);
+		return _openNodes.stream().mapToDouble(n -> _dualBound.get(n)).min().orElse(0);
 	}
 	
 	public double elapsedTime()

@@ -147,7 +147,9 @@ public class Solver
 //			else
 //				System.out.println("Node fathomed!");
 			
-			_openNodes.remove(current);
+			if( remainingTime() > 0 )
+				_openNodes.remove(current); // Otherwise, we are exiting due to the time limit, and the current node remains open
+			
 			last = current;
 			
 			if( _verbose == true )
@@ -203,7 +205,7 @@ public class Solver
 	
 	public double getDualBound()
 	{
-		return _openNodes.stream().mapToDouble(n -> _dualBound.get(n)).min().orElse(0);
+		return _openNodes.stream().mapToDouble(n -> _dualBound.get(n)).min().orElse(_ub);
 	}
 	
 	public double elapsedTime()

@@ -170,7 +170,9 @@ public class Solver
 //			else
 //				System.out.println("Node fathomed!");
 			
-			_openNodes.remove(current);
+			if( remainingTime() > 0 )
+				_openNodes.remove(current); // Otherwise, we are exiting due to the time limit, and the current node remains open
+			
 			last = current;
 			
 			if( _verbose == true )

@@ -35,6 +35,7 @@ public class Branching
     	
     	if( ret != null )
     		return ret;
+
     	
 //    	for(Cluster cluster: solution.keySet())
 //    		System.out.println(cluster + " = " + solution.get(cluster));

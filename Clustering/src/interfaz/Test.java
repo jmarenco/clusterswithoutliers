@@ -1,5 +1,6 @@
 package interfaz;
 
+import branchandprice.Pricing;
 import branchandprice.PricingFLZModel;
 import branchandprice.PricingZLRModel;
 import branchandprice.Solver;
@@ -143,9 +144,12 @@ public class Test
 		Solver.setTimeLimit(argmap.intArg("-tl", 3600));
 		Solver.setVerbose(argmap.containsArg("-verbose"));
 		Solver.showSummary(!argmap.containsArg("-verbose"));
-		Solver.setPricer(argmap.intArg("-pr", 0) == 0 ? Solver.Pricer.ZLR : Solver.Pricer.FLZ);
 		Solver.setRootPricer(argmap.containsArg("-hrp"));
-
+		int pricer_id = argmap.intArg("-pr", 0);
+		Solver.setPricer(pricer_id == 0 ? Solver.Pricer.ZLR : (pricer_id == 1 ? Solver.Pricer.FLZ : Solver.Pricer.Heuristic));
+		Pricing.setMaxColsPerPricing(argmap.intArg("-maxcols", 1));
+		
+		
 		Solver solver = new Solver(instance);
         solver.solve();
 	}
@@ -170,7 +174,8 @@ public class Test
 		System.out.println("    -tl <n>                  Timelimit [def: 300]");
 		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
-		System.out.println("    -pr [0|1]                Pricing strategy in bap model [def: 0]");
+		System.out.println("    -pr [0|1|2]              Pricing strategy in bap model [def: 0]");
+		System.out.println("    -maxcols <n>             Max number of columns per pricing in bap model [def: 1]");
 		System.out.println("    -negpr                   Stop pricing with negative objective in bap model");
 		System.out.println("    -hrp                     Heuristic for pricing at root node");
 		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");

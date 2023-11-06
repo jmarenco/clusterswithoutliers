@@ -8,7 +8,7 @@ import general.Cluster;
 import general.Instance;
 import general.NearestNeighbors;
 
-public class PricingHeuristic implements Pricing
+public class PricingHeuristic extends Pricing
 {
 	// Input data
 	private Master _master;
@@ -67,7 +67,10 @@ public class PricingHeuristic implements Pricing
 
     		double newDual = ret.totalSpan() - pointDuals - dualCosts[j];
     		if( currentDual > newDual )
+    		{
     			currentDual = newDual;
+    			pointDuals += dualCosts[j];
+    		}
     		else
     			ret.remove(_instance.getPoint(j));
     	}

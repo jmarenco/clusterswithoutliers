@@ -14,6 +14,7 @@ public class Solver
 	private Instance _instance;
 	private Master _master;
 	private Pricing _pricing;
+	private Pricing _exactPricing;
 	private Pricing _rootPricing;
 	private Branching _branching;
 	
@@ -49,9 +50,20 @@ public class Solver
 		_start = System.currentTimeMillis();
 		
 		if( _pricer == Pricer.ZLR )
+		{
 			_pricing = new PricingZLRModel(_master);
-		else
+			_exactPricing = _pricing;
+		}
+		else if( _pricer == Pricer.FLZ)
+		{
 			_pricing = new PricingFLZModel(_master);
+			_exactPricing = _pricing;
+		}
+		else
+		{
+			_pricing = new PricingHeuristicWithBranching(_master);
+			_exactPricing = new PricingZLRModel(_master);
+		}
 		
 		if( _rootPricer == Pricer.Heuristic )
 			_rootPricing = new PricingHeuristic(_master);
@@ -68,6 +80,8 @@ public class Solver
 		_nodes.add(root);
 		_openNodes.add(root);
 		
+//		int dbg = 0;
+
 		// Main loop
 		while( _openNodes.size() > 0 && elapsedTime() < _timeLimit )
 		{
@@ -93,6 +107,9 @@ public class Solver
 				_master.solve(remainingTime());
 				newColumns = false;
 
+//				dbg++;
+//				System.out.println("debug counter = " + dbg);
+				
 				if( _master.isOptimal() == true )
 				{
 					List<Cluster> added = null;
@@ -103,12 +120,18 @@ public class Solver
 						added = _rootPricing.generateColumns(remainingTime());
 					}
 					
-					if( added == null || added.size() == 0 )
+					if( (added == null || added.size() == 0) && _rootPricing != _pricing )
 					{
 						_pricing.updateObjective();
 						added = _pricing.generateColumns(remainingTime());
 					}
-	
+
+					if( (added == null || added.size() == 0) && _exactPricing != _pricing) // Activate exact pricing
+					{
+						_exactPricing.updateObjective();
+						added = _exactPricing.generateColumns(remainingTime());
+					}
+					
 					for(Cluster cluster: added)
 						_master.addColumn(cluster);
 	
@@ -185,6 +208,8 @@ public class Solver
 		{
 			_master.reverseBranching(fromLast.get(i).getBranchingDecision());
 			_pricing.reverseBranching(fromLast.get(i).getBranchingDecision());
+			if (_pricing != _exactPricing)
+				_exactPricing.reverseBranching(fromLast.get(i).getBranchingDecision());
 			
 			++i;
 		}
@@ -196,6 +221,8 @@ public class Solver
 		{
 			_master.performBranching(fromCurrent.get(j).getBranchingDecision());
 			_pricing.performBranching(fromCurrent.get(j).getBranchingDecision());
+			if (_pricing != _exactPricing)
+				_exactPricing.performBranching(fromCurrent.get(j).getBranchingDecision());
 
 			--j;
 		}
@@ -244,7 +271,10 @@ public class Solver
 	{
 		double dualBound = getDualBound();
 		double gap = _ub > 0 ? 100 * (_ub - dualBound) / _ub : 100;
-		double pricingTime = _pricing.getSolvingTime() + (_rootPricing != null ? _rootPricing.getSolvingTime() : 0);
+		double pricingTime = _pricing.getSolvingTime() + (_rootPricing != null && _rootPricing != _pricing? _rootPricing.getSolvingTime() : 0);
+		
+		if (_pricing != _exactPricing)
+			pricingTime += _exactPricing.getSolvingTime();
 		
 		System.out.print(_instance.getName() + " | B&P | ");
 		System.out.print(_openNodes.size() == 0 ? "Optimal | " : "Feasible | ");

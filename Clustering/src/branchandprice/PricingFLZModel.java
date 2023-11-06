@@ -13,7 +13,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex;
 
-public class PricingFLZModel implements Pricing
+public class PricingFLZModel extends Pricing
 {
 	// Input data
 	private Master _master;
@@ -238,19 +238,31 @@ public class PricingFLZModel implements Pricing
 //            }
 
             // Generate new column if it has negative reduced cost
-            if( cplex.getStatus() != IloCplex.Status.Infeasible && cplex.getObjValue() <= _reducedCostThreshold )
+            if( cplex.getStatus() != IloCplex.Status.Infeasible)
             { 
-                Cluster cluster = new Cluster();
-                double[] values = cplex.getValues(z);
-
-                for(int i=0; i<_instance.getPoints(); ++i)
-                {
-                  	if( Math.abs(values[i] - 1) < _variableThreshold )
-                   		cluster.add(_instance.getPoint(i));
-                }
-                    	
-                newPatterns.add(cluster);
-//                System.out.println(" -> " + cluster);
+            	int nsols = cplex.getSolnPoolNsolns();
+            	int found = 0;
+            	for (int j = 0; j < nsols; j++)
+            	{
+					if (cplex.getObjValue(j) <= _reducedCostThreshold)
+					{ 
+		                Cluster cluster = new Cluster();
+		                double[] values = cplex.getValues(z, j);
+		
+		                for(int i=0; i<_instance.getPoints(); ++i)
+		                {
+		                  	if( Math.abs(values[i] - 1) < _variableThreshold )
+		                   		cluster.add(_instance.getPoint(i));
+		                }
+		                    	
+		                newPatterns.add(cluster);
+		//                System.out.println(" -> " + cluster);
+		                
+		                found++;
+		                if (found >= getMaxColsPerPricing())
+		                	break;
+					}
+				}
             }
         }
         catch (IloException e)

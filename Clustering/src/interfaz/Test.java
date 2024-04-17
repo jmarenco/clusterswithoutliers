@@ -40,6 +40,8 @@ public class Test
 			solveRep(args);
 		else if(model.equals("bap"))
 			solveBap(args);
+		else if(argmap.containsArg("-writeonly"))
+			writeInstance(args);
 		else
 			showUsage();
 	}
@@ -149,9 +151,16 @@ public class Test
 		Solver.setPricer(pricer_id == 0 ? Solver.Pricer.ZLR : (pricer_id == 1 ? Solver.Pricer.FLZ : Solver.Pricer.Heuristic));
 		Pricing.setMaxColsPerPricing(argmap.intArg("-maxcols", 1));
 		
-		
 		Solver solver = new Solver(instance);
         solver.solve();
+	}
+	
+	private static void writeInstance(String[] args)
+	{
+		ArgMap argmap = new ArgMap(args);
+		Instance instance = constructInstance(args);
+		
+		InstanceWriter.write(instance, argmap.stringArg("-writeonly", "instance.dat"));
 	}
 	
 	private static void showUsage()
@@ -180,6 +189,7 @@ public class Test
 		System.out.println("    -hrp                     Heuristic for pricing at root node");
 		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
 		System.out.println("    -verbose                 Verbose output");
+		System.out.println("    -writeonly <s>           Does not solve, only writes instance to file <s>");
 		System.out.println("    -?                       Displays this help");
 		System.out.println();
 	}

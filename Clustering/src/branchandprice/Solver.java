@@ -43,7 +43,7 @@ public class Solver
 	{
 		// Initializes components
 		_master = new MasterWithRebuild(_instance);
-		_branching = new Branching(_instance);
+		_branching = new BranchingOnSideAndOutliers(_instance);
 		_nodes = new ArrayList<Node>();
 		_openNodes = new ArrayList<Node>();
 		_dualBound = new HashMap<Node, Double>();

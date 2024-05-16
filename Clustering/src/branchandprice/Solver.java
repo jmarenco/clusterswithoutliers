@@ -27,12 +27,14 @@ public class Solver
 	private Map<Node, Double> _dualBound;
 	
 	public static enum Pricer { ZLR, FLZ, Heuristic, None };
+	public static enum Brancher { Side, RyanFoster };
 	
 	private static long _timeLimit = 3600;
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
 	private static Pricer _pricer = Pricer.ZLR;
 	private static Pricer _rootPricer = Pricer.None;
+	private static Brancher _brancher = Brancher.Side;
 
 	public Solver(Instance instance)
 	{
@@ -43,7 +45,7 @@ public class Solver
 	{
 		// Initializes components
 		_master = new MasterWithRebuild(_instance);
-		_branching = new BranchingOnSideAndOutliers(_instance);
+		_branching = _brancher == Brancher.Side ? new BranchingOnSide(_instance) : new BranchingRyanFoster(_instance);
 		_nodes = new ArrayList<Node>();
 		_openNodes = new ArrayList<Node>();
 		_dualBound = new HashMap<Node, Double>();
@@ -323,5 +325,10 @@ public class Solver
 	public static void setRootPricer(boolean heuristic)
 	{
 		_rootPricer = heuristic ? Pricer.Heuristic : Pricer.None;
+	}
+	
+	public static void setBrancher(Brancher brancher)
+	{
+		_brancher = brancher;
 	}
 }

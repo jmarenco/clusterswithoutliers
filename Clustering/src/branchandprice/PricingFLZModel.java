@@ -317,6 +317,9 @@ public class PricingFLZModel extends Pricing
     	
     	if (sc instanceof BranchOnOutlier )
     		performBranchingOnOutlier((BranchOnOutlier)sc);
+    	
+    	if (sc instanceof BranchRyanFoster )
+    		performBranchingRyanFoster((BranchRyanFoster)sc);
     }
     
     private void performBranchingOnSide(BranchOnSide sc)
@@ -377,6 +380,42 @@ public class PricingFLZModel extends Pricing
            	lhs = cplex.sum(lhs, z[sc.getPoint()]);
 
            	IloConstraint branchingConstraint = sc.mustBeOutlier() ? cplex.addEq(lhs, 0) : cplex.addLe(lhs, 1);
+            branchingConstraints.put(sc, branchingConstraint);
+
+//            System.out.println(">>> Branching constraint added: ");
+//            System.out.println("    " + sc);
+//            System.out.println("    " + branchingConstraint);
+        }
+        catch (IloException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private void performBranchingRyanFoster(BranchRyanFoster sc)
+    {
+        try
+        {
+//        	System.out.println("Pricing: Perform branching " + sc);
+        	
+    		IloNumExpr lhs = cplex.linearIntExpr();
+    		IloConstraint branchingConstraint = null;
+    		
+        	if( sc.areTogether() == true )
+        	{
+        		lhs = cplex.sum(lhs, z[sc.getFirstIndex()]);
+        		lhs = cplex.sum(lhs, cplex.prod(-1, z[sc.getSecondIndex()]));
+
+           		branchingConstraint = cplex.addEq(lhs, 0);
+        	}
+        	else
+        	{
+        		lhs = cplex.sum(lhs, z[sc.getFirstIndex()]);
+        		lhs = cplex.sum(lhs, z[sc.getSecondIndex()]);
+
+           		branchingConstraint = cplex.addLe(lhs, 1);
+        	}
+        	
             branchingConstraints.put(sc, branchingConstraint);
 
 //            System.out.println(">>> Branching constraint added: ");

@@ -9,13 +9,13 @@ import general.Cluster;
 import general.Instance;
 import general.Point;
 
-public class BranchingOnSideAndOutliers extends Branching
+public class BranchingOnSide extends Branching
 {
 	// Tolerance for considering two cluster sides different
 	private static double _tolerance = 0.01;
 
 	// Constructor
-    public BranchingOnSideAndOutliers(Instance instance)
+    public BranchingOnSide(Instance instance)
     {
     	super(instance);
     }

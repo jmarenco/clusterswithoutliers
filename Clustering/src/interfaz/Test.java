@@ -149,6 +149,7 @@ public class Test
 		Solver.setRootPricer(argmap.containsArg("-hrp"));
 		int pricer_id = argmap.intArg("-pr", 0);
 		Solver.setPricer(pricer_id == 0 ? Solver.Pricer.ZLR : (pricer_id == 1 ? Solver.Pricer.FLZ : Solver.Pricer.Heuristic));
+		Solver.setBrancher(argmap.containsArg("-rf") ? Solver.Brancher.RyanFoster : Solver.Brancher.Side);
 		Pricing.setMaxColsPerPricing(argmap.intArg("-maxcols", 1));
 		
 		Solver solver = new Solver(instance);
@@ -187,6 +188,7 @@ public class Test
 		System.out.println("    -maxcols <n>             Max number of columns per pricing in bap model [def: 1]");
 		System.out.println("    -negpr                   Stop pricing with negative objective in bap model");
 		System.out.println("    -hrp                     Heuristic for pricing at root node");
+		System.out.println("    -rf                      Ryan-Foster branching");
 		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
 		System.out.println("    -verbose                 Verbose output");
 		System.out.println("    -writeonly <s>           Does not solve, only writes instance to file <s>");

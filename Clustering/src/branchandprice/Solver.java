@@ -234,7 +234,7 @@ public class Solver
 	
 	public double getDualBound()
 	{
-		return _openNodes.stream().mapToDouble(n -> _dualBound.get(n)).min().orElse(_ub);
+		return _openNodes.stream().mapToDouble(n -> _dualBound.containsKey(n) ? _dualBound.get(n) : 1000.0).min().orElse(_ub);
 	}
 	
 	public double elapsedTime()

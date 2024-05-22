@@ -293,6 +293,7 @@ public class Solver
 		System.out.print(PricingZLRModel.stopWhenNegative() ? "NegPr | " : "      | ");
 		System.out.print("MT: " + _timeLimit + " | ");
 		System.out.print("Pr: " + (_pricer == Pricer.ZLR ? "ZLR" : "FLZ")  + " | ");
+		System.out.print("Br: " + (_brancher == Brancher.Side ? "Side" : "RF")  + " | ");
 		System.out.print(_rootPricer == Pricer.Heuristic ? "HC: " + _rootPricing.getGeneratedColumns() + " | " : " | ");
 		System.out.println();
 	}	

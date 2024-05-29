@@ -27,7 +27,7 @@ public class Solver
 	private Map<Node, Double> _dualBound;
 	
 	public static enum Pricer { ZLR, FLZ, Heuristic, None };
-	public static enum Brancher { Side, RyanFoster };
+	public static enum Brancher { Side, RyanFoster, OnlyOutliers };
 	
 	private static long _timeLimit = 3600;
 	private static boolean _verbose = true;
@@ -45,11 +45,17 @@ public class Solver
 	{
 		// Initializes components
 		_master = new MasterWithRebuild(_instance);
-		_branching = _brancher == Brancher.Side ? new BranchingOnSide(_instance) : new BranchingRyanFoster(_instance);
 		_nodes = new ArrayList<Node>();
 		_openNodes = new ArrayList<Node>();
 		_dualBound = new HashMap<Node, Double>();
 		_start = System.currentTimeMillis();
+		
+		if( _brancher == Brancher.Side )
+			_branching = new BranchingOnSide(_instance);
+		else if( _brancher == Brancher.RyanFoster )
+			_branching = new BranchingRyanFoster(_instance);
+		else
+			_branching = new BranchingOutliersOnly(_instance);
 		
 		if( _pricer == Pricer.ZLR )
 		{
@@ -157,6 +163,13 @@ public class Solver
 			}
 			else if( _master.isFeasible() == true && _master.getObjValue() < _ub )
 			{
+				// Little hack: If we are solving the half-relaxed problem, we may not get branches although the solution is fractional
+				if( _brancher == Brancher.OnlyOutliers && _branching.getBranches(_master.getSolution(), _master.getOutliers()) == null )
+				{
+					_openNodes.remove(current);
+					continue;
+				}
+				
 //				System.out.println("Fractional solution - Branching ...");
 				for(BranchingDecision bd: _branching.getBranches(_master.getSolution(), _master.getOutliers()))
 				{
@@ -301,6 +314,11 @@ public class Solver
 	public ArrayList<Cluster> getSolution()
 	{
 		return _incumbent;
+	}
+	
+	public Master getMaster()
+	{
+		return _master;
 	}
 	
 	public static void setTimeLimit(long timeLimit)

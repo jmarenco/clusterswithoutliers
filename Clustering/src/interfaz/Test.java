@@ -5,6 +5,7 @@ import branchandprice.PricingFLZModel;
 import branchandprice.PricingZLRModel;
 import branchandprice.Solver;
 import colgen.Algorithm;
+import colgen.HalfRelaxedAlgorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
@@ -129,10 +130,18 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 		Instance instance = constructInstance(args);
-
-		Algorithm.solveRelaxation(argmap.containsArg("-relaxation"));
-		Algorithm algorithm = new Algorithm(instance);
-		algorithm.run();
+		
+		if( argmap.containsArg("-partialrelaxation") == false )
+		{
+			Algorithm.solveRelaxation(argmap.containsArg("-relaxation"));
+			Algorithm algorithm = new Algorithm(instance);
+			algorithm.run();
+		}
+		else
+		{
+			HalfRelaxedAlgorithm algorithm = new HalfRelaxedAlgorithm(instance);
+			algorithm.run();
+		}
 	}
 	
 	private static void solveBap(String[] args) throws IloException
@@ -190,6 +199,7 @@ public class Test
 		System.out.println("    -hrp                     Heuristic for pricing at root node");
 		System.out.println("    -rf                      Ryan-Foster branching");
 		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
+		System.out.println("    -partialrelaxation       Solve the partial linear relaxation at the root node (cg model only)");
 		System.out.println("    -verbose                 Verbose output");
 		System.out.println("    -writeonly <s>           Does not solve, only writes instance to file <s>");
 		System.out.println("    -?                       Displays this help");

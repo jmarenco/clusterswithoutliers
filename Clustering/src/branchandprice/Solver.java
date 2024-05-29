@@ -307,7 +307,8 @@ public class Solver
 		System.out.print("MT: " + _timeLimit + " | ");
 		System.out.print("Pr: " + (_pricer == Pricer.ZLR ? "ZLR" : (_pricer == Pricer.FLZ ? "FLZ" : "Heur"))  + " | ");
 		System.out.print("Br: " + (_brancher == Brancher.Side ? "Side" : "RF")  + " | ");
-		System.out.print(_rootPricer == Pricer.Heuristic ? "HC: " + _rootPricing.getGeneratedColumns() + " | " : " | ");
+		System.out.print(_rootPricer == Pricer.Heuristic ? "HC: " + _rootPricing.getGeneratedColumns() : "");
+		System.out.print(MasterWithRebuild.getInitialSingletons() ? " (is) | " : " | ");
 		System.out.println();
 	}	
 

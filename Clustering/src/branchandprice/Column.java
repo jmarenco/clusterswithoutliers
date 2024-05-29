@@ -27,6 +27,11 @@ public class Column
 		return new Column(cluster, cluster.totalSpan(), false);
 	}
 	
+	public static Column singleton(Point point)
+	{
+		return new Column(Cluster.singleton(point), 0, false);
+	}
+	
 	public Cluster getCluster()
 	{
 		return _cluster;

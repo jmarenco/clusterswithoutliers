@@ -42,6 +42,13 @@ public class Cluster
 		
 		return ret;
 	}
+	
+	public static Cluster singleton(Point point)
+	{
+		Cluster ret = new Cluster();
+		ret.add(point);
+		return ret;
+	}
 
 	public void add(Point point)
 	{

@@ -22,6 +22,8 @@ public class MasterWithRebuild implements Master
     private Map<IloNumVar, Column> _variables;
     private ArrayList<BranchingDecision> _branchings;
     private double _solvingTime = 0;
+    
+    private static boolean _initialSingletons = false;
 
     public MasterWithRebuild(Instance instance)
     {
@@ -189,6 +191,16 @@ public class MasterWithRebuild implements Master
 			Column column = Column.artificial(_instance);
 	    	addColumnToModel(column, _columns.size());
 	        _columns.add(column);
+	        
+	        if( _initialSingletons == true )
+	        {
+	        	for(int i=0; i<_instance.getPoints(); ++i)
+	        	{
+	    			Column singleton = Column.singleton(_instance.getPoint(i));
+	    	    	addColumnToModel(singleton, _columns.size());
+	    	        _columns.add(singleton);
+	        	}
+	        }
         }
         catch (IloException e)
         {
@@ -384,5 +396,15 @@ public class MasterWithRebuild implements Master
     public double getSolvingTime()
     {
     	return _solvingTime;
+    }
+    
+    public static void setInitialSingletons(boolean value)
+    {
+    	_initialSingletons = value;
+    }
+    
+    public static boolean getInitialSingletons()
+    {
+    	return _initialSingletons;
     }
 }

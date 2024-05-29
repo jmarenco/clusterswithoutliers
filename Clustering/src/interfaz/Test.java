@@ -1,5 +1,6 @@
 package interfaz;
 
+import branchandprice.MasterWithRebuild;
 import branchandprice.Pricing;
 import branchandprice.PricingFLZModel;
 import branchandprice.PricingZLRModel;
@@ -160,6 +161,7 @@ public class Test
 		Solver.setPricer(pricer_id == 0 ? Solver.Pricer.ZLR : (pricer_id == 1 ? Solver.Pricer.FLZ : Solver.Pricer.Heuristic));
 		Solver.setBrancher(argmap.containsArg("-rf") ? Solver.Brancher.RyanFoster : Solver.Brancher.Side);
 		Pricing.setMaxColsPerPricing(argmap.intArg("-maxcols", 1));
+		MasterWithRebuild.setInitialSingletons(argmap.containsArg("-initialsingletons"));
 		
 		Solver solver = new Solver(instance);
         solver.solve();
@@ -200,6 +202,7 @@ public class Test
 		System.out.println("    -rf                      Ryan-Foster branching");
 		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
 		System.out.println("    -partialrelaxation       Solve the partial linear relaxation at the root node (cg model only)");
+		System.out.println("    -initialsingletons       Add singleton columns (bap model only)");
 		System.out.println("    -verbose                 Verbose output");
 		System.out.println("    -writeonly <s>           Does not solve, only writes instance to file <s>");
 		System.out.println("    -?                       Displays this help");

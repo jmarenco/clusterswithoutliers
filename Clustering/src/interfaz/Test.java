@@ -11,6 +11,7 @@ import general.Instance;
 import general.Point;
 import general.RandomInstance;
 import ilog.concert.IloException;
+import kmeans.KMeansSolver;
 import popModel.POPModel;
 import repModel.RepModel;
 import standardModel.LinearSeparator;
@@ -42,6 +43,8 @@ public class Test
 			solveRep(args);
 		else if(model.equals("bap"))
 			solveBap(args);
+		else if(model.equals("kmn"))
+			solveKMeans(args);
 		else if(argmap.containsArg("-writeonly"))
 			writeInstance(args);
 		else
@@ -167,6 +170,20 @@ public class Test
         solver.solve();
 	}
 	
+	private static void solveKMeans(String[] args) throws IloException
+	{
+		ArgMap argmap = new ArgMap(args);
+		Instance instance = constructInstance(args);
+
+		KMeansSolver solver = new KMeansSolver(instance);
+		
+		KMeansSolver.setTimeLimit(argmap.intArg("-tl", 3600));
+		KMeansSolver.setVerbose(argmap.containsArg("-verbose"));
+		KMeansSolver.showSummary(!argmap.containsArg("-verbose"));
+		
+		solver.solve();
+	}
+
 	private static void writeInstance(String[] args)
 	{
 		ArgMap argmap = new ArgMap(args);

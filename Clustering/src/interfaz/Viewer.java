@@ -25,9 +25,11 @@ import general.*;
 public class Viewer
 {
 	private JFrame _frame;
+	static int viewnumber = 0;
 	
 	public Viewer(Instance instance, Solution solution)
 	{
+		viewnumber++;
 		XYSeriesCollection dataset = createDataset(instance, solution);
 		JFreeChart xylineChart = ChartFactory.createXYLineChart("", "", "", dataset, PlotOrientation.VERTICAL, true, true, false);
 		ChartPanel chartPanel = new ChartPanel(xylineChart);
@@ -58,6 +60,7 @@ public class Viewer
 		}
 		
 		_frame = new JFrame();
+		_frame.setTitle("View number: " + viewnumber);
 		_frame.setBounds(100, 100, 622, 640);
 		_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		_frame.getContentPane().add(chartPanel);

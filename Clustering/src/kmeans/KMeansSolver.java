@@ -3,17 +3,27 @@ package kmeans;
 import java.util.ArrayList;
 import java.util.Random;
 
+import branchandprice.MasterWithRebuild;
+import branchandprice.PricingZLRModel;
+import branchandprice.Solver.Brancher;
+import branchandprice.Solver.Pricer;
+import general.Cluster;
 import general.Instance;
 import general.Point;
+import general.Solution;
+import interfaz.Viewer;
 
 public class KMeansSolver 
 {
-	private static final Random random = new Random();
+	private static final Random random = new Random(0);
 	
 	private Instance _instance;
 	
 	private long _start;
+	private long _iter;
 	private double _ub;
+
+	private Solution _solution;
 	
 	private static long _timeLimit = 3600;
 	private static boolean _verbose = true;
@@ -23,8 +33,6 @@ public class KMeansSolver
 	{
 		_instance = instance;
 	}
-
-
 
 	public static void setTimeLimit(long timeLimit)
 	{
@@ -41,11 +49,10 @@ public class KMeansSolver
 		_summary = summary;
 	}
 
-
-
-	public void solve() 
+	public Solution solve() 
 	{
 		_start = System.currentTimeMillis();
+		_iter = 0;
 
 		int k = _instance.getClusters();
 		int n = _instance.getPoints();
@@ -58,6 +65,7 @@ public class KMeansSolver
 	    boolean changed = true;
 	    while( changed && elapsedTime() < _timeLimit )
 	    {
+	    	++_iter;
 	    	changed = false;
 	        // in each iteration we should find the nearest centroid for each point
 	    	for(int i=0; i<_instance.getPoints(); ++i)
@@ -76,11 +84,39 @@ public class KMeansSolver
 	        { 
 	            break; 
 	        }
+	        
+//		    recoverSolution(clusterOf, true);
 
-	        // at the end of each iteration we should relocate the centroids
+		    // at the end of each iteration we should relocate the centroids
 	        relocateCentroids(centroids, clusterOf);
 	    }
 	    
+	    recoverSolution(clusterOf);
+	    
+		if( _summary == true )
+			showSummary();
+
+		return _solution;
+		
+	}
+
+	private void recoverSolution(int[] clusterOf)
+	{
+		int k = _instance.getClusters();
+		_solution = new Solution();
+	    for (int j = 0; j < k; j++)
+	    	_solution.add(new Cluster());
+	    
+	    for (int i = 0; i < clusterOf.length; i++)
+	    	_solution.addTo(_instance.getPoint(i), clusterOf[i]);
+	}
+
+	private void recoverSolution(int[] clusterOf, boolean showInViewer) 
+	{
+		recoverSolution(clusterOf);
+		
+	    if (showInViewer)
+	    	new Viewer(_instance, _solution);
 	}
 
 	/**
@@ -112,8 +148,8 @@ public class KMeansSolver
 	    	if (centroid == null)
 	    	{
 	    		// TODO: empty clusters should be handled carefully! We should read a bit about this
-	    		//		For now, I will take a random point, but I'm not sure if this does not compromises the convergence
-	    		centroid = _instance.getPoint(random.nextInt(n)).clone();
+	    		//		For now, I will just keep the old centroid for this cluster
+	    		centroid = centroids.get(j);
 	    	}
 	    	else
 	    		centroid.divide(count); 
@@ -176,11 +212,33 @@ public class KMeansSolver
 		return centroids;
 	}
 
-
-
 	public double elapsedTime()
 	{
 		return (System.currentTimeMillis() - _start) / 1000.0;
 	}
+	
+	private void showSummary()
+	{
+		double ub = _solution.calcObjVal();
+		
+		System.out.print(_instance.getName() + " | KMN | ");
+		System.out.print("Feasible | ");
+		System.out.print("Obj: " + String.format("%6.4f", ub) + " | ");
+		System.out.print(String.format("%6.2f", elapsedTime()) + " sec. | ");
+		System.out.print(_iter + " iter | ");
+//		System.out.print(" (gap?) | ");
+//		System.out.print(" 0 cuts | ");
+//		System.out.print(" (cols?) | ");
+//		System.out.print("M: " + String.format("%6.2f", _master.getSolvingTime()) + " sec. | ");
+//		System.out.print("P: " + String.format("%6.2f", pricingTime) + " sec. | ");
+//		System.out.print(PricingZLRModel.stopWhenNegative() ? "NegPr | " : "      | ");
+		System.out.print("MT: " + _timeLimit + " | ");
+//		System.out.print("Pr: " + (_pricer == Pricer.ZLR ? "ZLR" : (_pricer == Pricer.FLZ ? "FLZ" : "Heur"))  + " | ");
+//		System.out.print("Br: " + (_brancher == Brancher.Side ? "Side" : "RF")  + " | ");
+//		System.out.print(_rootPricer == Pricer.Heuristic ? "HC: " + _rootPricing.getGeneratedColumns() : "");
+//		System.out.print(MasterWithRebuild.getInitialSingletons() ? " (is) | " : " | ");
+		System.out.println();
+	}	
+
 
 }

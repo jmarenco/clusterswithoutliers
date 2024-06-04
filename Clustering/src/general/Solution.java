@@ -42,8 +42,38 @@ public class Solution
 		_clusters = clusters;
 	}
 
+	public Solution() 
+	{
+		_clusters = new ArrayList<>();
+	}
+
 	public ArrayList<Cluster> getClusters()
 	{
 		return _clusters;
+	}
+
+	public void add(Cluster cluster) 
+	{
+		_clusters.add(cluster);
+	}
+
+	public Cluster get(int i) 
+	{
+		return _clusters.get(i);
+	}
+
+	public void addTo(Point point, int j) 
+	{
+		_clusters.get(j).add(point);
+	}
+
+	public double calcObjVal() 
+	{
+		double span = 0;
+		
+		for (Cluster c : _clusters)
+			span += c.totalSpan();
+		
+		return span;
 	}
 }

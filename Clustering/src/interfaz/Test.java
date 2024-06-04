@@ -10,6 +10,7 @@ import colgen.HalfRelaxedAlgorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
+import general.Solution;
 import ilog.concert.IloException;
 import kmeans.KMeansSolver;
 import popModel.POPModel;
@@ -179,7 +180,7 @@ public class Test
 		
 		KMeansSolver.setTimeLimit(argmap.intArg("-tl", 3600));
 		KMeansSolver.setVerbose(argmap.containsArg("-verbose"));
-		KMeansSolver.showSummary(!argmap.containsArg("-verbose"));
+		KMeansSolver.showSummary(true);
 		
 		solver.solve();
 	}

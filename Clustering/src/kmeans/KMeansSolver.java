@@ -221,22 +221,23 @@ public class KMeansSolver
 	{
 		double ub = _solution.calcObjVal();
 		
-		System.out.print(_instance.getName() + " | KMN | ");
-		System.out.print("Feasible | ");
-		System.out.print("Obj: " + String.format("%6.4f", ub) + " | ");
-		System.out.print(String.format("%6.2f", elapsedTime()) + " sec. | ");
-		System.out.print(_iter + " iter | ");
-//		System.out.print(" (gap?) | ");
-//		System.out.print(" 0 cuts | ");
-//		System.out.print(" (cols?) | ");
-//		System.out.print("M: " + String.format("%6.2f", _master.getSolvingTime()) + " sec. | ");
-//		System.out.print("P: " + String.format("%6.2f", pricingTime) + " sec. | ");
-//		System.out.print(PricingZLRModel.stopWhenNegative() ? "NegPr | " : "      | ");
-		System.out.print("MT: " + _timeLimit + " | ");
-//		System.out.print("Pr: " + (_pricer == Pricer.ZLR ? "ZLR" : (_pricer == Pricer.FLZ ? "FLZ" : "Heur"))  + " | ");
-//		System.out.print("Br: " + (_brancher == Brancher.Side ? "Side" : "RF")  + " | ");
-//		System.out.print(_rootPricer == Pricer.Heuristic ? "HC: " + _rootPricing.getGeneratedColumns() : "");
-//		System.out.print(MasterWithRebuild.getInitialSingletons() ? " (is) | " : " | ");
+		System.out.print(_instance.getDimension() + "\t");
+		System.out.print(_instance.getPoints() + "\t");
+		System.out.print(_instance.getClusters() + "\t");
+		System.out.print(_instance.getOutliers() + "\t");
+		System.out.print("KMN\t");
+		System.out.print("Feasible\t");
+		System.out.print(String.format("%6.4f", ub) + "\t");
+		System.out.print(String.format("%6.2f", elapsedTime()) + "\t");
+		System.out.print(_iter + "\t");
+
+//		System.out.print(_instance.getName() + " | KMN | ");
+//		System.out.print("Feasible | ");
+//		System.out.print("Obj: " + String.format("%6.4f", ub) + " | ");
+//		System.out.print(String.format("%6.2f", elapsedTime()) + " sec. | ");
+//		System.out.print(_iter + " iter | ");
+//		System.out.print("MT: " + _timeLimit + " | ");
+
 		System.out.println();
 	}	
 

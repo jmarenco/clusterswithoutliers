@@ -182,6 +182,7 @@ public class Test
 		KMeansSolver.setVerbose(argmap.containsArg("-verbose"));
 		KMeansSolver.showSummary(true);
 		
+		
 		solver.solve();
 	}
 

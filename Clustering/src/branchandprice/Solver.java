@@ -88,13 +88,11 @@ public class Solver
 		_nodes.add(root);
 		_openNodes.add(root);
 		
-//		int dbg = 0;
-
 		// Main loop
 		while( _openNodes.size() > 0 && elapsedTime() < _timeLimit )
 		{
 			Node current = nextNode();
-//			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision() + (current.getParent() != null ? " - Parent: Node " + current.getParent().getId() : ""));
+			System.out.println("Solving node " + current.getId() + ", " + current.getBranchingDecision() + (current.getParent() != null ? " - Parent: Node " + current.getParent().getId() : ""));
 
 //			Node aux = current;
 //			while( aux != null )
@@ -109,14 +107,15 @@ public class Solver
 			boolean newColumns = true;
 			int addedColumns = 0;
 			
+			int dbg = 0;
 			while( newColumns == true )
 			{
 //				_master.buildModel();
 				_master.solve(remainingTime());
 				newColumns = false;
 
-//				dbg++;
-//				System.out.println("debug counter = " + dbg);
+				dbg++;
+				System.out.println("debug counter = " + dbg);
 				
 				if( _master.isOptimal() == true )
 				{

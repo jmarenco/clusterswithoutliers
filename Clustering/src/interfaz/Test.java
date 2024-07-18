@@ -224,6 +224,7 @@ public class Test
 		System.out.println("    -initialsingletons       Add singleton columns (bap model only)");
 		System.out.println("    -verbose                 Verbose output");
 		System.out.println("    -writeonly <s>           Does not solve, only writes instance to file <s>");
+		System.out.println("    -ins <s>                 Read the instance from <s>");
 		System.out.println("    -?                       Displays this help");
 		System.out.println();
 	}
@@ -232,14 +233,21 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 		
-		int dimension = argmap.intArg("-d", 2);
-		int points = argmap.intArg("-n", 10);
-		int clusters = argmap.intArg("-c", 3);
-		int outliers = argmap.intArg("-o", 2);
-		double dispersion = argmap.doubleArg("-disp", 0.5);
-		int seed = argmap.intArg("-s", 0);
-		
-		return RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
+		if (argmap.containsArg("-ins"))
+		{
+			return InstanceReader.readFromDatafile(argmap.getArg("-ins"));
+		}
+		else // Generate random instance 
+		{
+			int dimension = argmap.intArg("-d", 2);
+			int points = argmap.intArg("-n", 10);
+			int clusters = argmap.intArg("-c", 3);
+			int outliers = argmap.intArg("-o", 2);
+			double dispersion = argmap.doubleArg("-disp", 0.5);
+			int seed = argmap.intArg("-s", 0);
+			
+			return RandomInstance.generate(dimension, points, clusters, outliers, dispersion, seed);
+		}
 	}
 	
 	public static Instance testInstance()

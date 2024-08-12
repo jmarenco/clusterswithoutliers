@@ -1,9 +1,11 @@
-package standardModel;
+package incremental;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import general.Cluster;
 import general.Instance;
+import general.Point;
 import general.RectangularCluster;
 import general.Solution;
 import ilog.concert.IloException;
@@ -13,8 +15,14 @@ import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.IntParam;
 import ilog.cplex.IloCplex.Status;
 import ilog.cplex.IloCplex.UnknownObjectException;
+import incremental.LazyCoveringSeparator.Metric;
+import standardModel.LinearSeparator;
+import standardModel.LinearSeparatorRestricted;
+import standardModel.LinearSeparatorSparse;
+import standardModel.RectangularModelInterface;
+import standardModel.Separator;
 
-public class RectangularModel implements RectangularModelInterface
+public class IncrementalStandardModel implements RectangularModelInterface
 {
 	// Instance
 	private Instance _instance;
@@ -22,6 +30,9 @@ public class RectangularModel implements RectangularModelInterface
 	// Solution
 	private ArrayList<Cluster> _clusters;
 	
+	// Initial set of points to be covered
+	private Set<Point> _initial_points;
+
 	// Parameters
 	private boolean _integer = true;
 	private boolean _strongBinding = true;
@@ -49,7 +60,13 @@ public class RectangularModel implements RectangularModelInterface
 	private IloNumVar[][] r;
 	private IloNumVar[][] l;
 
-	public RectangularModel(Instance instance)
+	// Separators
+	Separator separator;
+	LazySeparator lazySeparator;
+	boolean useLazyConstraints = false;
+
+
+	public IncrementalStandardModel(Instance instance)
 	{
 		_instance = instance;
 
@@ -68,7 +85,12 @@ public class RectangularModel implements RectangularModelInterface
 	{
 		_strongBinding = value;
 	}
-	
+
+	public boolean getStrongBinding()
+	{
+		return _strongBinding;
+	}
+
 	public void setMaxTime(int value)
 	{
 		_maxTime = value;
@@ -101,6 +123,21 @@ public class RectangularModel implements RectangularModelInterface
 			cplex.setOut(null);
 			cplex.setWarning(null);
 		}
+		
+		separator = new Separator(this);
+		lazySeparator = new LazySeparator(this);
+
+//		SeparatorThreaded separator = new SeparatorThreaded(this);
+//		cplex.setParam(IntParam.Threads, 1);
+//		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
+
+		cplex.use(separator);
+		useLazyConstraints = LazyCoveringSeparator.separationMetric != LazyCoveringSeparator.Metric.None;
+		if (useLazyConstraints)
+			cplex.use(lazySeparator);
+		
+		cplex.setParam(IloCplex.Param.Preprocessing.Reduce, 0);
+//		cplex.setParam(IloCplex.Param.Preprocessing.Linear.PreLinear , 0);
 	}
 
 	private void createVariables() throws IloException
@@ -145,7 +182,7 @@ public class RectangularModel implements RectangularModelInterface
 
 	private void createStrongBindingConstraints() throws IloException
 	{
-		for(int i=0; i<p; ++i)
+		for(int i=0; i<p; ++i) if (!useLazyConstraints ||_initial_points.contains(_instance.getPoint(i)))
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 		{
@@ -155,7 +192,7 @@ public class RectangularModel implements RectangularModelInterface
 			cplex.addLe(lhs, _instance.max(t));
 		}
 	    
-	    for(int i=0; i<p; ++i)
+	    for(int i=0; i<p; ++i) if (!useLazyConstraints ||_initial_points.contains(_instance.getPoint(i)))
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 		{
@@ -168,7 +205,7 @@ public class RectangularModel implements RectangularModelInterface
 	
 	private void createWeakBindingConstraints() throws IloException
 	{
-		for(int i=0; i<p; ++i)
+		for(int i=0; i<p; ++i) if (!useLazyConstraints || _initial_points.contains(_instance.getPoint(i)))
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 		{
@@ -178,7 +215,7 @@ public class RectangularModel implements RectangularModelInterface
 			cplex.addLe(lhs, _instance.getPoint(i).get(t) + _instance.max(t) - _instance.min(t));
 		}
 	    
-	    for(int i=0; i<p; ++i)
+	    for(int i=0; i<p; ++i) if (!useLazyConstraints ||_initial_points.contains(_instance.getPoint(i)))
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 		{
@@ -320,13 +357,6 @@ public class RectangularModel implements RectangularModelInterface
 	{
 		long start = System.currentTimeMillis();
 
-		Separator separator = new Separator(this);
-
-//		SeparatorThreaded separator = new SeparatorThreaded(this);
-//		cplex.setParam(IntParam.Threads, 1);
-//		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
-
-		cplex.use(separator);
 		cplex.setParam(IntParam.TimeLimit, _maxTime);
 		cplex.solve();
 		
@@ -353,6 +383,7 @@ public class RectangularModel implements RectangularModelInterface
 			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
 			System.out.print("SF: " + Separator.getSkipFactor() + " | ");
 			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
+			System.out.print("Lazy cut execs: " + lazySeparator.getExecutions() + " | ");
 			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
 			System.out.print("MT: " + _maxTime + " | ");
 			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " | "); 
@@ -450,5 +481,10 @@ public class RectangularModel implements RectangularModelInterface
 	public static void setObjective(Objective objective)
 	{
 		_objective = objective;
+	}
+
+	public void setInitialSetOfPointsToBeCovered(Set<Point> initial_points) 
+	{
+		_initial_points = initial_points;
 	}
 }

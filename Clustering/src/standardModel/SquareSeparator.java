@@ -13,7 +13,7 @@ import ilog.cplex.IloCplex;
 public class SquareSeparator implements SeparatorInterface
 {
 	private Separator _parent;
-	private RectangularModel _model;
+	private RectangularModelInterface _model;
 	private Instance _instance;
 	
 	private int _cluster;
@@ -39,7 +39,7 @@ public class SquareSeparator implements SeparatorInterface
 	public SquareSeparator(Separator parent, int cluster) throws IloException
 	{
 		_parent = parent;
-		_model = parent.getRectangularModel();
+		_model = parent.getModelInterface();
 		_instance = _model.getInstance();
 
 		_cluster = cluster;

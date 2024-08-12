@@ -12,6 +12,9 @@ import general.Point;
 import general.RandomInstance;
 import general.Solution;
 import ilog.concert.IloException;
+import incremental.IncrementalSolver;
+import incremental.IncrementalStandardModel;
+import incremental.LazyCoveringSeparator;
 import kmeans.KMeansSolver;
 import popModel.POPModel;
 import repModel.RepModel;
@@ -46,6 +49,8 @@ public class Test
 			solveBap(args);
 		else if(model.equals("kmn"))
 			solveKMeans(args);
+		else if(model.equals("inc"))
+			solveIncremental(args);
 		else if(argmap.containsArg("-writeonly"))
 			writeInstance(args);
 		else
@@ -186,6 +191,60 @@ public class Test
 		solver.solve();
 	}
 
+	private static void solveIncremental(String[] args) throws IloException
+	{
+		ArgMap argmap = new ArgMap(args);
+
+		int cutRounds = argmap.intArg("-cr", 0);
+		int skipFactor = argmap.intArg("-sf", 0);
+		boolean cutAndBranch  = argmap.intArg("-cb", 0) == 1;
+		int maxTime = argmap.intArg("-tl", 300);
+		int symmBreak = argmap.intArg("-symm", 0);
+		double threshold = argmap.doubleArg("-thr", 0.5);
+		int sepStrategy = argmap.intArg("-sstr", 0);
+		int objective = argmap.intArg("-fobj", 0);
+		double lowerLimit = argmap.doubleArg("-llim", 0.1);
+		double upperLimit = argmap.doubleArg("-ulim", 0.9);
+
+		Instance instance = constructInstance(args);
+
+		IncrementalStandardModel.setVerbose(argmap.containsArg("-verbose"));
+		IncrementalStandardModel.showSummary(!argmap.containsArg("-verbose"));
+		IncrementalStandardModel.setObjective(objective == 1 ? IncrementalStandardModel.Objective.Area : IncrementalStandardModel.Objective.Span);
+		
+		Separator.setActive(cutRounds > 0);
+		Separator.setMaxRounds(cutRounds);
+		Separator.setSkipFactor(skipFactor);
+		Separator.setCutAndBranch(cutAndBranch);
+		Separator.setStrategy(sepStrategy);
+		LinearSeparator.setThreshold(threshold);
+		LinearSeparatorSparse.setThreshold(threshold);
+		LinearSeparatorSparse.setLowerLimit(lowerLimit);
+		LinearSeparatorSparse.setUpperLimit(upperLimit);
+
+		if( symmBreak == 1 )
+			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.Size);
+
+		if( symmBreak == 2 )
+			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.IndexSum);
+
+		if( symmBreak == 3 )
+			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.OrderedStart);
+
+		LazyCoveringSeparator.setMetric(argmap.stringArg("-lazymetric", "None"));
+		
+		
+		IncrementalStandardModel model = new IncrementalStandardModel(instance);
+
+		model.setMaxTime(maxTime);
+		model.setStrongBinding(false);
+		model.solve();
+		
+//		IncrementalSolver solver = new IncrementalSolver(instance);
+//		solver.setMaxTime(maxTime);
+//		solver.solve();
+	}
+	
 	private static void writeInstance(String[] args)
 	{
 		ArgMap argmap = new ArgMap(args);

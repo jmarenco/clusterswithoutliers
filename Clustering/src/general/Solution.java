@@ -66,6 +66,11 @@ public class Solution
 	{
 		_clusters.get(j).add(point);
 	}
+	
+	public boolean isFeasible()
+	{
+		return _clusters != null;
+	}
 
 	public double calcObjVal() 
 	{

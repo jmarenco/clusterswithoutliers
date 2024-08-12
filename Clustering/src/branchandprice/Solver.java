@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 import general.Cluster;
 import general.Instance;
+import general.Solution;
 
 public class Solver
 {
@@ -41,7 +42,7 @@ public class Solver
 		_instance = instance;
 	}
 	
-	public void solve()
+	public Solution solve()
 	{
 		// Initializes components
 		_master = new MasterWithRebuild(_instance);
@@ -195,6 +196,8 @@ public class Solver
 
 		if( _summary == true )
 			showSummary();
+		
+		return new Solution(_incumbent);
 	}
 	
 	// Node selection rule

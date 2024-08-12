@@ -163,4 +163,19 @@ public class Cluster
 		
 		return "{" + ret + "}";
 	}
+
+	public boolean covers(Point p)
+	{
+		boolean covered = true;
+		for (int t = 0; t < p.getDimension(); ++t)
+		{
+			if (this.min(t) > p.get(t) || this.max(t) < p.get(t)) // out of the box!
+			{
+				covered = false;
+				break;
+			}
+		}
+		
+		return covered;
+	}
 }

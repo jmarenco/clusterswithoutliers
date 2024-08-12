@@ -10,7 +10,7 @@ import ilog.cplex.IloCplex;
 
 public class Separator extends IloCplex.UserCutCallback
 {
-	private RectangularModel _model;
+	private RectangularModelInterface _model;
 	private Instance _instance;
 	private ArrayList<SeparatorInterface> _linearSeparators;
 	
@@ -26,7 +26,7 @@ public class Separator extends IloCplex.UserCutCallback
 	private int _skipped;
 	private int _executions = 0;
 
-	public Separator(RectangularModel model)
+	public Separator(RectangularModelInterface model)
 	{
 		_model = model;
 		_instance = model.getInstance();
@@ -108,7 +108,7 @@ public class Separator extends IloCplex.UserCutCallback
 		return current;
 	}
 	
-	public RectangularModel getRectangularModel()
+	public RectangularModelInterface getModelInterface()
 	{
 		return _model;
 	}

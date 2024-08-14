@@ -15,7 +15,6 @@ import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.IntParam;
 import ilog.cplex.IloCplex.Status;
 import ilog.cplex.IloCplex.UnknownObjectException;
-import incremental.LazyCoveringSeparator.Metric;
 import standardModel.LinearSeparator;
 import standardModel.LinearSeparatorRestricted;
 import standardModel.LinearSeparatorSparse;
@@ -132,7 +131,7 @@ public class IncrementalStandardModel implements RectangularModelInterface
 //		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
 
 		cplex.use(separator);
-		useLazyConstraints = LazyCoveringSeparator.separationMetric != LazyCoveringSeparator.Metric.None;
+		useLazyConstraints = IncrementalSolver.separationMetric != IncrementalSolver.Metric.None;
 		if (useLazyConstraints)
 			cplex.use(lazySeparator);
 		

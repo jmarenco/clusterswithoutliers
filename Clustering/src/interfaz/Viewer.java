@@ -42,7 +42,8 @@ public class Viewer
 			renderer.setSeriesShape(i, ShapeUtilities.createRegularCross(2, 2));
 		}
 		
-		renderer.setSeriesPaint(0, Color.LIGHT_GRAY);
+		renderer.setSeriesPaint(0, Color.BLACK);
+		renderer.setSeriesPaint(1, Color.LIGHT_GRAY);
 		plot.setRenderer(renderer);
 		plot.setBackgroundPaint(Color.WHITE);
 		xylineChart.removeLegend();
@@ -71,7 +72,9 @@ public class Viewer
 	{
 		XYSeriesCollection dataset = new XYSeriesCollection();
 		XYSeries outliers = new XYSeries("Outliers");
+		XYSeries outliers_covered = new XYSeries("Outliers Covered");
 		dataset.addSeries(outliers);
+		dataset.addSeries(outliers_covered);
 		
 		Set<Point> clustered = new HashSet<Point>();
 		
@@ -91,8 +94,26 @@ public class Viewer
 		}
 		
 		for(int i=0; i<instance.getPoints(); ++i) if( clustered.contains(instance.getPoint(i)) == false )
-			outliers.add(instance.getPoint(i).get(0), instance.getPoint(i).get(1));
-
+		{
+			Point p = instance.getPoint(i);
+			
+			// We check if it is covered
+			boolean covered = false;
+			for(Cluster cluster: solution.getClusters())
+			{
+				if (cluster.covers(p))
+				{
+					covered = true;
+					break;
+				}
+			}
+			
+			if (covered)
+				outliers_covered.add(p.get(0), p.get(1));
+			else
+				outliers.add(p.get(0), p.get(1));
+		}
+		
 		return dataset;
 	}
 }

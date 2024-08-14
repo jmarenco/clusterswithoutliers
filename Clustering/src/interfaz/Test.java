@@ -10,11 +10,9 @@ import colgen.HalfRelaxedAlgorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
-import general.Solution;
 import ilog.concert.IloException;
 import incremental.IncrementalSolver;
 import incremental.IncrementalStandardModel;
-import incremental.LazyCoveringSeparator;
 import kmeans.KMeansSolver;
 import popModel.POPModel;
 import repModel.RepModel;
@@ -231,18 +229,15 @@ public class Test
 		if( symmBreak == 3 )
 			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.OrderedStart);
 
-		LazyCoveringSeparator.setMetric(argmap.stringArg("-lazymetric", "None"));
-		
-		
-		IncrementalStandardModel model = new IncrementalStandardModel(instance);
+		IncrementalSolver.setMetric(argmap.stringArg("-incmetric", "dist"));
 
-		model.setMaxTime(maxTime);
-		model.setStrongBinding(false);
-		model.solve();
-		
-//		IncrementalSolver solver = new IncrementalSolver(instance);
-//		solver.setMaxTime(maxTime);
-//		solver.solve();
+		IncrementalSolver solver = new IncrementalSolver(instance);
+
+//		IncrementalStandardModel solver = new IncrementalStandardModel(instance);
+//		solver.setStrongBinding(false);
+
+		solver.setMaxTime(maxTime);
+		solver.solve();
 	}
 	
 	private static void writeInstance(String[] args)
@@ -256,35 +251,36 @@ public class Test
 	private static void showUsage()
 	{
 		System.out.println("Available configuration options: ");
-		System.out.println("    -m [sm|pop|cg|rep|bap]   Model to use [def:sm]");
-		System.out.println("    -d <n>                   Dimension for the instance [def: 2]");
-		System.out.println("    -n <n>                   Number of points [def: 10]");
-		System.out.println("    -c <n>                   Number of clusters [def: 3]");
-		System.out.println("    -o <n>                   Max number of outliers [def: 2]");
-		System.out.println("    -disp <f>                Dispersion [def: 0.5]");
-		System.out.println("    -s <n>                   Seed for the random generator [def: 0]");
-		System.out.println("    -cr <n>                  Cutting rounds for sm model [def: 0]");
-		System.out.println("    -sf <n>                  Skip factor for sm model [def: 0]");
-		System.out.println("    -cb [0|1]                Use cut and branch on sm model [def: 0]");
-		System.out.println("    -sstr [0|1|2|3]          Separation strategy on sm model [def: 0]");
-		System.out.println("    -fobj [0|1]              Objective function in sm model [def: 0]");
-		System.out.println("    -llim <n>                Lower limit for sparse separation in sm model [def: 0.1]");
-		System.out.println("    -ulim <n>                Upper limit for sparse separation in sm model [def: 0.9]");
-		System.out.println("    -tl <n>                  Timelimit [def: 300]");
-		System.out.println("    -symm <n>                Symmetry-breaking constraints [def: 0]");
-		System.out.println("    -thr <f>                 Threshold for adding cuts [def: 0.5]");
-		System.out.println("    -pr [0|1|2]              Pricing strategy in bap model [def: 0]");
-		System.out.println("    -maxcols <n>             Max number of columns per pricing in bap model [def: 1]");
-		System.out.println("    -negpr                   Stop pricing with negative objective in bap model");
-		System.out.println("    -hrp                     Heuristic for pricing at root node");
-		System.out.println("    -rf                      Ryan-Foster branching");
-		System.out.println("    -relaxation              Solve the linear relaxation at the root node (cg model only)");
-		System.out.println("    -partialrelaxation       Solve the partial linear relaxation at the root node (cg model only)");
-		System.out.println("    -initialsingletons       Add singleton columns (bap model only)");
-		System.out.println("    -verbose                 Verbose output");
-		System.out.println("    -writeonly <s>           Does not solve, only writes instance to file <s>");
-		System.out.println("    -ins <s>                 Read the instance from <s>");
-		System.out.println("    -?                       Displays this help");
+		System.out.println("    -m [sm|pop|cg|rep|bap]                 Model to use [def:sm]");
+		System.out.println("    -d <n>                                 Dimension for the instance [def: 2]");
+		System.out.println("    -n <n>                                 Number of points [def: 10]");
+		System.out.println("    -c <n>                                 Number of clusters [def: 3]");
+		System.out.println("    -o <n>                                 Max number of outliers [def: 2]");
+		System.out.println("    -disp <f>                              Dispersion [def: 0.5]");
+		System.out.println("    -s <n>                                 Seed for the random generator [def: 0]");
+		System.out.println("    -cr <n>                                Cutting rounds for sm model [def: 0]");
+		System.out.println("    -sf <n>                                Skip factor for sm model [def: 0]");
+		System.out.println("    -cb [0|1]                              Use cut and branch on sm model [def: 0]");
+		System.out.println("    -sstr [0|1|2|3]                        Separation strategy on sm model [def: 0]");
+		System.out.println("    -fobj [0|1]                            Objective function in sm model [def: 0]");
+		System.out.println("    -llim <n>                              Lower limit for sparse separation in sm model [def: 0.1]");
+		System.out.println("    -ulim <n>                              Upper limit for sparse separation in sm model [def: 0.9]");
+		System.out.println("    -tl <n>                                Timelimit [def: 300]");
+		System.out.println("    -symm <n>                              Symmetry-breaking constraints [def: 0]");
+		System.out.println("    -thr <f>                               Threshold for adding cuts [def: 0.5]");
+		System.out.println("    -pr [0|1|2]                            Pricing strategy in bap model [def: 0]");
+		System.out.println("    -maxcols <n>                           Max number of columns per pricing in bap model [def: 1]");
+		System.out.println("    -negpr                                 Stop pricing with negative objective in bap model");
+		System.out.println("    -hrp                                   Heuristic for pricing at root node");
+		System.out.println("    -rf                                    Ryan-Foster branching");
+		System.out.println("    -relaxation                            Solve the linear relaxation at the root node (cg model only)");
+		System.out.println("    -partialrelaxation                     Solve the partial linear relaxation at the root node (cg model only)");
+		System.out.println("    -initialsingletons                     Add singleton columns (bap model only)");
+		System.out.println("    -incmetric [none|rand|ecc|dist|core]   Pricing strategy in bap model [def: 0]");
+		System.out.println("    -verbose                               Verbose output");
+		System.out.println("    -writeonly <s>                         Does not solve, only writes instance to file <s>");
+		System.out.println("    -ins <s>                               Read the instance from <s>");
+		System.out.println("    -?                                     Displays this help");
 		System.out.println();
 	}
 	

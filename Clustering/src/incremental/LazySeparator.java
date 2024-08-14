@@ -7,7 +7,6 @@ import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
-import incremental.LazyCoveringSeparator.Metric;
 import standardModel.RectangularModelInterface;
 
 public class LazySeparator extends IloCplex.LazyConstraintCallback
@@ -26,7 +25,7 @@ public class LazySeparator extends IloCplex.LazyConstraintCallback
 		
 		try
 		{
-			if (LazyCoveringSeparator.separationMetric == LazyCoveringSeparator.Metric.None)
+			if (IncrementalSolver.separationMetric == IncrementalSolver.Metric.None)
 				_lazySeparators.add(new LazyDummySeparator());
 			else
 				_lazySeparators.add(new LazyCoveringSeparator(this, _instance));

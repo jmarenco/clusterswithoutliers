@@ -7,6 +7,7 @@ import java.util.Set;
 
 import general.Instance;
 import general.Point;
+import incremental.IncrementalSolver.Metric;
 
 public class RandomManager extends IncrementalManager 
 {
@@ -22,6 +23,12 @@ public class RandomManager extends IncrementalManager
 		_instance_base = ins;
 	}
 	
+	@Override
+	protected String method() 
+	{
+		return "RAND_" + _random_threshold + "_" + increment_step;
+	}
+
 	@Override
 	protected void init() 
 	{

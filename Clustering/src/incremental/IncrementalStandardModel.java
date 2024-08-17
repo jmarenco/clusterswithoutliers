@@ -131,7 +131,7 @@ public class IncrementalStandardModel implements RectangularModelInterface
 //		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
 
 		cplex.use(separator);
-		useLazyConstraints = IncrementalSolver.separationMetric != IncrementalSolver.Metric.None;
+		useLazyConstraints = IncrementalSolver.incrementalMetric != IncrementalSolver.Metric.None;
 		if (useLazyConstraints)
 			cplex.use(lazySeparator);
 		

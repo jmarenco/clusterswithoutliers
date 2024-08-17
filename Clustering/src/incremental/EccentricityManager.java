@@ -15,14 +15,22 @@ public class EccentricityManager extends IncrementalManager
 	private HashMap<Integer, Neighbourhood> _neighbourhoods;
 	private Instance _instance_base;
 	
-	public static double max_distance_to_neighbour = 0.2;
-	public static int increment_step = 20;
-	public static boolean initial_different_calc = true;
-	public static boolean sum_over_dimensions = false;
+	private static double _max_distance_to_neighbour = 0.2;
+	private static int _increment_step = 20;
+	private static boolean _initial_different_calc = true;
+	private static boolean _sum_over_dimensions = false;
 
 	public EccentricityManager(Instance ins) 
 	{
 		_instance_base = ins;
+	}
+
+	@Override
+	protected String method() 
+	{
+		return (IncrementalSolver.incrementalMetric == Metric.Eccentricity ? "ECC_" : "DIST_")
+				+ (_sum_over_dimensions? "SUM_" : "MAX_")
+				+ _max_distance_to_neighbour + "_" + _increment_step;
 	}
 
 	@Override
@@ -40,7 +48,7 @@ public class EccentricityManager extends IncrementalManager
 			{
 				Point p2 = _instance_base.getPoint(j);
 				
-				if (p.distance(p2) <= max_distance_to_neighbour) // is in the neighbourhood
+				if (p.distance(p2) <= _max_distance_to_neighbour) // is in the neighbourhood
 					N.add_neighbour(p2);
 			}
 			
@@ -57,12 +65,11 @@ public class EccentricityManager extends IncrementalManager
 	{
 		_unused_points = new HashSet<Point>();
 		
-		if (initial_different_calc)
+		if (_initial_different_calc)
 		{
 			HashSet<Point> initial_points = new HashSet<>();
 
 			// We take the most (dist-)eccentric points
-			// We first filter the unused points which are not covered by the previous slution
 			ArrayList<Point> candidates = new ArrayList<>(_instance_base.getPoints());
 			for (int i = 0; i < _instance_base.getPoints(); i++)
 				candidates.add(_instance_base.getPoint(i));
@@ -134,7 +141,7 @@ public class EccentricityManager extends IncrementalManager
 //		}
 		
 		// We now take the first points on this sorted list
-		for (int i = 0; i < increment_step && i < candidates.size(); i++)
+		for (int i = 0; i < _increment_step && i < candidates.size(); i++)
 		{
 			Point p = candidates.get(i);
 			_unused_points.remove(p);
@@ -145,6 +152,20 @@ public class EccentricityManager extends IncrementalManager
 	}
 
 
+	public static void setSumOverDimensions(boolean sum) 
+	{
+		_sum_over_dimensions = sum;
+	}
+
+	public static void setMaxDistanceToNeighbour(double max) 
+	{
+		_max_distance_to_neighbour = max;
+	}
+
+	public static void setIncrementStep(int inc_step) 
+	{
+		_increment_step = inc_step;
+	}
 
 	
 	/**
@@ -212,7 +233,7 @@ public class EccentricityManager extends IncrementalManager
 		public double getDistanceExcentricity() { return _distanceExcentricity; }
 		public double getCurrentExcentricity() 
 		{
-			return IncrementalSolver.separationMetric == Metric.Eccentricity ? getExcentricity() : getDistanceExcentricity();
+			return IncrementalSolver.incrementalMetric == Metric.Eccentricity ? getExcentricity() : getDistanceExcentricity();
 //			return getDistanceExcentricity();
 		}
 
@@ -229,8 +250,8 @@ public class EccentricityManager extends IncrementalManager
 		{
 			if (_neighbours == 0)
 			{
-				_excentricity = sum_over_dimensions ? _p.getDimension() : 1.0;
-				_distanceExcentricity = _p.getDimension() * max_distance_to_neighbour;
+				_excentricity = _sum_over_dimensions ? _p.getDimension() : 1.0;
+				_distanceExcentricity = _p.getDimension() * _max_distance_to_neighbour;
 				return;
 			}
 			
@@ -242,7 +263,7 @@ public class EccentricityManager extends IncrementalManager
 				// For the excentricity
 				double exc = Math.max(_pointsOnTheLeft[t], _pointsOnTheRight[t]) / (double) _neighbours;
 				
-				if (sum_over_dimensions)
+				if (_sum_over_dimensions)
 					_excentricity += exc;
 				else if (exc > _excentricity)
 					_excentricity = exc;
@@ -250,12 +271,12 @@ public class EccentricityManager extends IncrementalManager
 				// For the distance-excentricity
 				double dist_diff = 
 						(exc == 1? // this means it has no neighbours on one of its sides (i.e., we will divide by 0)
-								max_distance_to_neighbour
+								_max_distance_to_neighbour
 								:
 								Math.abs((_distanceSumOnTheLeft[t]/_pointsOnTheLeft[t]) - (_distanceSumOnTheRight[t]/_pointsOnTheRight[t]))
 						);
 
-				if (sum_over_dimensions)
+				if (_sum_over_dimensions)
 					_distanceExcentricity += dist_diff;
 				else if (dist_diff > _distanceExcentricity)
 					_distanceExcentricity = dist_diff;
@@ -263,6 +284,5 @@ public class EccentricityManager extends IncrementalManager
 		}
 
 	}
-
 
 }

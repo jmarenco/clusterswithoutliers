@@ -15,4 +15,6 @@ public abstract class IncrementalManager
 
 	protected abstract Set<Point> getNextSetOfPoints(Set<Integer> covered_by_last_solution);
 
+	protected abstract String method();
+
 }

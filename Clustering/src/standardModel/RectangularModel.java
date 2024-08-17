@@ -2,9 +2,12 @@ package standardModel;
 
 import java.util.ArrayList;
 
+import general.Clock;
 import general.Cluster;
 import general.Instance;
+import general.Logger;
 import general.RectangularCluster;
+import general.Results;
 import general.Solution;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
@@ -49,6 +52,12 @@ public class RectangularModel implements RectangularModelInterface
 	private IloNumVar[][] r;
 	private IloNumVar[][] l;
 
+	private Clock _clock;
+
+	private boolean _log_solution = true;
+
+	private double _last_lb = 0.0;
+
 	public RectangularModel(Instance instance)
 	{
 		_instance = instance;
@@ -74,8 +83,16 @@ public class RectangularModel implements RectangularModelInterface
 		_maxTime = value;
 	}
 	
+	public void setLogSolution(boolean _log_solution) 
+	{
+		this._log_solution = _log_solution;
+	}
+
 	public Solution solve() throws IloException
 	{
+		_clock = new Clock(_maxTime);
+		_clock.start();
+		
 		createSolver();
 		createVariables();
 	    createClusteringConstraints();
@@ -88,6 +105,8 @@ public class RectangularModel implements RectangularModelInterface
 		solveModel();
     	obtainSolution();
 	    closeSolver();
+	    
+	    _clock.stop();
 	    
 	    return new Solution(_clusters);
 	}
@@ -318,8 +337,6 @@ public class RectangularModel implements RectangularModelInterface
 	
 	private void solveModel() throws IloException
 	{
-		long start = System.currentTimeMillis();
-
 		Separator separator = new Separator(this);
 
 //		SeparatorThreaded separator = new SeparatorThreaded(this);
@@ -327,16 +344,15 @@ public class RectangularModel implements RectangularModelInterface
 //		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
 
 		cplex.use(separator);
-		cplex.setParam(IntParam.TimeLimit, _maxTime);
+		cplex.setParam(IntParam.TimeLimit, _clock.remaining());
 		cplex.solve();
-		
-		double time = (System.currentTimeMillis() - start) / 1000.0;
+		_last_lb = cplex.getBestObjValue();
 		
 		if( _summary == false )
 		{
 			System.out.println("Status: " + cplex.getStatus());
 			System.out.println("Objective: " + String.format("%6.4f", cplex.getObjValue()));
-			System.out.println("Time: " + String.format("%6.2f", time));
+			System.out.println("Time: " + String.format("%6.2f", _clock.elapsed()));
 			System.out.println("Nodes: " + cplex.getNnodes());
 			System.out.println("Gap: " + ((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) : "  ****"));
 			System.out.println("Cuts: " + cplex.getNcuts(IloCplex.CutType.User));
@@ -346,7 +362,7 @@ public class RectangularModel implements RectangularModelInterface
 			System.out.print(_instance.getName() + " | Std | ");
 			System.out.print(cplex.getStatus() + " | ");
 			System.out.print("Obj: " + String.format("%6.4f", cplex.getObjValue()) + " | ");
-			System.out.print(String.format("%6.2f", time) + " sec. | ");
+			System.out.print(String.format("%6.2f", _clock.elapsed()) + " sec. | ");
 			System.out.print(cplex.getNnodes() + " nodes | ");
 			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | " : "  **** | "));
 			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
@@ -365,9 +381,12 @@ public class RectangularModel implements RectangularModelInterface
 	private void obtainSolution() throws IloException, UnknownObjectException
 	{
 		_clusters = new ArrayList<Cluster>();
+		double ub = Double.MAX_VALUE;
 		
     	if( cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible )
 		{
+    		ub = cplex.getObjValue();
+    		
 	    	for(int j=0; j<n; ++j)
 	    	{
 	    		RectangularCluster cluster = new RectangularCluster(d);
@@ -395,7 +414,15 @@ public class RectangularModel implements RectangularModelInterface
 //				System.out.println("r" + j + "_" + t + " = " + cplex.getValue(r[j][t]));
 //			}
 		}
-	}
+    	
+		// Log the solution
+    	if (_log_solution)
+    	{
+			Results.Status stat = cplex.getStatus() == Status.Optimal? Results.Status.OPTIMAL : (cplex.getStatus() == Status.Feasible? Results.Status.FEASIBLE : Results.Status.NOSOLUTION);
+			double lb = cplex.getBestObjValue();
+			Logger.log(_instance, "CMP", new Results(new Solution(_clusters), stat, lb, ub, _clock.elapsed(), cplex.getNnodes(), 0, _instance.getPoints()));
+    	}
+    }
 	
 	private void closeSolver()
 	{
@@ -450,5 +477,10 @@ public class RectangularModel implements RectangularModelInterface
 	public static void setObjective(Objective objective)
 	{
 		_objective = objective;
+	}
+
+	public double getLastLB() 
+	{
+		return _last_lb ;
 	}
 }

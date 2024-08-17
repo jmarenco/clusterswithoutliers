@@ -25,7 +25,7 @@ public class LazySeparator extends IloCplex.LazyConstraintCallback
 		
 		try
 		{
-			if (IncrementalSolver.separationMetric == IncrementalSolver.Metric.None)
+			if (IncrementalSolver.incrementalMetric == IncrementalSolver.Metric.None)
 				_lazySeparators.add(new LazyDummySeparator());
 			else
 				_lazySeparators.add(new LazyCoveringSeparator(this, _instance));

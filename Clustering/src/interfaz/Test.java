@@ -11,6 +11,8 @@ import general.Instance;
 import general.Point;
 import general.RandomInstance;
 import ilog.concert.IloException;
+import incremental.BorderPointsManager;
+import incremental.EccentricityManager;
 import incremental.IncrementalSolver;
 import incremental.IncrementalStandardModel;
 import kmeans.KMeansSolver;
@@ -230,9 +232,16 @@ public class Test
 			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.OrderedStart);
 
 		IncrementalSolver.setMetric(argmap.stringArg("-incmetric", "dist"));
+		IncrementalSolver.setShowIntermediateSolutions(argmap.containsArg("-incshow")); 
+		
+		EccentricityManager.setSumOverDimensions(argmap.stringArg("-eccmode", "MAX").equals("SUM"));
+		EccentricityManager.setIncrementStep(argmap.intArg("-incstep", 20));
+		EccentricityManager.setMaxDistanceToNeighbour(argmap.doubleArg("-maxdist", 0.2));
+
+		BorderPointsManager.setIncrementStep(argmap.intArg("-incstep", 20));
+		BorderPointsManager.setMaxDistanceToNeighbour(argmap.doubleArg("-maxdist", 0.2));
 
 		IncrementalSolver solver = new IncrementalSolver(instance);
-
 //		IncrementalStandardModel solver = new IncrementalStandardModel(instance);
 //		solver.setStrongBinding(false);
 
@@ -276,13 +285,17 @@ public class Test
 		System.out.println("    -relaxation                            Solve the linear relaxation at the root node (cg model only)");
 		System.out.println("    -partialrelaxation                     Solve the partial linear relaxation at the root node (cg model only)");
 		System.out.println("    -initialsingletons                     Add singleton columns (bap model only)");
-		System.out.println("    -incmetric [none|rand|ecc|dist|core]   Pricing strategy in bap model [def: 0]");
+		System.out.println("    -incmetric [none|rand|ecc|dist|bord]   Pricing strategy in bap model [def: dist]");
+		System.out.println("    -incshow                               Shows a plot displaying each intermadiate solution of the incremental solver");
+		System.out.println("    -eccmode [max|sum]                     Eccentricty mode for global eccentricity [def: MAX]");
+		System.out.println("    -incstep <n>                           Max number of points to add on each incremental iteration [def: 20]");
+		System.out.println("    -maxdist <f>                           Max distance to neighbours (for incremental resolution) [def: 0.2]");
 		System.out.println("    -verbose                               Verbose output");
 		System.out.println("    -writeonly <s>                         Does not solve, only writes instance to file <s>");
 		System.out.println("    -ins <s>                               Read the instance from <s>");
 		System.out.println("    -?                                     Displays this help");
 		System.out.println();
-	}
+}
 	
 	private static Instance constructInstance(String[] args)
 	{

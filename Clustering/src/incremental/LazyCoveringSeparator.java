@@ -49,9 +49,9 @@ public class LazyCoveringSeparator implements LazySeparatorInterface
 	
 	private void init_manager() 
 	{
-		if (IncrementalSolver.separationMetric == Metric.Eccentricity || IncrementalSolver.separationMetric == Metric.DistanceEccentricity)
+		if (IncrementalSolver.incrementalMetric == Metric.Eccentricity || IncrementalSolver.incrementalMetric == Metric.DistanceEccentricity)
 			_incrementalManager = new EccentricityManager(_instance_base);
-		else if (IncrementalSolver.separationMetric == Metric.Random)
+		else if (IncrementalSolver.incrementalMetric == Metric.Random)
 			_incrementalManager = new RandomManager(_instance_base);
 
 		_incrementalManager.init();

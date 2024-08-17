@@ -112,4 +112,13 @@ public class Instance
 		for(int i=0; i<_points.size(); ++i)
 			System.out.println("x[" + i + "] = " + _points.get(i));
 	}
+
+	public String log_details(String tab) 
+	{
+		return getName()
+				+ tab + getDimension()
+				+ tab + getPoints()
+				+ tab + getClusters()
+				+ tab + getOutliers();
+	}
 }

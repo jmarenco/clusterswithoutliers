@@ -80,10 +80,9 @@ public class IncrementalSolver
 			{
 				try_to_improve_incumbent();
 				
-				if ((_best_ub - _best_lb)/ (_best_lb + myEpsilon) < myEpsilon) // gap is 0!
+				if (currentGap() < myEpsilon) // gap is 0!
 					solved = true;
-				
-				if (!solved)
+				else
 					add_points_to_current(_incrementalManager.getNextSetOfPoints(_covered_by_last_solution));
 			}
 
@@ -98,7 +97,7 @@ public class IncrementalSolver
 			System.out.print(_instance_base.getName() + " | " + method() + " | ");
 			System.out.print("LB: " + String.format("%6.4f", _best_lb) + " | ");
 			System.out.print("UB: " + String.format("%6.4f", _best_incumbent == null? "INF" : _best_ub) + " | ");
-			System.out.print("GAP: " + String.format("%6.2f", 100.0*(_best_ub - _best_lb) / _best_lb) + "% | ");
+			System.out.print("GAP: " + String.format("%6.2f", 100.0*currentGap()) + "% | ");
 			System.out.print(String.format("%6.2f", _clock.elapsed()) + " sec. | ");
 			System.out.print("MT: " + _clock.getTimeLimit() + " | ");
 			System.out.println();
@@ -107,6 +106,11 @@ public class IncrementalSolver
 		// Log the solution
 		Results.Status stat = _best_incumbent == null? Status.NOSOLUTION : (_best_lb + myEpsilon < _best_ub  ? Status.FEASIBLE : Status.OPTIMAL);
 		Logger.log(_instance_base, method(), new Results(_last_solution, stat, _best_lb, _best_ub, _clock.elapsed(), -1, iter, _instance_cur.getPoints()));
+	}
+
+	private double currentGap() 
+	{
+		return (_best_ub - _best_lb)/ (_best_lb + myEpsilon);
 	}
 
 	private void closeModel() 
@@ -178,6 +182,13 @@ public class IncrementalSolver
 			System.out.println(string);
 	}
 
+	/**
+	 * Recovers the best solution found on the last iteration and checks if it is feasible for the global instance.
+	 * At the same time, it calculates the set of points covered by this solution (to use this set later, to select 
+	 * more points to add to the instance.
+	 * 
+	 * @return
+	 */
 	private boolean check_solution() 
 	{
 		_covered_by_last_solution = new HashSet<>();
@@ -203,10 +214,9 @@ public class IncrementalSolver
 		if (_show_intermediate_solutions)
 			new Viewer(_instance_base, _last_solution, "" + _last_solution.calcObjVal());
 		
-		
 		boolean feasible = ncovered >= (_instance_base.getPoints() - _instance_base.getOutliers());
 		
-		if (feasible)
+		if (feasible) // Then we know it is optimal for the global instance! 
 		{
 			double ub = _last_solution.calcObjVal();
 			
@@ -226,8 +236,8 @@ public class IncrementalSolver
 	 */
 	private void try_to_improve_incumbent() throws IloException 
 	{
-		// For the moment, we will ask the model for the previous integer solutions found
-		// with the hope that some of it covers the entire set of points.
+		// For the moment, we will ask the model for the integer solutions found during 
+		// last solve, with the hope that some of it covers the entire set of points.
 		// Note that solutions are consulted in increasing order by obj function, so as 
 		// soon as we found a (globally) feasible one, we can take it and stop the search.
 		
@@ -235,24 +245,33 @@ public class IncrementalSolver
 		
 		for (int s = 1; s <= n; s++)
 		{
-			Solution sol = _model.getSolutionNumber(s);
-			double sol_ub = _model.getObjValueOfSolutionN(s);
-			
-			if (sol_ub >= _best_ub) // Done... no more interesting solutions here
+			double sol_obj = _model.getObjValueOfSolutionN(s);
+			if (sol_obj >= _best_ub) // Done... no more interesting solutions here (assuming they are sorted by obj value)
 				break;
-			else if (isFeasible(sol)) // Super! We found an improvement
+			else
 			{
-				System.out.println(" >>>>>> Incumbent improved with suboptimal solutions from previous iteration! [" + _best_ub + " -> " + sol_ub  + "]");
-				
-				_best_ub = sol_ub;
-				_best_incumbent = sol;
+				Solution sol = _model.getSolutionNumber(s);
 
-				// We stop here because all subsequent solutions are worst or equal
-				break;
+				if (isFeasible(sol)) // Super! We found an improvement
+				{
+					System.out.println(" >>>>>> Incumbent improved with suboptimal solutions from previous iteration! [" + _best_ub + " -> " + sol_obj  + "]");
+					
+					_best_ub = sol_obj;
+					_best_incumbent = sol;
+	
+					// We stop here because all subsequent solutions are worst or equal
+					break;
+				}
 			}
 		}
 	}
 
+	/**
+	 * Checks if the given solution is feasible for the global instance (i.e., if it covers enough points).
+	 * 
+	 * @param sol
+	 * @return
+	 */
 	private boolean isFeasible(Solution sol) 
 	{
 		int ncovered = 0;

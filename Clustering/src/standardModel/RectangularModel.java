@@ -29,6 +29,8 @@ public class RectangularModel implements RectangularModelInterface
 	private boolean _integer = true;
 	private boolean _strongBinding = true;
 	private int _maxTime = 3600;
+	private double _objLB = 0.0;
+	private boolean _keepAlive = false;
 	
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
@@ -57,6 +59,7 @@ public class RectangularModel implements RectangularModelInterface
 	private boolean _log_solution = true;
 
 	private double _last_lb = 0.0;
+
 
 	public RectangularModel(Instance instance)
 	{
@@ -101,6 +104,10 @@ public class RectangularModel implements RectangularModelInterface
 		createOutliersConstraint();
 		createSymmetryBreakingConstraints();
 		createObjective();
+		
+		if (_objLB > 0.0)
+			createObjectiveConstraint();
+			
 		
 		solveModel();
     	obtainSolution();
@@ -294,8 +301,14 @@ public class RectangularModel implements RectangularModelInterface
 		else
 			createNonlinearObjective();
 	}
-			
+		
 	private void createLinearObjective() throws IloException
+	{
+		IloNumExpr fobj = createLinearObjectiveExpression();
+		cplex.addMinimize(fobj);
+	}
+
+	private IloNumExpr createLinearObjectiveExpression() throws IloException 
 	{
 		IloNumExpr fobj = cplex.linearNumExpr();
 
@@ -306,10 +319,18 @@ public class RectangularModel implements RectangularModelInterface
 			fobj = cplex.sum(fobj, cplex.prod(-1.0, l[j][t]));
 		}
 		
-		cplex.addMinimize(fobj);
+		return fobj;
 	}
 	
 	private void createNonlinearObjective() throws IloException
+	{
+		IloNumExpr fobj = createNonLinearObjectiveExpression();
+
+		cplex.addMinimize(fobj);
+//		cplex.setParam(IntParam.SolutionTarget, 3);
+	}
+
+	private IloNumExpr createNonLinearObjectiveExpression() throws IloException 
 	{
 		IloNumExpr fobj = cplex.linearNumExpr();
 
@@ -330,11 +351,33 @@ public class RectangularModel implements RectangularModelInterface
 			
 			fobj = cplex.sum(fobj, area);
 		}
-
-		cplex.addMinimize(fobj);
-//		cplex.setParam(IntParam.SolutionTarget, 3);
+		
+		return fobj;
 	}
 	
+	
+	private void createObjectiveConstraint() throws IloException
+	{
+		if( _objective == Objective.Span )
+			createLinearObjectiveConstraint();
+		else
+			createNonlinearObjectiveConstraint();
+	}
+	
+	private void createLinearObjectiveConstraint() throws IloException
+	{
+		IloNumExpr fobj = createLinearObjectiveExpression();
+		
+		cplex.addGe(fobj, _objLB, "obj_lb");
+	}
+	
+	private void createNonlinearObjectiveConstraint() throws IloException
+	{
+		IloNumExpr fobj = createNonLinearObjectiveExpression();
+
+		cplex.addGe(fobj, _objLB, "obj_lb");
+	}
+
 	private void solveModel() throws IloException
 	{
 		Separator separator = new Separator(this);
@@ -344,7 +387,9 @@ public class RectangularModel implements RectangularModelInterface
 //		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
 
 		cplex.use(separator);
+
 		cplex.setParam(IntParam.TimeLimit, _clock.remaining());
+		
 		cplex.solve();
 		_last_lb = cplex.getBestObjValue();
 		
@@ -424,9 +469,10 @@ public class RectangularModel implements RectangularModelInterface
     	}
     }
 	
-	private void closeSolver()
+	public void closeSolver()
 	{
-		cplex.end();
+		if (!_keepAlive)
+			cplex.end();
 	}
 
 	public ArrayList<Cluster> getClusters()
@@ -482,5 +528,50 @@ public class RectangularModel implements RectangularModelInterface
 	public double getLastLB() 
 	{
 		return _last_lb ;
+	}
+
+	public void setObjLB(double lb) 
+	{
+		_objLB = lb;
+	}
+
+	public void keepAlive() 
+	{
+		_keepAlive = true;
+	}
+
+	public int getNSolutions() throws IloException 
+	{
+		return cplex.getSolnPoolNsolns();
+	}
+
+	public double getObjValueOfSolutionN(int s) throws IloException
+	{
+		return cplex.getObjValue(s);
+	}
+
+	public Solution getSolutionNumber(int s) throws UnknownObjectException, IloException 
+	{
+		_clusters = new ArrayList<Cluster>();
+    	for(int j=0; j<n; ++j)
+    	{
+    		RectangularCluster cluster = new RectangularCluster(d);
+    		
+			for(int t=0; t<d; ++t)
+			{
+				cluster.setMin(t, cplex.getValue(l[j][t], s));
+				cluster.setMax(t, cplex.getValue(r[j][t], s));
+			}
+    		
+    		_clusters.add(cluster);
+    	}
+    		
+		for(int i=0; i<p; ++i)
+	    for(int j=0; j<n; ++j) if( cplex.getValue(z[i][j], s) > 0.9 )
+	    {
+	    	_clusters.get(j).add(_instance.getPoint(i));
+	    }
+
+		return new Solution(_clusters);
 	}
 }

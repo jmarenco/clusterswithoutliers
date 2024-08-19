@@ -27,7 +27,17 @@ public class Viewer
 	private JFrame _frame;
 	static int viewnumber = 0;
 	
-	public Viewer(Instance instance, Solution solution)
+	public Viewer(Instance instance, Solution solution, String title)
+	{
+		create_view(instance, solution, title);
+	}
+
+	public Viewer(Instance instance, Solution solution) 
+	{
+		create_view(instance, solution, "");
+	}
+
+	private void create_view(Instance instance, Solution solution, String title) 
 	{
 		viewnumber++;
 		XYSeriesCollection dataset = createDataset(instance, solution);
@@ -61,7 +71,7 @@ public class Viewer
 		}
 		
 		_frame = new JFrame();
-		_frame.setTitle("View number: " + viewnumber);
+		_frame.setTitle("View number " + viewnumber + ": " + title);
 		_frame.setBounds(100, 100, 622, 640);
 		_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		_frame.getContentPane().add(chartPanel);

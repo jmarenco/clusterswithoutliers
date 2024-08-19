@@ -21,18 +21,22 @@ public class IncrementalSolver
 	private Instance _instance_base;
 	private Instance _instance_cur;
 
-	private Solution _last_solution;
+	private Solution _last_solution = null;
+	private Solution _best_incumbent = null;
 	private double _best_lb = 0.0;
+	private double _best_ub = Double.MAX_VALUE;
 	private HashSet<Integer> _covered_by_last_solution;
 	
 	private Clock _clock;
 	
 	private IncrementalManager _incrementalManager;
+	private RectangularModel _model;
 	
 	// Config
 	private static boolean _verbose = true;
 	private static boolean _summary = true;
 	private static boolean _show_intermediate_solutions = false;
+	private double myEpsilon = 0.000001;
 	
 	public static enum Metric { None, Random, Eccentricity, DistanceEccentricity, BorderPoints }; 
 	public static Metric incrementalMetric = Metric.DistanceEccentricity;
@@ -66,7 +70,7 @@ public class IncrementalSolver
 		
 		boolean solved = false;
 		int iter = 0;
-		while (!solved)
+		while (!solved && !_clock.timeout())
 		{
 			solve_current();
 			
@@ -74,27 +78,40 @@ public class IncrementalSolver
 			
 			if (!solved)
 			{
-				add_points_to_current(_incrementalManager.getNextSetOfPoints(_covered_by_last_solution));
+				try_to_improve_incumbent();
+				
+				if (_best_lb + myEpsilon >= _best_ub)
+					solved = true;
+				
+				if (!solved)
+					add_points_to_current(_incrementalManager.getNextSetOfPoints(_covered_by_last_solution));
 			}
+
 			iter++;
+			closeModel();
 		}
 		
 		_clock.stop();
 		
 		if (_summary)
 		{
-			System.out.print(_instance_base.getName() + " | Incr | ");
-			System.out.print("Obj: " + String.format("%6.4f", _last_solution == null? "INF" : _last_solution.calcObjVal()) + " | ");
+			System.out.print(_instance_base.getName() + " | " + method() + " | ");
+			System.out.print("LB: " + String.format("%6.4f", _best_lb) + " | ");
+			System.out.print("UB: " + String.format("%6.4f", _best_incumbent == null? "INF" : _best_ub) + " | ");
+			System.out.print("GAP: " + String.format("%6.2f", 100.0*(_best_ub - _best_lb) / _best_lb) + "% | ");
 			System.out.print(String.format("%6.2f", _clock.elapsed()) + " sec. | ");
 			System.out.print("MT: " + _clock.getTimeLimit() + " | ");
 			System.out.println();
 		}
 		
 		// Log the solution
-		Results.Status stat = _last_solution == null || !solved? Status.NOSOLUTION : (_clock.timeout()? Status.FEASIBLE : Status.OPTIMAL);
-		double ub = solved? _last_solution.calcObjVal() : Double.MAX_VALUE;
-		double lb = _best_lb;
-		Logger.log(_instance_base, method(), new Results(_last_solution, stat, lb, ub, _clock.elapsed(), -1, iter, _instance_cur.getPoints()));
+		Results.Status stat = _best_incumbent == null? Status.NOSOLUTION : (_best_lb + myEpsilon < _best_ub  ? Status.FEASIBLE : Status.OPTIMAL);
+		Logger.log(_instance_base, method(), new Results(_last_solution, stat, _best_lb, _best_ub, _clock.elapsed(), -1, iter, _instance_cur.getPoints()));
+	}
+
+	private void closeModel() 
+	{
+		_model.closeSolver();
 	}
 
 	private String method() 
@@ -138,13 +155,21 @@ public class IncrementalSolver
 		verb("Solving current instance of size " + _instance_cur.getPoints());
 		
 //		IncrementalStandardModel model = new IncrementalStandardModel(_instance_cur);
-		RectangularModel model = new RectangularModel(_instance_cur);
-		model.setLogSolution(false);
+		_model = new RectangularModel(_instance_cur);
+		_model.setLogSolution(false);
+		_model.keepAlive();
 
-		model.setMaxTime((int)_clock.remaining());
-		model.setStrongBinding(false);
-		_last_solution = model.solve();
-		_best_lb = Math.max(_best_lb, model.getLastLB());
+		_model.setMaxTime((int) Math.ceil(_clock.remaining()));
+		_model.setStrongBinding(false);
+
+//		OBS: I tried setting a LB on the objective function, but it seems this is not a good practice (in general).
+//		See for example: 
+//		https://or.stackexchange.com/questions/4264/how-to-use-tight-upper-and-lower-bounds-to-get-to-the-optimal-value-via-branch-a
+//		if (_best_lb > 0.0)
+//			_model.setObjLB(_best_lb);
+		
+		_last_solution = _model.solve();
+		_best_lb = Math.max(_best_lb, _model.getLastLB());
 	}
 
 	private void verb(String string) 
@@ -176,18 +201,79 @@ public class IncrementalSolver
 		verb("Solution has " + (_instance_base.getPoints() - ncovered) + " uncovered points [allowed = " + _instance_base.getOutliers() + "]" );
 		
 		if (_show_intermediate_solutions)
-			new Viewer(_instance_base, _last_solution);
+			new Viewer(_instance_base, _last_solution, "" + _last_solution.calcObjVal());
 		
-		return ncovered >= (_instance_base.getPoints() - _instance_base.getOutliers());
+		
+		boolean feasible = ncovered >= (_instance_base.getPoints() - _instance_base.getOutliers());
+		
+		if (feasible)
+		{
+			double ub = _last_solution.calcObjVal();
+			
+			if (ub < _best_ub)
+			{
+				_best_ub = ub;
+				_best_incumbent = _last_solution;
+			}
+		}
+		
+		return feasible;
 	}
 
 	/**
-	 * Selects a set of points from the _unused_points and adds these to _instance_cur.
-	 * 
-	 * From the _unused_points which are not covered by the last solution, it selects those 
-	 * with the highest value of excentricity.
-	 * @param new_points 
+	 * Tries to improve the incumbent in order to improve the UB.
+	 * @throws IloException 
 	 */
+	private void try_to_improve_incumbent() throws IloException 
+	{
+		// For the moment, we will ask the model for the previous integer solutions found
+		// with the hope that some of it covers the entire set of points.
+		// Note that solutions are consulted in increasing order by obj function, so as 
+		// soon as we found a (globally) feasible one, we can take it and stop the search.
+		
+		int n = _model.getNSolutions();
+		
+		for (int s = 1; s <= n; s++)
+		{
+			Solution sol = _model.getSolutionNumber(s);
+			double sol_ub = _model.getObjValueOfSolutionN(s);
+			
+			if (sol_ub >= _best_ub) // Done... no more interesting solutions here
+				break;
+			else if (isFeasible(sol)) // Super! We found an improvement
+			{
+				System.out.println(" >>>>>> Incumbent improved with suboptimal solutions from previous iteration! [" + _best_ub + " -> " + sol_ub  + "]");
+				
+				_best_ub = sol_ub;
+				_best_incumbent = sol;
+
+				// We stop here because all subsequent solutions are worst or equal
+				break;
+			}
+		}
+	}
+
+	private boolean isFeasible(Solution sol) 
+	{
+		int ncovered = 0;
+		
+		for (int i = 0; i < _instance_base.getPoints(); i++)
+		{
+			Point p = _instance_base.getPoint(i);
+			
+			for (Cluster cluster : sol.getClusters())
+			{
+				if (cluster.covers(p)) // covered!
+				{
+					ncovered++;
+					break;
+				}
+			}
+		}
+		
+		return ncovered >= (_instance_base.getPoints() - _instance_base.getOutliers());	
+	}
+
 	private void add_points_to_current(Set<Point> new_points) 
 	{
 		for (Point p : new_points)

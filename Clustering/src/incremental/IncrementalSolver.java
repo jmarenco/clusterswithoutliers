@@ -80,7 +80,7 @@ public class IncrementalSolver
 			{
 				try_to_improve_incumbent();
 				
-				if (_best_lb + myEpsilon >= _best_ub)
+				if ((_best_ub - _best_lb)/ (_best_lb + myEpsilon) < myEpsilon) // gap is 0!
 					solved = true;
 				
 				if (!solved)

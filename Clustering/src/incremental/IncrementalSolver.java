@@ -46,6 +46,9 @@ public class IncrementalSolver
 		_instance_base = instance;
 		_clock = new Clock();
 		_last_solution = null;
+		
+		_best_incumbent = Solution.withAllPoints(instance);
+		_best_ub = _best_incumbent.calcObjVal();
 	}
 	
 	public void setMaxTime(int maxTime) 
@@ -96,7 +99,7 @@ public class IncrementalSolver
 		{
 			System.out.print(_instance_base.getName() + " | " + method() + " | ");
 			System.out.print("LB: " + String.format("%6.4f", _best_lb) + " | ");
-			System.out.print("UB: " + String.format("%6.4f", _best_incumbent == null? "INF" : _best_ub) + " | ");
+			System.out.print("UB: " + _best_incumbent == null? "INF" : String.format("%6.4f",_best_ub) + " | ");
 			System.out.print("GAP: " + String.format("%6.2f", 100.0*currentGap()) + "% | ");
 			System.out.print(String.format("%6.2f", _clock.elapsed()) + " sec. | ");
 			System.out.print("MT: " + _clock.getTimeLimit() + " | ");
@@ -104,7 +107,7 @@ public class IncrementalSolver
 		}
 		
 		// Log the solution
-		Results.Status stat = _best_incumbent == null? Status.NOSOLUTION : (_best_lb + myEpsilon < _best_ub  ? Status.FEASIBLE : Status.OPTIMAL);
+		Results.Status stat = _best_incumbent == null? Status.NOSOLUTION : (currentGap() < myEpsilon? Status.OPTIMAL : Status.FEASIBLE);
 		Logger.log(_instance_base, method(), new Results(_last_solution, stat, _best_lb, _best_ub, _clock.elapsed(), -1, iter, _instance_cur.getPoints()));
 	}
 
@@ -243,7 +246,7 @@ public class IncrementalSolver
 		
 		int n = _model.getNSolutions();
 		
-		for (int s = 1; s <= n; s++)
+		for (int s = 1; s < n; s++)
 		{
 			double sol_obj = _model.getObjValueOfSolutionN(s);
 			if (sol_obj >= _best_ub) // Done... no more interesting solutions here (assuming they are sorted by obj value)

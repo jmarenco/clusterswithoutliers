@@ -81,4 +81,11 @@ public class Solution
 		
 		return span;
 	}
+
+	public static Solution withAllPoints(Instance instance) 
+	{
+		Solution ret = new Solution();
+		ret.add(Cluster.withAllPoints(instance));
+		return ret;
+	}
 }

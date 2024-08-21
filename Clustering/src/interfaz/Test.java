@@ -10,6 +10,7 @@ import colgen.HalfRelaxedAlgorithm;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
+import general.Solution;
 import ilog.concert.IloException;
 import incremental.BorderPointsManager;
 import incremental.EccentricityManager;
@@ -37,7 +38,11 @@ public class Test
 		
 		String model = argmap.stringArg("-m", "");
 
-		if(model.equals("sm"))
+		if(argmap.containsArg("-writeonly"))
+			writeInstance(args);
+		else if(argmap.containsArg("-showonly"))
+			showInstance(args);
+		else if(model.equals("sm"))
 			solveStandard(args);
 		else if(model.equals("pop"))
 			solvePop(args);
@@ -51,9 +56,7 @@ public class Test
 			solveKMeans(args);
 		else if(model.equals("inc"))
 			solveIncremental(args);
-		else if(argmap.containsArg("-writeonly"))
-			writeInstance(args);
-		else
+		else 
 			showUsage();
 	}
 	
@@ -256,6 +259,12 @@ public class Test
 		
 		InstanceWriter.write(instance, argmap.stringArg("-writeonly", "instance.dat"));
 	}
+
+	private static void showInstance(String[] args)
+	{
+		Instance instance = constructInstance(args);
+		new Viewer(instance, new Solution());
+	}
 	
 	private static void showUsage()
 	{
@@ -292,6 +301,7 @@ public class Test
 		System.out.println("    -maxdist <f>                           Max distance to neighbours (for incremental resolution) [def: 0.2]");
 		System.out.println("    -verbose                               Verbose output");
 		System.out.println("    -writeonly <s>                         Does not solve, only writes instance to file <s>");
+		System.out.println("    -showonly                              Does not solve, only show a plot with the instance");
 		System.out.println("    -ins <s>                               Read the instance from <s>");
 		System.out.println("    -?                                     Displays this help");
 		System.out.println();

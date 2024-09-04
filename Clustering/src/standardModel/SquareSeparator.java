@@ -170,7 +170,6 @@ public class SquareSeparator implements SeparatorInterface
 			cplex.setLinearCoef(objective, zVar(i,_cluster), alpha[i]);
 
 		// Solve
-		cplex.exportModel("c:\\users\\jmarenco\\sep.lp");
 		cplex.solve();
 
 		// The model should be feasible and bounded ...

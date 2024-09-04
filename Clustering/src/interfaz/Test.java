@@ -92,6 +92,7 @@ public class Test
 		LinearSeparatorSparse.setThreshold(threshold);
 		LinearSeparatorSparse.setLowerLimit(lowerLimit);
 		LinearSeparatorSparse.setUpperLimit(upperLimit);
+		SquareSeparator.setThreshold(threshold);
 		SquareSeparator.setSparsingRatio(sparsityRatio);
 
 		if( symmBreak == 1 )

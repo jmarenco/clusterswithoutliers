@@ -23,6 +23,7 @@ import standardModel.LinearSeparator;
 import standardModel.LinearSeparatorSparse;
 import standardModel.RectangularModel;
 import standardModel.Separator;
+import standardModel.SquareSeparator;
 
 public class Test
 {
@@ -74,11 +75,12 @@ public class Test
 		int objective = argmap.intArg("-fobj", 0);
 		double lowerLimit = argmap.doubleArg("-llim", 0.1);
 		double upperLimit = argmap.doubleArg("-ulim", 0.9);
+		double sparsityRatio = argmap.doubleArg("-sprat", 0.25);
 
 		Instance instance = constructInstance(args);
 
 		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
-		RectangularModel.showSummary(!argmap.containsArg("-verbose"));
+		RectangularModel.showSummary(true);
 		RectangularModel.setObjective(objective == 1 ? RectangularModel.Objective.Area : RectangularModel.Objective.Span);
 		
 		Separator.setActive(cutRounds > 0);
@@ -90,6 +92,7 @@ public class Test
 		LinearSeparatorSparse.setThreshold(threshold);
 		LinearSeparatorSparse.setLowerLimit(lowerLimit);
 		LinearSeparatorSparse.setUpperLimit(upperLimit);
+		SquareSeparator.setSparsingRatio(sparsityRatio);
 
 		if( symmBreak == 1 )
 			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);
@@ -279,7 +282,8 @@ public class Test
 		System.out.println("    -cr <n>                                Cutting rounds for sm model [def: 0]");
 		System.out.println("    -sf <n>                                Skip factor for sm model [def: 0]");
 		System.out.println("    -cb [0|1]                              Use cut and branch on sm model [def: 0]");
-		System.out.println("    -sstr [0|1|2|3]                        Separation strategy on sm model [def: 0]");
+		System.out.println("    -sstr [0-4]                            Separation strategy on sm model [def: 0]");
+		System.out.println("    -sprat <f>                             Sparsity ratio in square separator for sm model [def: 0.25]");
 		System.out.println("    -fobj [0|1]                            Objective function in sm model [def: 0]");
 		System.out.println("    -llim <n>                              Lower limit for sparse separation in sm model [def: 0.1]");
 		System.out.println("    -ulim <n>                              Upper limit for sparse separation in sm model [def: 0.9]");

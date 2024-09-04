@@ -2,8 +2,10 @@ package standardModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 import general.Instance;
+import general.Point;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
@@ -15,6 +17,8 @@ public class SquareSeparator implements SeparatorInterface
 	private Separator _parent;
 	private RectangularModelInterface _model;
 	private Instance _instance;
+	private SparsingStrategy _strategy;
+	private ArrayList<Point> _points;
 	
 	private int _cluster;
 	private int _dimension1;
@@ -23,6 +27,7 @@ public class SquareSeparator implements SeparatorInterface
 	private double[] _coordinates2;
 	
 	private static double _threshold = 0.5;
+	private static double _sparsingRatio = 0.3;
 	private static boolean _verbose = false;
 	private static boolean _check = false;
 	private static boolean _allClusters = false;
@@ -36,15 +41,19 @@ public class SquareSeparator implements SeparatorInterface
 	private IloNumVar b2;
 	private IloObjective objective;
 	
-	public SquareSeparator(Separator parent, int cluster) throws IloException
+	public static enum SparsingStrategy { Random, None };
+	
+	public SquareSeparator(Separator parent, int cluster, SparsingStrategy strategy) throws IloException
 	{
 		_parent = parent;
 		_model = parent.getModelInterface();
 		_instance = _model.getInstance();
+		_strategy = strategy;
 
 		_cluster = cluster;
 		_dimension1 = 0;
 		_dimension2 = 1;
+		_points = getSparsePoints();
 		_coordinates1 = getCoordinates(0);
 		_coordinates2 = getCoordinates(1);
 		
@@ -282,12 +291,30 @@ public class SquareSeparator implements SeparatorInterface
 			cplex.end();
 	}
 	
+	// Gets the sparse points
+	public ArrayList<Point> getSparsePoints()
+	{
+		ArrayList<Point> ret = new ArrayList<Point>();
+		Random random = new Random(0);
+		
+		for(int i=0; i<_instance.getPoints(); ++i)
+		{
+			if( _strategy == SparsingStrategy.None )
+				ret.add(_instance.getPoint(i));
+			
+			if( _strategy == SparsingStrategy.Random && random.nextDouble() < _sparsingRatio )
+				ret.add(_instance.getPoint(i));
+		}
+
+		return ret;
+	}
+	
 	// Gets the coordinates in current dimension, with no repetitions and in ascending order
 	public double[] getCoordinates(int dimension)
 	{
 		ArrayList<Double> coordinates = new ArrayList<Double>();
-		for(int i=0; i<_instance.getPoints(); ++i) if( !coordinates.contains(_instance.getPoint(i).get(dimension)))
-			coordinates.add(_instance.getPoint(i).get(dimension));
+		for(Point point: _points) if( !coordinates.contains(point.get(dimension)))
+			coordinates.add(point.get(dimension));
 		
 		Collections.sort(coordinates);
 		
@@ -320,6 +347,15 @@ public class SquareSeparator implements SeparatorInterface
 	public static double getThreshold()
 	{
 		return _threshold;
+	}
+	
+	public static void setSparsingRatio(double value)
+	{
+		_sparsingRatio = value;
+	}
+	public static double getSparsingRatio()
+	{
+		return _sparsingRatio;
 	}
 }
 

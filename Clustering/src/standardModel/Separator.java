@@ -7,6 +7,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
+import standardModel.SquareSeparator.SparsingStrategy;
 
 public class Separator extends IloCplex.UserCutCallback
 {
@@ -47,10 +48,10 @@ public class Separator extends IloCplex.UserCutCallback
 					_linearSeparators.add(new LinearSeparatorRestricted(this, i, j));
 			}
 			
-			if( _strategy == 3 )
+			if( _strategy == 3 || _strategy == 4 )
 			{
 				for(int i=0; i<_instance.getClusters(); ++i)
-					_linearSeparators.add(new SquareSeparator(this, i));
+					_linearSeparators.add(new SquareSeparator(this, i, _strategy == 3 ? SparsingStrategy.None : SparsingStrategy.Random));
 			}
 		}
 		catch(Exception e)

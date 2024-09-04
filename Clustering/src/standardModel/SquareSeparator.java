@@ -42,7 +42,7 @@ public class SquareSeparator implements SeparatorInterface
 	private IloNumVar b2;
 	private IloObjective objective;
 	
-	public static enum SparsingStrategy { Random, None };
+	public static enum SparsingStrategy { Random, FirstQuadrant, SecondQuadrant, ThirdQuadrant, FourthQuadrant, None };
 	
 	public SquareSeparator(Separator parent, int cluster, SparsingStrategy strategy) throws IloException
 	{
@@ -320,6 +320,30 @@ public class SquareSeparator implements SeparatorInterface
 			}
 			
 			if( _strategy == SparsingStrategy.Random && random.nextDouble() < _sparsingRatio )
+			{
+				_points.add(_instance.getPoint(i));
+				_pointIndices.add(i);
+			}
+			
+			if( _strategy == SparsingStrategy.FirstQuadrant && _instance.getPoint(i).get(0) < 0 && _instance.getPoint(i).get(1) < 0 )
+			{
+				_points.add(_instance.getPoint(i));
+				_pointIndices.add(i);
+			}
+			
+			if( _strategy == SparsingStrategy.SecondQuadrant && _instance.getPoint(i).get(0) > 0 && _instance.getPoint(i).get(1) < 0 )
+			{
+				_points.add(_instance.getPoint(i));
+				_pointIndices.add(i);
+			}
+			
+			if( _strategy == SparsingStrategy.ThirdQuadrant && _instance.getPoint(i).get(0) < 0 && _instance.getPoint(i).get(1) > 0 )
+			{
+				_points.add(_instance.getPoint(i));
+				_pointIndices.add(i);
+			}
+			
+			if( _strategy == SparsingStrategy.FourthQuadrant && _instance.getPoint(i).get(0) > 0 && _instance.getPoint(i).get(1) > 0 )
 			{
 				_points.add(_instance.getPoint(i));
 				_pointIndices.add(i);

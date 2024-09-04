@@ -18,6 +18,7 @@ public class SquareSeparator implements SeparatorInterface
 	private RectangularModelInterface _model;
 	private Instance _instance;
 	private SparsingStrategy _strategy;
+	private ArrayList<Integer> _pointIndices;
 	private ArrayList<Point> _points;
 	
 	private int _cluster;
@@ -53,7 +54,9 @@ public class SquareSeparator implements SeparatorInterface
 		_cluster = cluster;
 		_dimension1 = 0;
 		_dimension2 = 1;
-		_points = getSparsePoints();
+
+		constructSparsePoints();
+		
 		_coordinates1 = getCoordinates(0);
 		_coordinates2 = getCoordinates(1);
 		
@@ -76,7 +79,7 @@ public class SquareSeparator implements SeparatorInterface
 		b2 = cplex.numVar(0, 10 * _instance.getPoints(), "b2");
 		
 		for(int i=0; i<_instance.getPoints(); ++i)
-			alpha[i] = cplex.numVar(0, 1e10, "alfa" + i);
+			alpha[i] = cplex.numVar(0, _pointIndices.contains(i) ? 1e10 : 0, "alfa" + i);
 		
 		// Create objective function
 		IloNumExpr fobj = cplex.linearNumExpr();
@@ -104,7 +107,7 @@ public class SquareSeparator implements SeparatorInterface
 			lhs = cplex.sum(lhs, cplex.prod(-_coordinates2[j2], a2));
 			lhs = cplex.sum(lhs, cplex.prod(_coordinates2[i2], b2));
 			
-			for(int k=0; k<_instance.getPoints(); ++k) if( _coordinates1[i1]-0.001 <= _instance.getPoint(k).get(_dimension1) && _instance.getPoint(k).get(_dimension1) <= _coordinates1[j1]+0.001 && _coordinates2[i2]-0.001 <= _instance.getPoint(k).get(_dimension2) && _instance.getPoint(k).get(_dimension2) <= _coordinates2[j2]+0.001 )
+			for(Integer k: _pointIndices) if( _coordinates1[i1]-0.001 <= _instance.getPoint(k).get(_dimension1) && _instance.getPoint(k).get(_dimension1) <= _coordinates1[j1]+0.001 && _coordinates2[i2]-0.001 <= _instance.getPoint(k).get(_dimension2) && _instance.getPoint(k).get(_dimension2) <= _coordinates2[j2]+0.001 )
 				lhs = cplex.sum(lhs, alpha[k]);
 			
 			cplex.addLe(lhs, 0, "c" + i1 + "_" + j1 + "_" + i2 + "_" + j2);
@@ -119,24 +122,32 @@ public class SquareSeparator implements SeparatorInterface
 		lhs1 = cplex.sum(lhs1, cplex.prod(-1, beta));
 		lhs1 = cplex.sum(lhs1, cplex.prod(-_instance.max(_dimension1), a1));
 		lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(_dimension1), b1));
+		lhs1 = cplex.sum(lhs1, cplex.prod(-_instance.max(_dimension2), a2));
+		lhs1 = cplex.sum(lhs1, cplex.prod(_instance.max(_dimension2), b2));
 		
 		lhs2 = cplex.sum(lhs2, cplex.prod(-1,  beta));
 		lhs2 = cplex.sum(lhs2, cplex.prod(-_instance.min(_dimension1), a1));
 		lhs2 = cplex.sum(lhs2, cplex.prod(_instance.min(_dimension1), b1));
+		lhs2 = cplex.sum(lhs2, cplex.prod(-_instance.max(_dimension2), a2));
+		lhs2 = cplex.sum(lhs2, cplex.prod(_instance.max(_dimension2), b2));
 
 		lhs3 = cplex.sum(lhs3, cplex.prod(-1, beta));
-		lhs3 = cplex.sum(lhs3, cplex.prod(-_instance.max(_dimension2), a2));
-		lhs3 = cplex.sum(lhs3, cplex.prod(_instance.max(_dimension2), b2));
+		lhs3 = cplex.sum(lhs3, cplex.prod(-_instance.max(_dimension1), a1));
+		lhs3 = cplex.sum(lhs3, cplex.prod(_instance.max(_dimension1), b1));
+		lhs3 = cplex.sum(lhs3, cplex.prod(-_instance.min(_dimension2), a2));
+		lhs3 = cplex.sum(lhs3, cplex.prod(_instance.min(_dimension2), b2));
 		
 		lhs4 = cplex.sum(lhs4, cplex.prod(-1,  beta));
+		lhs4 = cplex.sum(lhs4, cplex.prod(-_instance.min(_dimension1), a1));
+		lhs4 = cplex.sum(lhs4, cplex.prod(_instance.min(_dimension1), b1));
 		lhs4 = cplex.sum(lhs4, cplex.prod(-_instance.min(_dimension2), a2));
 		lhs4 = cplex.sum(lhs4, cplex.prod(_instance.min(_dimension2), b2));
 		
-		cplex.addLe(lhs1, 0, "inflim1");
-		cplex.addLe(lhs2, 0, "suplim1");
-		cplex.addLe(lhs3, 0, "inflim2");
-		cplex.addLe(lhs4, 0, "suplim2");
-		
+		cplex.addLe(lhs1, 0, "maxmaxlim1");
+		cplex.addLe(lhs2, 0, "minmaxlim1");
+		cplex.addLe(lhs3, 0, "maxminlim2");
+		cplex.addLe(lhs4, 0, "minminlim2");
+
 		// Create normalization constraint
 		IloNumExpr lhs5 = cplex.linearNumExpr();
 		lhs5 = cplex.sum(lhs5, a1);
@@ -159,6 +170,7 @@ public class SquareSeparator implements SeparatorInterface
 			cplex.setLinearCoef(objective, zVar(i,_cluster), alpha[i]);
 
 		// Solve
+		cplex.exportModel("c:\\users\\jmarenco\\sep.lp");
 		cplex.solve();
 
 		// The model should be feasible and bounded ...
@@ -224,7 +236,7 @@ public class SquareSeparator implements SeparatorInterface
 	private void printInequality() throws IloException
 	{
 		System.out.printf("%.2f * r1", cplex.getValue(a1));
-		System.out.printf(" - %.2f * l1 >=", cplex.getValue(b1));
+		System.out.printf(" - %.2f * l1 ", cplex.getValue(b1));
 		System.out.printf(" + %.2f * r2", cplex.getValue(a2));
 		System.out.printf(" - %.2f * l2 >=", cplex.getValue(b2));
 		
@@ -263,7 +275,7 @@ public class SquareSeparator implements SeparatorInterface
 			
 			if (lhs < -0.01)
 			{
-				System.out.print("************** Not valid! a = ");
+				System.out.print("************** Not valid! x = ");
 				
 				for(int i=0; i<_instance.getPoints(); ++i)
 					System.out.print(x[i] ? "1 " : "0 ");
@@ -292,21 +304,27 @@ public class SquareSeparator implements SeparatorInterface
 	}
 	
 	// Gets the sparse points
-	public ArrayList<Point> getSparsePoints()
+	public void constructSparsePoints()
 	{
-		ArrayList<Point> ret = new ArrayList<Point>();
+		_points = new ArrayList<Point>();
+		_pointIndices = new ArrayList<Integer>();
+		
 		Random random = new Random(0);
 		
 		for(int i=0; i<_instance.getPoints(); ++i)
 		{
 			if( _strategy == SparsingStrategy.None )
-				ret.add(_instance.getPoint(i));
+			{
+				_points.add(_instance.getPoint(i));
+				_pointIndices.add(i);
+			}
 			
 			if( _strategy == SparsingStrategy.Random && random.nextDouble() < _sparsingRatio )
-				ret.add(_instance.getPoint(i));
+			{
+				_points.add(_instance.getPoint(i));
+				_pointIndices.add(i);
+			}
 		}
-
-		return ret;
 	}
 	
 	// Gets the coordinates in current dimension, with no repetitions and in ascending order

@@ -64,6 +64,16 @@ public class Separator extends IloCplex.UserCutCallback
 					_linearSeparators.add(new SquareSeparator(this, i, SparsingStrategy.FourthQuadrant));
 				}
 			}
+			
+			if( _strategy == 6 )
+			{
+				for(int i=0; i<_instance.getClusters(); ++i)
+					_linearSeparators.add(new SquareSeparatorSparse(this, i));
+
+//				for(int i=0; i<_instance.getClusters(); ++i)
+//				for(int j=0; j<_instance.getDimension(); ++j)
+//					_linearSeparators.add(new LinearSeparator(this, i, j));
+			}
 		}
 		catch(Exception e)
 		{

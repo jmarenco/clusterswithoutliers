@@ -2,22 +2,19 @@ package standardModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Random;
 
 import general.Instance;
 import general.Point;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
-import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex;
 
-public class SquareSeparator implements SeparatorInterface
+public class SquareSeparatorSparse implements SeparatorInterface
 {
 	private Separator _parent;
 	private RectangularModelInterface _model;
 	private Instance _instance;
-	private SparsingStrategy _strategy;
 	private ArrayList<Integer> _pointIndices;
 	private ArrayList<Point> _points;
 	
@@ -26,13 +23,14 @@ public class SquareSeparator implements SeparatorInterface
 	private int _dimension2;
 	private double[] _coordinates1;
 	private double[] _coordinates2;
-	
+
+	private static double _lowerBound = 0.1;
+	private static double _upperBound = 1e6;
 	private static double _threshold = 0.5;
-	private static double _sparsingRatio = 0.3;
 	private static boolean _verbose = false;
 	private static boolean _check = false;
 	private static boolean _allClusters = false;
-	private static boolean _spanRhs = true;
+	private static boolean _spanRhs = false;
 	
 	private IloCplex cplex;
 	private IloNumVar[] alpha;
@@ -41,31 +39,30 @@ public class SquareSeparator implements SeparatorInterface
 	private IloNumVar b1;
 	private IloNumVar a2;
 	private IloNumVar b2;
-	private IloObjective objective;
 	
-	public static enum SparsingStrategy { Random, FirstQuadrant, SecondQuadrant, ThirdQuadrant, FourthQuadrant, None };
-	
-	public SquareSeparator(Separator parent, int cluster, SparsingStrategy strategy) throws IloException
+	public SquareSeparatorSparse(Separator parent, int cluster) throws IloException
 	{
 		_parent = parent;
 		_model = parent.getModelInterface();
 		_instance = _model.getInstance();
-		_strategy = strategy;
 
 		_cluster = cluster;
 		_dimension1 = 0;
 		_dimension2 = 1;
-
+	}
+	
+	public void separate() throws IloException
+	{
 		constructSparsePoints();
 		
 		_coordinates1 = getCoordinates(0);
 		_coordinates2 = getCoordinates(1);
 		
-		createModel();
-	}
-	
-	private void createModel() throws IloException
-	{
+		if( _points.size() > 12 )
+			return;
+		
+		long inicio = System.currentTimeMillis();
+		
 		// Create model
 		cplex = new IloCplex();
 		cplex.setOut(null);
@@ -87,16 +84,17 @@ public class SquareSeparator implements SeparatorInterface
 		
 		// Create objective function
 		IloNumExpr fobj = cplex.linearNumExpr();
+		
 		fobj = cplex.sum(fobj, cplex.prod(-1.0, beta));
-		fobj = cplex.sum(fobj, cplex.prod(-1.0, a1));
-		fobj = cplex.sum(fobj, cplex.prod(1.0, b1));
-		fobj = cplex.sum(fobj, cplex.prod(-1.0, a2));
-		fobj = cplex.sum(fobj, cplex.prod(1.0, b2));
+		fobj = cplex.sum(fobj, cplex.prod(-rVar(_cluster, _dimension1), a1));
+		fobj = cplex.sum(fobj, cplex.prod(lVar(_cluster, _dimension1), b1));
+		fobj = cplex.sum(fobj, cplex.prod(-rVar(_cluster, _dimension2), a2));
+		fobj = cplex.sum(fobj, cplex.prod(lVar(_cluster, _dimension2), b2));
 
 		for(int i=0; i<_instance.getPoints(); ++i)
-			fobj = cplex.sum(fobj, cplex.prod(1.0, alpha[i]));
+			fobj = cplex.sum(fobj, cplex.prod(zVar(i,_cluster), alpha[i]));
 		
-		objective = cplex.addMaximize(fobj);
+		cplex.addMaximize(fobj);
 
 		// Create constraints for pairs of points
 		for(int i1=0; i1<_coordinates1.length; ++i1)
@@ -161,20 +159,8 @@ public class SquareSeparator implements SeparatorInterface
 			lhs5 = cplex.sum(lhs5, a2);
 			lhs5 = cplex.sum(lhs5, b2);
 	
-			cplex.addEq(lhs5, _instance.getPoints() + 1, "norm");
+			cplex.addEq(lhs5, 5 /*_instance.getPoints() + 1*/, "norm");
 		}
-	}
-	
-	public void separate() throws IloException
-	{
-		// Update objective function
-		cplex.setLinearCoef(objective, -rVar(_cluster, _dimension1), a1);
-		cplex.setLinearCoef(objective, lVar(_cluster, _dimension1), b1);
-		cplex.setLinearCoef(objective, -rVar(_cluster, _dimension2), a2);
-		cplex.setLinearCoef(objective, lVar(_cluster, _dimension2), b2);
-
-		for(int i=0; i<_instance.getPoints(); ++i)
-			cplex.setLinearCoef(objective, zVar(i,_cluster), alpha[i]);
 
 		// Solve
 		cplex.solve();
@@ -205,6 +191,10 @@ public class SquareSeparator implements SeparatorInterface
 					addCut(i);
 			}
 		}
+		
+		cplex.end();
+		
+//		System.out.println("SSP: " + _coordinates1.length + " -> " + (System.currentTimeMillis() - inicio)/1000.0 + " seg");
 	}
 	
 	// Adds inequality to the master problem
@@ -251,6 +241,7 @@ public class SquareSeparator implements SeparatorInterface
 
 		System.out.printf(" - %.2f", cplex.getValue(beta));
 		System.out.printf(" (viol: %.2f)", violation());
+		System.out.print(violation() > _threshold ? " (c)" : "");
 		System.out.println();
 	}
 	
@@ -310,50 +301,15 @@ public class SquareSeparator implements SeparatorInterface
 	}
 	
 	// Gets the sparse points
-	public void constructSparsePoints()
+	public void constructSparsePoints() throws IloException
 	{
 		_points = new ArrayList<Point>();
 		_pointIndices = new ArrayList<Integer>();
 		
-		Random random = new Random(0);
-		
-		for(int i=0; i<_instance.getPoints(); ++i)
+		for(int i=0; i<_instance.getPoints(); ++i) if( zVar(i, _cluster) >= _lowerBound && zVar(i, _cluster) <= _upperBound )
 		{
-			if( _strategy == SparsingStrategy.None )
-			{
-				_points.add(_instance.getPoint(i));
-				_pointIndices.add(i);
-			}
-			
-			if( _strategy == SparsingStrategy.Random && random.nextDouble() < _sparsingRatio )
-			{
-				_points.add(_instance.getPoint(i));
-				_pointIndices.add(i);
-			}
-			
-			if( _strategy == SparsingStrategy.FirstQuadrant && _instance.getPoint(i).get(0) < 0 && _instance.getPoint(i).get(1) < 0 )
-			{
-				_points.add(_instance.getPoint(i));
-				_pointIndices.add(i);
-			}
-			
-			if( _strategy == SparsingStrategy.SecondQuadrant && _instance.getPoint(i).get(0) > 0 && _instance.getPoint(i).get(1) < 0 )
-			{
-				_points.add(_instance.getPoint(i));
-				_pointIndices.add(i);
-			}
-			
-			if( _strategy == SparsingStrategy.ThirdQuadrant && _instance.getPoint(i).get(0) < 0 && _instance.getPoint(i).get(1) > 0 )
-			{
-				_points.add(_instance.getPoint(i));
-				_pointIndices.add(i);
-			}
-			
-			if( _strategy == SparsingStrategy.FourthQuadrant && _instance.getPoint(i).get(0) > 0 && _instance.getPoint(i).get(1) > 0 )
-			{
-				_points.add(_instance.getPoint(i));
-				_pointIndices.add(i);
-			}
+			_points.add(_instance.getPoint(i));
+			_pointIndices.add(i);
 		}
 	}
 	
@@ -397,13 +353,13 @@ public class SquareSeparator implements SeparatorInterface
 		return _threshold;
 	}
 	
-	public static void setSparsingRatio(double value)
+	public static void setLowerBound(double value)
 	{
-		_sparsingRatio = value;
+		_lowerBound = value;
 	}
-	public static double getSparsingRatio()
+	public static double getLowerBound()
 	{
-		return _sparsingRatio;
+		return _lowerBound;
 	}
 }
 

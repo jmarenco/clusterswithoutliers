@@ -24,6 +24,7 @@ import standardModel.LinearSeparatorSparse;
 import standardModel.RectangularModel;
 import standardModel.Separator;
 import standardModel.SquareSeparator;
+import standardModel.SquareSeparatorSparse;
 
 public class Test
 {
@@ -94,6 +95,7 @@ public class Test
 		LinearSeparatorSparse.setUpperLimit(upperLimit);
 		SquareSeparator.setThreshold(threshold);
 		SquareSeparator.setSparsingRatio(sparsityRatio);
+		SquareSeparatorSparse.setThreshold(threshold);
 
 		if( symmBreak == 1 )
 			RectangularModel.setSymmetryBreaking(RectangularModel.SymmetryBreaking.Size);

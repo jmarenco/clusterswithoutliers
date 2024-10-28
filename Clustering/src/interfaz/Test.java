@@ -25,11 +25,14 @@ import standardModel.RectangularModel;
 import standardModel.Separator;
 import standardModel.SquareSeparator;
 import standardModel.SquareSeparatorSparse;
+import standardModelCpsat.RectangularModelCpsat;
+
 
 public class Test
 {
-	public static void main(String[] args) throws IloException
+	public static void main(String[] args) throws IloException, Exception
 	{
+		System.loadLibrary("jniortools");
 		ArgMap argmap = new ArgMap(args);
 		
 		if (argmap.containsArg("-?"))
@@ -58,6 +61,8 @@ public class Test
 			solveKMeans(args);
 		else if(model.equals("inc"))
 			solveIncremental(args);
+		else if(model.equals("cpsat"))
+			solveCpsat(args);
 		else 
 			showUsage();
 	}
@@ -256,6 +261,32 @@ public class Test
 
 		solver.setMaxTime(maxTime);
 		solver.solve();
+	}
+	
+	private static void solveCpsat(String[] args) throws Exception
+	{
+		ArgMap argmap = new ArgMap(args);
+
+		int cutRounds = argmap.intArg("-cr", 0);
+		int skipFactor = argmap.intArg("-sf", 0);
+		boolean cutAndBranch  = argmap.intArg("-cb", 0) == 1;
+		int maxTime = argmap.intArg("-tl", 300);
+		int symmBreak = argmap.intArg("-symm", 0);
+		double threshold = argmap.doubleArg("-thr", 0.5);
+		int sepStrategy = argmap.intArg("-sstr", 0);
+		int objective = argmap.intArg("-fobj", 0);
+		double lowerLimit = argmap.doubleArg("-llim", 0.1);
+		double upperLimit = argmap.doubleArg("-ulim", 0.9);
+		double sparsityRatio = argmap.doubleArg("-sprat", 0.25);
+
+		Instance instance = constructInstance(args);
+		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
+		RectangularModel.showSummary(true);
+
+		RectangularModelCpsat model = new RectangularModelCpsat(instance);
+
+		model.setMaxTime(maxTime);
+		model.solve();
 	}
 	
 	private static void writeInstance(String[] args)

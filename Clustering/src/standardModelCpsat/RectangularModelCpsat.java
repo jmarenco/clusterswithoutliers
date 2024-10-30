@@ -3,6 +3,16 @@ package standardModelCpsat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import com.google.ortools.sat.CpModel;
+import com.google.ortools.sat.CpSolver;
+import com.google.ortools.sat.CpSolverStatus;
+import com.google.ortools.sat.IntVar;
+import com.google.ortools.sat.LinearExpr;
+import com.google.ortools.sat.LinearExprBuilder;
+//import com.google.ortools.sat.DoubleLinearExpr;
+import com.google.ortools.sat.Literal;
+import com.google.ortools.util.Domain;
+
 import general.Clock;
 import general.Cluster;
 import general.Instance;
@@ -10,18 +20,6 @@ import general.Logger;
 import general.RectangularCluster;
 import general.Results;
 import general.Solution;
-
-import com.google.ortools.sat.LinearExpr;
-import com.google.ortools.sat.CpModel;
-import com.google.ortools.sat.CpSolver;
-import com.google.ortools.sat.CpSolverStatus;
-import com.google.ortools.sat.IntVar;
-import com.google.ortools.sat.LinearExprBuilder;
-//import com.google.ortools.sat.DoubleLinearExpr;
-import com.google.ortools.sat.Literal;
-import com.google.ortools.util.Domain;
-
-
 
 
 public class RectangularModelCpsat {
@@ -233,7 +231,7 @@ public class RectangularModelCpsat {
 		}
 		
 
-		_last_lb = solver.bestObjectiveBound();
+		_last_lb = (double)solver.bestObjectiveBound()/round_factor;
 		
 		if( _summary == false )
 		{
@@ -364,9 +362,9 @@ public class RectangularModelCpsat {
 		return solver.objectiveValue();
 	}
 
-//	public Solution getSolutionNumber(int s) throws Exception 
-//	{
-//		_clusters = new ArrayList<Cluster>();
+	public Solution getSolutionNumber(int s) throws Exception 
+	{
+		_clusters = new ArrayList<Cluster>();
 //    	for(int j=0; j<n; ++j)
 //    	{
 //    		RectangularCluster cluster = new RectangularCluster(d);
@@ -385,8 +383,20 @@ public class RectangularModelCpsat {
 //	    {
 //	    	_clusters.get(j).add(_instance.getPoint(i));
 //	    }
-//
-//		return new Solution(_clusters);
-//	}
+
+		return new Solution(_clusters);
+	}
+
+
+	public void closeSolver() 
+	{ }
+
+
+	public void keepAlive() 
+	{ }
+
+
+	public void setStrongBinding(boolean b) 
+	{ }
 
 }

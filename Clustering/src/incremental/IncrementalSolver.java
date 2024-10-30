@@ -15,6 +15,7 @@ import ilog.concert.IloException;
 import incremental.IncrementalSolver.Metric;
 import interfaz.Viewer;
 import standardModel.RectangularModel;
+import standardModelCpsat.RectangularModelCpsat;
 
 public class IncrementalSolver 
 {
@@ -31,6 +32,7 @@ public class IncrementalSolver
 	
 	private IncrementalManager _incrementalManager;
 	private RectangularModel _model;
+//	private RectangularModelCpsat _model;
 	
 	// Config
 	private static boolean _verbose = true;
@@ -61,7 +63,7 @@ public class IncrementalSolver
 		_show_intermediate_solutions = show;
 	}
 
-	public void solve() throws IloException
+	public void solve() throws IloException, Exception
 	{
 		_clock.start();
 		
@@ -157,7 +159,7 @@ public class IncrementalSolver
 		add_points_to_current(_incrementalManager.getInitialPoints());
 	}
 
-	private void solve_current() throws IloException 
+	private void solve_current() throws IloException, Exception
 	{
 		verb("Solving current instance of size " + _instance_cur.getPoints());
 		
@@ -237,7 +239,7 @@ public class IncrementalSolver
 	 * Tries to improve the incumbent in order to improve the UB.
 	 * @throws IloException 
 	 */
-	private void try_to_improve_incumbent() throws IloException 
+	private void try_to_improve_incumbent() throws IloException, Exception
 	{
 		// For the moment, we will ask the model for the integer solutions found during 
 		// last solve, with the hope that some of it covers the entire set of points.

@@ -205,7 +205,7 @@ public class Test
 		solver.solve();
 	}
 
-	private static void solveIncremental(String[] args) throws IloException
+	private static void solveIncremental(String[] args) throws IloException, Exception
 	{
 		ArgMap argmap = new ArgMap(args);
 

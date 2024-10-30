@@ -21,7 +21,13 @@ import standardModel.LinearSeparatorSparse;
 import standardModel.RectangularModelInterface;
 import standardModel.Separator;
 
-public class IncrementalStandardModel implements RectangularModelInterface
+
+/**
+ * This class is a RectangularModel with Lazy constraints which are added incrementally (following the incremental metrics).
+ * 
+ * We abandonned this class because we noted that it was better to just restart the model on each iteration of the incremental algorithm.
+ */
+public class RectangularLazyIncrementalModel implements RectangularModelInterface
 {
 	// Instance
 	private Instance _instance;
@@ -65,7 +71,7 @@ public class IncrementalStandardModel implements RectangularModelInterface
 	boolean useLazyConstraints = false;
 
 
-	public IncrementalStandardModel(Instance instance)
+	public RectangularLazyIncrementalModel(Instance instance)
 	{
 		_instance = instance;
 

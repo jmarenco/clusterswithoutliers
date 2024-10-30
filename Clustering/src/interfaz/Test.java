@@ -15,7 +15,7 @@ import ilog.concert.IloException;
 import incremental.BorderPointsManager;
 import incremental.EccentricityManager;
 import incremental.IncrementalSolver;
-import incremental.IncrementalStandardModel;
+import incremental.RectangularLazyIncrementalModel;
 import kmeans.KMeansSolver;
 import popModel.POPModel;
 import repModel.RepModel;
@@ -67,7 +67,7 @@ public class Test
 			showUsage();
 	}
 	
-	private static void solveStandard(String[] args) throws IloException
+	private static void solveStandard(String[] args) throws Exception
 	{
 		ArgMap argmap = new ArgMap(args);
 
@@ -222,9 +222,9 @@ public class Test
 
 		Instance instance = constructInstance(args);
 
-		IncrementalStandardModel.setVerbose(argmap.containsArg("-verbose"));
-		IncrementalStandardModel.showSummary(!argmap.containsArg("-verbose"));
-		IncrementalStandardModel.setObjective(objective == 1 ? IncrementalStandardModel.Objective.Area : IncrementalStandardModel.Objective.Span);
+		RectangularLazyIncrementalModel.setVerbose(argmap.containsArg("-verbose"));
+		RectangularLazyIncrementalModel.showSummary(!argmap.containsArg("-verbose"));
+		RectangularLazyIncrementalModel.setObjective(objective == 1 ? RectangularLazyIncrementalModel.Objective.Area : RectangularLazyIncrementalModel.Objective.Span);
 		
 		Separator.setActive(cutRounds > 0);
 		Separator.setMaxRounds(cutRounds);
@@ -237,14 +237,15 @@ public class Test
 		LinearSeparatorSparse.setUpperLimit(upperLimit);
 
 		if( symmBreak == 1 )
-			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.Size);
+			RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.Size);
 
 		if( symmBreak == 2 )
-			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.IndexSum);
+			RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.IndexSum);
 
 		if( symmBreak == 3 )
-			IncrementalStandardModel.setSymmetryBreaking(IncrementalStandardModel.SymmetryBreaking.OrderedStart);
+			RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.OrderedStart);
 
+		IncrementalSolver.setBBSolver(argmap.stringArg("-incbbsolver", "sm")); // options are [sm, cpsat, bap]
 		IncrementalSolver.setMetric(argmap.stringArg("-incmetric", "dist"));
 		IncrementalSolver.setShowIntermediateSolutions(argmap.containsArg("-incshow")); 
 		
@@ -333,6 +334,7 @@ public class Test
 		System.out.println("    -partialrelaxation                     Solve the partial linear relaxation at the root node (cg model only)");
 		System.out.println("    -initialsingletons                     Add singleton columns (bap model only)");
 		System.out.println("    -incmetric [none|rand|ecc|dist|bord]   Pricing strategy in bap model [def: dist]");
+		System.out.println("    -incbbsolver [sm|cpsat|bap]            Black Box solver for subproblems [def: sm]");
 		System.out.println("    -incshow                               Shows a plot displaying each intermadiate solution of the incremental solver");
 		System.out.println("    -eccmode [max|sum]                     Eccentricty mode for global eccentricity [def: MAX]");
 		System.out.println("    -incstep <n>                           Max number of points to add on each incremental iteration [def: 20]");

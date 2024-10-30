@@ -1,6 +1,7 @@
 package incremental;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import general.Clock;
@@ -31,8 +32,9 @@ public class IncrementalSolver
 	private Clock _clock;
 	
 	private IncrementalManager _incrementalManager;
-	private RectangularModel _model;
+//	private RectangularModel _model;
 //	private RectangularModelCpsat _model;
+	private BlackBoxClusteringSolver _bbsolver;
 	
 	// Config
 	private static boolean _verbose = true;
@@ -42,6 +44,9 @@ public class IncrementalSolver
 	
 	public static enum Metric { None, Random, Eccentricity, DistanceEccentricity, BorderPoints }; 
 	public static Metric incrementalMetric = Metric.DistanceEccentricity;
+
+	public static enum Solver { CompactModel, CPSAT, BAPSolver }; 
+	public static Solver solverModel = Solver.CompactModel;
 
 	public IncrementalSolver(Instance instance)
 	{
@@ -69,6 +74,7 @@ public class IncrementalSolver
 		
 		init();
 		
+		init_bbsolver();
 		init_manager();
 		
 		create_initial_instance();
@@ -120,7 +126,7 @@ public class IncrementalSolver
 
 	private void closeModel() 
 	{
-		_model.closeSolver();
+		_bbsolver.closeSolver();
 	}
 
 	private String method() 
@@ -130,10 +136,35 @@ public class IncrementalSolver
 
 	private void init() 
 	{
-		IncrementalStandardModel.setVerbose(_verbose);
-		IncrementalStandardModel.showSummary(false);
+		RectangularLazyIncrementalModel.setVerbose(_verbose);
+		RectangularLazyIncrementalModel.showSummary(false);
 		
 		_covered_by_last_solution = new HashSet<>();
+	}
+
+	private void init_bbsolver() 
+	{
+		if (IncrementalSolver.solverModel == Solver.CompactModel)
+		{
+			RectangularModel model = new RectangularModel(_instance_base);
+			model.setLogSolution(false);
+			model.keepAlive();
+			model.setStrongBinding(false);
+			
+			_bbsolver = model;
+		}
+		else if (IncrementalSolver.solverModel == Solver.CPSAT)
+		{
+			RectangularModelCpsat model = new RectangularModelCpsat(_instance_base);
+			model.setLogSolution(false);
+			
+			_bbsolver = model;
+		}
+		else if (IncrementalSolver.solverModel == Solver.BAPSolver)
+		{
+			// TODO
+			_bbsolver = null;
+		}
 	}
 
 	private void init_manager() 
@@ -163,22 +194,9 @@ public class IncrementalSolver
 	{
 		verb("Solving current instance of size " + _instance_cur.getPoints());
 		
-//		IncrementalStandardModel model = new IncrementalStandardModel(_instance_cur);
-		_model = new RectangularModel(_instance_cur);
-		_model.setLogSolution(false);
-		_model.keepAlive();
-
-		_model.setMaxTime((int) Math.ceil(_clock.remaining()));
-		_model.setStrongBinding(false);
-
-//		OBS: I tried setting a LB on the objective function, but it seems this is not a good practice (in general).
-//		See for example: 
-//		https://or.stackexchange.com/questions/4264/how-to-use-tight-upper-and-lower-bounds-to-get-to-the-optimal-value-via-branch-a
-//		if (_best_lb > 0.0)
-//			_model.setObjLB(_best_lb);
-		
-		_last_solution = _model.solve();
-		_best_lb = Math.max(_best_lb, _model.getLastLB());
+		_bbsolver.setMaxTime((int) Math.ceil(_clock.remaining()));
+		_last_solution = _bbsolver.solve(_instance_cur);
+		_best_lb = Math.max(_best_lb, _bbsolver.getLastLB());
 	}
 
 	private void verb(String string) 
@@ -246,16 +264,16 @@ public class IncrementalSolver
 		// Note that solutions are consulted in increasing order by obj function, so as 
 		// soon as we found a (globally) feasible one, we can take it and stop the search.
 		
-		int n = _model.getNSolutions();
+		int n = _bbsolver.getNSolutions();
 		
 		for (int s = 1; s < n; s++)
 		{
-			double sol_obj = _model.getObjValueOfSolutionN(s);
+			double sol_obj = _bbsolver.getObjValueOfSolutionN(s);
 			if (sol_obj >= _best_ub) // Done... no more interesting solutions here (assuming they are sorted by obj value)
 				break;
 			else
 			{
-				Solution sol = _model.getSolutionNumber(s);
+				Solution sol = _bbsolver.getSolutionNumber(s);
 
 				if (isFeasible(sol)) // Super! We found an improvement
 				{
@@ -331,4 +349,22 @@ public class IncrementalSolver
 			throw new RuntimeException(msg);
 		}
 	}
+	
+	public static void setBBSolver(String bbs) 
+	{
+		if (bbs.toUpperCase().equals("SM"))
+			solverModel = Solver.CompactModel;
+		else if (bbs.toUpperCase().equals("CPSAT"))
+			solverModel = Solver.CPSAT;
+		else if (bbs.toUpperCase().equals("BAP"))
+			solverModel = Solver.BAPSolver;
+		else
+		{
+			String msg = "[IncrementalSolver] The BB solver " + bbs + " is not a valid BB solver.";
+			System.out.println(msg);
+			System.out.println("Options are: SM | CPSAT | BAP");
+			throw new RuntimeException(msg);
+		}
+	}
+
 }

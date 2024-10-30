@@ -20,9 +20,10 @@ import general.Logger;
 import general.RectangularCluster;
 import general.Results;
 import general.Solution;
+import incremental.BlackBoxClusteringSolver;
 
 
-public class RectangularModelCpsat {
+public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	// Instance
 	private Instance _instance;
 	
@@ -73,6 +74,12 @@ public class RectangularModelCpsat {
 
 	public RectangularModelCpsat(Instance instance)
 	{
+		init(instance);
+	}
+
+
+	private void init(Instance instance) 
+	{
 		_instance = instance;
 
 		p = _instance.getPoints();
@@ -115,6 +122,13 @@ public class RectangularModelCpsat {
 
 	public Solution solve() throws Exception
 	{
+		return solve(_instance);
+	}
+	
+	public Solution solve(Instance ins) throws Exception
+	{
+		init(ins);
+		
 		_clock = new Clock(_maxTime);
 		_clock.start();
 		

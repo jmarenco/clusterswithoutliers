@@ -1,5 +1,5 @@
 /bin/
-.classpath
+*.classpath
 
 # Compiled class file
 *.class

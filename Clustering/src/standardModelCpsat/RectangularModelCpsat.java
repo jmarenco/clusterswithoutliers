@@ -157,6 +157,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		model = new CpModel();
 	    solver.getParameters().setLogToStdout(_verbose);
 	    solver.getParameters().setLogSearchProgress(_verbose);
+	    solver.getParameters().setLinearizationLevel(2);
 	}
 
 	private void createVariables() throws Exception
@@ -180,8 +181,14 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 
 	private void createClusteringConstraints() throws Exception
 	{
-		for(int i=0; i<p; ++i)
-			model.addAtMostOne(z[i]);
+		for(int i=0; i<p; ++i) {
+			if (o == 0) {
+				model.addExactlyOne(z[i]);
+			} else {
+				model.addAtMostOne(z[i]);
+			}
+			
+		}
 	}
 	
 	private void createBindingConstraints() throws Exception
@@ -204,11 +211,13 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 
 	private void createOutliersConstraint() throws Exception
 	{
-		LinearExprBuilder all_points = LinearExpr.newBuilder();
-	    for(int i=0; i<p; ++i)
-		for(int j=0; j<n; ++j)
-			all_points.add(z[i][j]);
-	    model.addGreaterOrEqual(all_points, p-o);
+		if (o > 0) {
+			LinearExprBuilder all_points = LinearExpr.newBuilder();
+		    for(int i=0; i<p; ++i)
+			for(int j=0; j<n; ++j)
+				all_points.add(z[i][j]);
+		    model.addGreaterOrEqual(all_points, p-o);
+		}
 	}
 
 

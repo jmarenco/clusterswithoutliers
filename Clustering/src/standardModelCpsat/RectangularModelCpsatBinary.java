@@ -6,12 +6,10 @@ import java.util.Arrays;
 import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.CpSolver;
 import com.google.ortools.sat.CpSolverStatus;
-import com.google.ortools.sat.IntVar;
+import com.google.ortools.sat.DoubleLinearExpr;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
-//import com.google.ortools.sat.DoubleLinearExpr;
 import com.google.ortools.sat.Literal;
-import com.google.ortools.util.Domain;
 
 import general.Clock;
 import general.Cluster;
@@ -23,7 +21,7 @@ import general.Solution;
 import incremental.BlackBoxClusteringSolver;
 
 
-public class RectangularModelCpsat implements BlackBoxClusteringSolver {
+public class RectangularModelCpsatBinary implements BlackBoxClusteringSolver {
 	// Instance
 	private Instance _instance;
 	
@@ -52,32 +50,24 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 
     // Variables
 	private Literal[][] z;
-	private IntVar[][] r;
-	private IntVar[][] l;
+	private Literal[][][] r;
+	private Literal[][][] l;
 
 	// Coordinates
-	private long[][] sorted_coords_per_dim;
-	// NOTE: CPSAT uses only integer numbers, so the input coords are scaled by this factor.
-		private double round_factor = 1e10;
-		
+	private double[][] sorted_coords_per_dim;
+	private int[][] rank_point_per_dim;
+	
 	private Clock _clock;
 
 	private boolean _log_solution = true;
 
 	private double _last_lb = 0.0;
 	
-	private long toLong(double value)
-	{
-		return (long)(value*round_factor);
-	}
 
-
-	public RectangularModelCpsat(Instance instance)
+	public RectangularModelCpsatBinary(Instance instance)
 	{
 		init(instance);
 	}
-
-
 	private void init(Instance instance) 
 	{
 		_instance = instance;
@@ -91,19 +81,21 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	
 	private void sortCoords()
 	{
-		sorted_coords_per_dim = new long[d][p];
+		sorted_coords_per_dim = new double[d][p];
+		rank_point_per_dim = new int[d][p];
 
 		for(int t=0; t<d; ++t) {
 			Integer[] indices = new Integer[p];
-			for(int i=0; i<p; ++i) 
+			for(int i=0; i<p; ++i)
 			{
 				indices[i] = i;
 			}
 			final int final_t = t;
 			Arrays.sort(indices, (i, j) -> Double.compare( _instance.getPoint(i).get(final_t), _instance.getPoint(j).get(final_t)));
-			for(int i=0; i<p; ++i)
-			{
-				sorted_coords_per_dim[t][i] = toLong(_instance.getPoint(indices[i]).get(t));
+			for(int i=0; i<p; ++i) 
+			{						
+				rank_point_per_dim[t][indices[i]] = i;
+				sorted_coords_per_dim[t][i] = _instance.getPoint(indices[i]).get(t);
             }
 		}
 	}
@@ -122,7 +114,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	{
 		return solve(_instance);
 	}
-	
+
 	public Solution solve(Instance ins) throws Exception
 	{
 		init(ins);
@@ -157,19 +149,18 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	private void createVariables() throws Exception
 	{
 		z = new Literal[p][n];
-		r = new IntVar[n][d];
-		l = new IntVar[n][d];
+		r = new Literal[n][d][p];
+		l = new Literal[n][d][p];
 
 		for(int i=0; i<p; ++i)
 	    for(int j=0; j<n; ++j)
 	    	z[i][j] = model.newBoolVar("z" + i + "_" + j);
 
-		for(int t=0; t<d; ++t) {
-			Domain domain = Domain.fromValues(sorted_coords_per_dim[t]);
-			for(int j=0; j<n; ++j) {
-				r[j][t] = model.newIntVarFromDomain(domain, "r" + j + "_" + t);
-				l[j][t] = model.newIntVarFromDomain(domain, "l" + j + "_" + t);
-			}
+		for(int j=0; j<n; ++j)
+		for(int t=0; t<d; ++t)
+		for(int i=0; i<p; ++i) {
+				r[j][t][i] = model.newBoolVar("r" + j + "_" + t + "_rank_" + i);
+				l[j][t][i] = model.newBoolVar("l" + j + "_" + t + "_rank_" + i);
 		}
 	}
 
@@ -185,16 +176,32 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
 		{
-            model.addLessOrEqual(l[j][t], toLong(_instance.getPoint(i).get(t))).onlyEnforceIf(z[i][j]);
-            model.addGreaterOrEqual(r[j][t], toLong(_instance.getPoint(i).get(t))).onlyEnforceIf(z[i][j]);
+            model.addImplication(z[i][j], r[j][t][rank_point_per_dim[t][i]]);
+            model.addImplication(z[i][j], l[j][t][rank_point_per_dim[t][i]]);
 		}
 	}
 
 	private void createOrderingConstraints() throws Exception
 	{
-		for(int j=0; j<n; ++j)
+	    for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t)
-			model.addGreaterOrEqual(r[j][t], l[j][t]);
+		for(int i=0; i<p-1; ++i)
+		{
+			model.addImplication(l[j][t][i], l[j][t][i+1]);
+			model.addImplication(r[j][t][i+1], r[j][t][i]);
+		}
+	    
+	    for(int j=0; j<n; ++j)
+		for(int t=0; t<d; ++t)
+		{
+			LinearExprBuilder all_borders = LinearExpr.newBuilder();
+			for(int i=0; i<p; ++i) 
+			{
+				all_borders.add(l[j][t][i]);
+				all_borders.add(r[j][t][i]);
+			}
+			model.addGreaterOrEqual(all_borders, p+1);
+		}
 	}
 
 	private void createOutliersConstraint() throws Exception
@@ -213,14 +220,29 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	}
 		
 	private void createLinearObjective() throws Exception
-	{
-		LinearExprBuilder objective = LinearExpr.newBuilder();
-		
+	{		
+		Literal[] flatten_vars = new Literal[2*n*d*p];
+		double[] flatten_coef = new double[2*n*d*p];
 		for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t) {
-			objective.addTerm(r[j][t], 1);
-			objective.addTerm(l[j][t], -1);
+			int offset = j*d*p+t*p;
+			flatten_vars[offset + 0] = r[j][t][0];
+			flatten_coef[offset + 0] = sorted_coords_per_dim[t][0];
+		    for(int i=1; i<p; ++i)
+		    {
+				flatten_vars[offset + i] = r[j][t][i];
+				flatten_coef[offset + i] = (sorted_coords_per_dim[t][i]-sorted_coords_per_dim[t][i-1]);		    	
+		    }
+		    offset += n*d*p;
+		    for(int i=0; i<p-1; ++i)
+		    {
+				flatten_vars[offset + i] = l[j][t][i];
+				flatten_coef[offset + i] = (sorted_coords_per_dim[t][i+1]-sorted_coords_per_dim[t][i]);		    	
+		    }
+			flatten_vars[offset + p-1] = l[j][t][p-1];
+			flatten_coef[offset + p-1] = -sorted_coords_per_dim[t][p-1];
 		}
+		DoubleLinearExpr objective = new DoubleLinearExpr(flatten_vars, flatten_coef, 0.0);
 		model.minimize(objective);
 	}
 
@@ -236,12 +258,12 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		}
 		
 
-		_last_lb = (double)solver.bestObjectiveBound()/round_factor;
+		_last_lb = (double)solver.bestObjectiveBound();
 		
 		if( _summary == false )
 		{
 			System.out.println("Status: " + status.getNumber());
-			System.out.println("Objective: " + String.format("%6.4f", (double)solver.objectiveValue()/round_factor));
+			System.out.println("Objective: " + String.format("%6.4f", (double)solver.objectiveValue()));
 			System.out.println("Time: " + String.format("%6.2f", _clock.elapsed()));
 			System.out.println("Nodes: " + solver.numBranches());
 			System.out.println("Gap: " + ((gap >= 0.0)? String.format("%6.2f", 100 * gap) : "  ****"));
@@ -250,10 +272,11 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		else
 		{
 			System.out.println("Status: " + status.getNumber());
-			System.out.println("Objective: " + String.format("%6.4f", (double)solver.objectiveValue()/round_factor));
+			System.out.println("Objective: " + String.format("%6.4f", (double)solver.objectiveValue()));
 			System.out.println("Time: " + String.format("%6.2f", _clock.elapsed()));
 			System.out.println("Nodes: " + solver.numBranches());
 			System.out.println("Gap: " + ((gap >= 0.0)? String.format("%6.2f", 100 * gap) : "  ****"));
+			System.out.println("Cuts: " + "  *****");
 //			System.out.print(_instance.getName() + " | Std | ");
 //			System.out.print(cplex.getStatus() + " | ");
 //			System.out.print("Obj: " + String.format("%6.4f", cplex.getObjValue()) + " | ");
@@ -280,14 +303,32 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		
     	if( status == CpSolverStatus.OPTIMAL || status == CpSolverStatus.FEASIBLE )
 		{
-    		ub = (double)solver.objectiveValue()/round_factor;
+    		ub = (double)solver.objectiveValue();
 	    	for(int j=0; j<n; ++j)
 	    	{
 	    		RectangularCluster cluster = new RectangularCluster(d);
 				for(int t=0; t<d; ++t)
 				{
-					cluster.setMin(t, (double)solver.value(l[j][t])/round_factor);
-					cluster.setMax(t, (double)solver.value(r[j][t])/round_factor);
+					for (int i=0; i<p ; i++)
+					{
+						if (solver.value(l[j][t][i]) > 0)
+						{
+							cluster.setMin(t, sorted_coords_per_dim[t][i]);
+							break;
+						}
+						
+					}
+					for (int i=p-1; i >= 0 ; i--)
+					{
+						if (solver.value(r[j][t][i]) > 0)
+						{
+							cluster.setMax(t, sorted_coords_per_dim[t][i]);
+							break;
+						}
+						
+					}
+
+					System.out.println(" Optimal dim " + t + " [" + cluster.getMin(t) + "," + cluster.getMax(t) + "]");
 				}
 	    		_clusters.add(cluster);
 	    	}
@@ -299,12 +340,13 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		    }
 
 		}
+
     	
 		// Log the solution
     	if (_log_solution)
     	{
 			Results.Status stat = (status == CpSolverStatus.OPTIMAL)? Results.Status.OPTIMAL : (status == CpSolverStatus.FEASIBLE? Results.Status.FEASIBLE : Results.Status.NOSOLUTION);
-			double lb =(double) solver.bestObjectiveBound()/round_factor;
+			double lb =(double) solver.bestObjectiveBound();
 			Logger.log(_instance, "CMP", new Results(new Solution(_clusters), stat, lb, ub, _clock.elapsed(), 0, 0, _instance.getPoints()));
     	}
     }
@@ -325,14 +367,14 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		return z[point][cluster];
 	}
 	
-	public IntVar rVar(int cluster, int dimension)
+	public Literal rVar(int cluster, int dimension, int pos)
 	{
-		return r[cluster][dimension];
+		return r[cluster][dimension][pos];
 	}
 	
-	public IntVar lVar(int cluster, int dimension)
+	public Literal lVar(int cluster, int dimension, int pos)
 	{
-		return l[cluster][dimension];
+		return l[cluster][dimension][pos];
 	}
 	
 	
@@ -365,10 +407,8 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 
 	public Solution getSolutionNumber(int s) throws Exception 
 	{
-		return new Solution(_clusters);
+		return new Solution(_clusters);	
 	}
-
-
 	public void closeSolver() 
 	{ }
 
@@ -379,5 +419,4 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 
 	public void setStrongBinding(boolean b) 
 	{ }
-
 }

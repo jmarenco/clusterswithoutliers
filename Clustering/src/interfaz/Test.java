@@ -26,6 +26,7 @@ import standardModel.Separator;
 import standardModel.SquareSeparator;
 import standardModel.SquareSeparatorSparse;
 import standardModelCpsat.RectangularModelCpsat;
+import standardModelCpsat.RectangularModelCpsatBinary;
 
 
 public class Test
@@ -63,6 +64,8 @@ public class Test
 			solveIncremental(args);
 		else if(model.equals("cpsat"))
 			solveCpsat(args);
+		else if(model.equals("cpsatbin"))
+			solveCpsatBinary(args);
 		else 
 			showUsage();
 	}
@@ -268,28 +271,31 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 
-		int cutRounds = argmap.intArg("-cr", 0);
-		int skipFactor = argmap.intArg("-sf", 0);
-		boolean cutAndBranch  = argmap.intArg("-cb", 0) == 1;
 		int maxTime = argmap.intArg("-tl", 300);
-		int symmBreak = argmap.intArg("-symm", 0);
-		double threshold = argmap.doubleArg("-thr", 0.5);
-		int sepStrategy = argmap.intArg("-sstr", 0);
-		int objective = argmap.intArg("-fobj", 0);
-		double lowerLimit = argmap.doubleArg("-llim", 0.1);
-		double upperLimit = argmap.doubleArg("-ulim", 0.9);
-		double sparsityRatio = argmap.doubleArg("-sprat", 0.25);
 
 		Instance instance = constructInstance(args);
-		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
-		RectangularModel.showSummary(true);
-
+		RectangularModelCpsat.setVerbose(argmap.containsArg("-verbose"));
+		RectangularModelCpsat.showSummary(true);
 		RectangularModelCpsat model = new RectangularModelCpsat(instance);
+		model.setMaxTime(maxTime);
+		model.solve();
+	}
+
+	private static void solveCpsatBinary(String[] args) throws Exception
+	{
+		ArgMap argmap = new ArgMap(args);
+
+		int maxTime = argmap.intArg("-tl", 300);
+
+		Instance instance = constructInstance(args);
+		RectangularModelCpsatBinary.setVerbose(argmap.containsArg("-verbose"));
+		RectangularModelCpsatBinary.showSummary(true);
+		RectangularModelCpsatBinary model = new RectangularModelCpsatBinary(instance);
 
 		model.setMaxTime(maxTime);
 		model.solve();
 	}
-	
+
 	private static void writeInstance(String[] args)
 	{
 		ArgMap argmap = new ArgMap(args);

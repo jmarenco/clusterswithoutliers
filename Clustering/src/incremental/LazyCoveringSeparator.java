@@ -15,7 +15,7 @@ public class LazyCoveringSeparator implements LazySeparatorInterface
 	private static final double EPS = 0.00001;
 	
 	private LazySeparator _parent;
-	private IncrementalStandardModel _model;
+	private RectangularLazyIncrementalModel _model;
 	
 	private Instance _instance_base;
 	
@@ -34,7 +34,7 @@ public class LazyCoveringSeparator implements LazySeparatorInterface
 	public LazyCoveringSeparator(LazySeparator lazySeparator, Instance instance) 
 	{
 		_parent = lazySeparator;
-		_model = (IncrementalStandardModel) _parent.getModelInterface();
+		_model = (RectangularLazyIncrementalModel) _parent.getModelInterface();
 		_instance_base = instance;
 		_npoints = _instance_base.getPoints();
 		_nclusters = _instance_base.getClusters();

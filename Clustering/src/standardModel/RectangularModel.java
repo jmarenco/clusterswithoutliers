@@ -16,8 +16,9 @@ import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.IntParam;
 import ilog.cplex.IloCplex.Status;
 import ilog.cplex.IloCplex.UnknownObjectException;
+import incremental.BlackBoxClusteringSolver;
 
-public class RectangularModel implements RectangularModelInterface
+public class RectangularModel implements RectangularModelInterface, BlackBoxClusteringSolver
 {
 	// Instance
 	private Instance _instance;
@@ -63,6 +64,11 @@ public class RectangularModel implements RectangularModelInterface
 
 	public RectangularModel(Instance instance)
 	{
+		init(instance);
+	}
+
+	private void init(Instance instance) 
+	{
 		_instance = instance;
 
 		p = _instance.getPoints();
@@ -91,8 +97,15 @@ public class RectangularModel implements RectangularModelInterface
 		this._log_solution = _log_solution;
 	}
 
-	public Solution solve() throws IloException
+	public Solution solve() throws Exception
 	{
+		return solve(_instance);
+	}
+	
+	public Solution solve(Instance ins) throws Exception
+	{
+		init(ins);
+		
 		_clock = new Clock(_maxTime);
 		_clock.start();
 		
@@ -120,6 +133,9 @@ public class RectangularModel implements RectangularModelInterface
 
 	private void createSolver() throws IloException
 	{
+		if (cplex != null)
+			cplex.end();
+		
 		cplex = new IloCplex();
 		
 		if( _verbose == false )
@@ -540,19 +556,19 @@ public class RectangularModel implements RectangularModelInterface
 		_keepAlive = true;
 	}
 
-	public int getNSolutions() throws IloException 
+	public int getNSolutions() throws Exception 
 	{
 		return cplex.getSolnPoolNsolns();
 	}
 
-	public double getObjValueOfSolutionN(int s) throws IloException
+	public double getObjValueOfSolutionN(int s) throws Exception
 	{
 		return cplex.getObjValue(s);
 	}
 
-	public Solution getSolutionNumber(int s) throws UnknownObjectException, IloException 
+	public Solution getSolutionNumber(int s) throws Exception 
 	{
-		_clusters = new ArrayList<Cluster>();
+		ArrayList<Cluster> _solclusters = new ArrayList<Cluster>();
     	for(int j=0; j<n; ++j)
     	{
     		RectangularCluster cluster = new RectangularCluster(d);
@@ -563,15 +579,15 @@ public class RectangularModel implements RectangularModelInterface
 				cluster.setMax(t, cplex.getValue(r[j][t], s));
 			}
     		
-    		_clusters.add(cluster);
+    		_solclusters.add(cluster);
     	}
     		
 		for(int i=0; i<p; ++i)
 	    for(int j=0; j<n; ++j) if( cplex.getValue(z[i][j], s) > 0.9 )
 	    {
-	    	_clusters.get(j).add(_instance.getPoint(i));
+	    	_solclusters.get(j).add(_instance.getPoint(i));
 	    }
 
-		return new Solution(_clusters);
+		return new Solution(_solclusters);
 	}
 }

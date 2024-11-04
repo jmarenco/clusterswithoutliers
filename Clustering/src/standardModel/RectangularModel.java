@@ -61,6 +61,11 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 
 	private double _last_lb = 0.0;
 
+	public String getSolverName()
+	{
+		return "SM";
+	}
+
 
 	public RectangularModel(Instance instance)
 	{

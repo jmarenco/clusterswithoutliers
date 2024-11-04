@@ -66,6 +66,11 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 
 	private double _last_lb = 0.0;
 	
+	public String getSolverName()
+	{
+		return "CPSAT";
+	}
+	
 	private long toLong(double value)
 	{
 		return (long)(value*round_factor);

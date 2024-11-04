@@ -42,5 +42,10 @@ public interface BlackBoxClusteringSolver
 	 * Returns the feasible solution number i from the last execution.
 	 */
 	Solution getSolutionNumber(int i) throws Exception;
-
+	
+	/**
+	 * Returns the name of the solver.
+	 */
+	String getSolverName();
+	
 }

@@ -111,6 +111,7 @@ public class IncrementalSolver
 			System.out.print("GAP: " + String.format("%6.2f", 100.0*currentGap()) + "% | ");
 			System.out.print(String.format("%6.2f", _clock.elapsed()) + " sec. | ");
 			System.out.print("MT: " + _clock.getTimeLimit() + " | ");
+			System.out.print("BB: " + _bbsolver.getSolverName() + " | ");
 			System.out.println();
 		}
 		

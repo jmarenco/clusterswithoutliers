@@ -63,6 +63,10 @@ public class RectangularModelCpsatBinary implements BlackBoxClusteringSolver {
 
 	private double _last_lb = 0.0;
 	
+	public String getSolverName()
+	{
+		return "CPSATBIN";
+	}
 
 	public RectangularModelCpsatBinary(Instance instance)
 	{

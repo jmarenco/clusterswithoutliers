@@ -7,6 +7,7 @@ import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.CpSolver;
 import com.google.ortools.sat.CpSolverStatus;
 import com.google.ortools.sat.IntVar;
+import com.google.ortools.sat.IntervalVar;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 //import com.google.ortools.sat.DoubleLinearExpr;
@@ -54,6 +55,10 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	private Literal[][] z;
 	private IntVar[][] r;
 	private IntVar[][] l;
+	private IntVar[][] len;
+	private IntervalVar[][] interval;
+
+
 
 	// Coordinates
 	private long[][] sorted_coords_per_dim;
@@ -139,7 +144,6 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		createVariables();
 	    createClusteringConstraints();
 	    createBindingConstraints();
-	    createOrderingConstraints();
 		createOutliersConstraint();
 		createObjective();
 					
@@ -165,6 +169,8 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		z = new Literal[p][n];
 		r = new IntVar[n][d];
 		l = new IntVar[n][d];
+		len = new IntVar[n][d];
+		interval = new IntervalVar[n][d];
 
 		for(int i=0; i<p; ++i)
 	    for(int j=0; j<n; ++j)
@@ -175,6 +181,8 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 			for(int j=0; j<n; ++j) {
 				r[j][t] = model.newIntVarFromDomain(domain, "r" + j + "_" + t);
 				l[j][t] = model.newIntVarFromDomain(domain, "l" + j + "_" + t);
+				len[j][t] = model.newIntVar(0, sorted_coords_per_dim[t][p-1]-sorted_coords_per_dim[t][0], "len" + j + "_" + t);
+				interval[j][t] = model.newIntervalVar(l[j][t], len[j][t], r[j][t],  "interval" + j + "_" + t);
 			}
 		}
 	}
@@ -202,13 +210,6 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		}
 	}
 
-	private void createOrderingConstraints() throws Exception
-	{
-		for(int j=0; j<n; ++j)
-		for(int t=0; t<d; ++t)
-			model.addGreaterOrEqual(r[j][t], l[j][t]);
-	}
-
 	private void createOutliersConstraint() throws Exception
 	{
 		if (o > 0) {
@@ -232,8 +233,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		
 		for(int j=0; j<n; ++j)
 		for(int t=0; t<d; ++t) {
-			objective.addTerm(r[j][t], 1);
-			objective.addTerm(l[j][t], -1);
+			objective.addTerm(len[j][t], 1);
 		}
 		model.minimize(objective);
 	}

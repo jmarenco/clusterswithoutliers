@@ -25,6 +25,7 @@ public class Solver
 	private ArrayList<Node> _nodes;
 	private ArrayList<Node> _openNodes;
 	private ArrayList<Cluster> _incumbent;
+	private ArrayList<Solution> _solutions;
 	private Map<Node, Double> _dualBound;
 	
 	public static enum Pricer { ZLR, FLZ, Heuristic, None };
@@ -49,6 +50,7 @@ public class Solver
 		_nodes = new ArrayList<Node>();
 		_openNodes = new ArrayList<Node>();
 		_dualBound = new HashMap<Node, Double>();
+		_solutions = new ArrayList<Solution>();
 		_start = System.currentTimeMillis();
 		
 		if( _brancher == Brancher.Side )
@@ -156,6 +158,7 @@ public class Solver
 				{
 					_incumbent = new ArrayList<Cluster>(_master.getSolution().keySet());
 					_ub = _master.getObjValue();
+					_solutions.add(new Solution(_incumbent));
 
 					incumbentUpdated = true;
 //					System.out.println("Incumbent updated! Obj = " + _master.getObjValue());
@@ -317,6 +320,11 @@ public class Solver
 	public ArrayList<Cluster> getSolution()
 	{
 		return _incumbent;
+	}
+	
+	public ArrayList<Solution> getFoundSolutions()
+	{
+		return _solutions;
 	}
 	
 	public Master getMaster()

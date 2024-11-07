@@ -212,41 +212,7 @@ public class Test
 	{
 		ArgMap argmap = new ArgMap(args);
 
-		int cutRounds = argmap.intArg("-cr", 0);
-		int skipFactor = argmap.intArg("-sf", 0);
-		boolean cutAndBranch  = argmap.intArg("-cb", 0) == 1;
-		int maxTime = argmap.intArg("-tl", 300);
-		int symmBreak = argmap.intArg("-symm", 0);
-		double threshold = argmap.doubleArg("-thr", 0.5);
-		int sepStrategy = argmap.intArg("-sstr", 0);
-		int objective = argmap.intArg("-fobj", 0);
-		double lowerLimit = argmap.doubleArg("-llim", 0.1);
-		double upperLimit = argmap.doubleArg("-ulim", 0.9);
-
 		Instance instance = constructInstance(args);
-
-		RectangularLazyIncrementalModel.setVerbose(argmap.containsArg("-verbose"));
-		RectangularLazyIncrementalModel.showSummary(!argmap.containsArg("-verbose"));
-		RectangularLazyIncrementalModel.setObjective(objective == 1 ? RectangularLazyIncrementalModel.Objective.Area : RectangularLazyIncrementalModel.Objective.Span);
-		
-		Separator.setActive(cutRounds > 0);
-		Separator.setMaxRounds(cutRounds);
-		Separator.setSkipFactor(skipFactor);
-		Separator.setCutAndBranch(cutAndBranch);
-		Separator.setStrategy(sepStrategy);
-		LinearSeparator.setThreshold(threshold);
-		LinearSeparatorSparse.setThreshold(threshold);
-		LinearSeparatorSparse.setLowerLimit(lowerLimit);
-		LinearSeparatorSparse.setUpperLimit(upperLimit);
-
-		if( symmBreak == 1 )
-			RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.Size);
-
-		if( symmBreak == 2 )
-			RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.IndexSum);
-
-		if( symmBreak == 3 )
-			RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.OrderedStart);
 
 		IncrementalSolver.setBBSolver(argmap.stringArg("-incbbsolver", "sm")); // options are [sm, cpsat, bap]
 		IncrementalSolver.setMetric(argmap.stringArg("-incmetric", "dist"));
@@ -259,10 +225,62 @@ public class Test
 		BorderPointsManager.setIncrementStep(argmap.intArg("-incstep", 20));
 		BorderPointsManager.setMaxDistanceToNeighbour(argmap.doubleArg("-maxdist", 0.2));
 
+		
+		if (IncrementalSolver.solverModel == IncrementalSolver.Solver.CompactModel)
+		{
+			int cutRounds = argmap.intArg("-cr", 0);
+			int skipFactor = argmap.intArg("-sf", 0);
+			boolean cutAndBranch  = argmap.intArg("-cb", 0) == 1;
+			int symmBreak = argmap.intArg("-symm", 0);
+			double threshold = argmap.doubleArg("-thr", 0.5);
+			int sepStrategy = argmap.intArg("-sstr", 0);
+			int objective = argmap.intArg("-fobj", 0);
+			double lowerLimit = argmap.doubleArg("-llim", 0.1);
+			double upperLimit = argmap.doubleArg("-ulim", 0.9);
+
+			RectangularLazyIncrementalModel.setVerbose(argmap.containsArg("-verbose"));
+			RectangularLazyIncrementalModel.showSummary(!argmap.containsArg("-verbose"));
+			RectangularLazyIncrementalModel.setObjective(objective == 1 ? RectangularLazyIncrementalModel.Objective.Area : RectangularLazyIncrementalModel.Objective.Span);
+			
+			Separator.setActive(cutRounds > 0);
+			Separator.setMaxRounds(cutRounds);
+			Separator.setSkipFactor(skipFactor);
+			Separator.setCutAndBranch(cutAndBranch);
+			Separator.setStrategy(sepStrategy);
+			LinearSeparator.setThreshold(threshold);
+			LinearSeparatorSparse.setThreshold(threshold);
+			LinearSeparatorSparse.setLowerLimit(lowerLimit);
+			LinearSeparatorSparse.setUpperLimit(upperLimit);
+
+			if( symmBreak == 1 )
+				RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.Size);
+
+			if( symmBreak == 2 )
+				RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.IndexSum);
+
+			if( symmBreak == 3 )
+				RectangularLazyIncrementalModel.setSymmetryBreaking(RectangularLazyIncrementalModel.SymmetryBreaking.OrderedStart);
+		}
+		else if (IncrementalSolver.solverModel == IncrementalSolver.Solver.BAPSolver) 
+		{
+			PricingZLRModel.stopWhenNegative(argmap.containsArg("-negpr"));
+			PricingFLZModel.stopWhenNegative(argmap.containsArg("-negpr"));
+
+			Solver.setVerbose(argmap.containsArg("-verbose"));
+			Solver.showSummary(!argmap.containsArg("-verbose"));
+			Solver.setRootPricer(argmap.containsArg("-hrp"));
+			int pricer_id = argmap.intArg("-pr", 0);
+			Solver.setPricer(pricer_id == 0 ? Solver.Pricer.ZLR : (pricer_id == 1 ? Solver.Pricer.FLZ : Solver.Pricer.Heuristic));
+			Solver.setBrancher(argmap.containsArg("-rf") ? Solver.Brancher.RyanFoster : Solver.Brancher.Side);
+			Pricing.setMaxColsPerPricing(argmap.intArg("-maxcols", 1));
+			MasterWithRebuild.setInitialSingletons(argmap.containsArg("-initialsingletons"));
+		}
+		
 		IncrementalSolver solver = new IncrementalSolver(instance);
 //		IncrementalStandardModel solver = new IncrementalStandardModel(instance);
 //		solver.setStrongBinding(false);
 
+		int maxTime = argmap.intArg("-tl", 300);
 		solver.setMaxTime(maxTime);
 		solver.solve();
 	}

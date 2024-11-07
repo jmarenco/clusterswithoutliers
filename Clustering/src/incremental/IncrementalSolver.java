@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import branchandprice.Wrapper;
 import general.Clock;
 import general.Cluster;
 import general.FeasibleSolutionHeuristic;
@@ -133,7 +134,7 @@ public class IncrementalSolver
 
 	private String method() 
 	{
-		return "INC_" + _incrementalManager.method();
+		return "INC_" + _bbsolver.getSolverName() + "_" + _incrementalManager.method();
 	}
 
 	private void init() 
@@ -164,8 +165,7 @@ public class IncrementalSolver
 		}
 		else if (IncrementalSolver.solverModel == Solver.BAPSolver)
 		{
-			// TODO
-			_bbsolver = null;
+			_bbsolver = new branchandprice.Wrapper();
 		}
 	}
 
@@ -368,7 +368,7 @@ public class IncrementalSolver
 		{
 			String msg = "[IncrementalSolver] The metric " + metric + " is not a valid metric.";
 			System.out.println(msg);
-			System.out.println("Options are: NONE | RANDOM | ECC | DISTECC | BORD");
+			System.out.println("Options are: NONE | RANDOM | ECC | DIST | BORD");
 			throw new RuntimeException(msg);
 		}
 	}

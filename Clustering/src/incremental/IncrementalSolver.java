@@ -17,6 +17,7 @@ import incremental.IncrementalSolver.Metric;
 import interfaz.Viewer;
 import standardModel.RectangularModel;
 import standardModelCpsat.RectangularModelCpsat;
+import incremental.FeasibleSolutionHeuristic;
 
 public class IncrementalSolver 
 {
@@ -286,6 +287,25 @@ public class IncrementalSolver
 					// We stop here because all subsequent solutions are worst or equal
 					break;
 				}
+			}
+		}
+		FeasibleSolutionHeuristic heuristic = new FeasibleSolutionHeuristic(_instance_base);
+		Solution fixed_sol = heuristic.MakeFeasible(_last_solution);
+		double fixed_obj = fixed_sol.calcObjVal();
+		if (fixed_obj < _best_ub)
+		{
+			if (isFeasible(fixed_sol)) // Super! We found an improvement
+			{
+				System.out.println(" >>>>>> Incumbent improved with heuristic! [" + _best_ub + " -> " + fixed_obj  + "]");
+				
+				_best_ub = fixed_obj;
+				_best_incumbent = fixed_sol;
+
+				// We stop here because all subsequent solutions are worst or equal
+			}
+			else
+			{
+				System.out.println(" >>>>>> ERROR?: Fixed solution is not feasible?");
 			}
 		}
 	}

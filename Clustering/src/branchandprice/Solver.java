@@ -118,7 +118,7 @@ public class Solver
 				newColumns = false;
 
 				dbg++;
-				System.out.println("debug counter = " + dbg);
+//				System.out.println("debug counter = " + dbg);
 				
 				if( _master.isOptimal() == true )
 				{

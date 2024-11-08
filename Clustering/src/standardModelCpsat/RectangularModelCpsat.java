@@ -133,7 +133,12 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		return solve(_instance);
 	}
 	
-	public Solution solve(Instance ins) throws Exception
+	public Solution solve(Instance ins) throws Exception {
+		Solution trivial_solution = Solution.withAllPoints(ins);
+		return solve(ins, trivial_solution);
+	}
+	
+	public Solution solve(Instance ins, Solution initial_solution) throws Exception
 	{
 		init(ins);
 		
@@ -146,7 +151,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	    createBindingConstraints();
 		createOutliersConstraint();
 		createObjective();
-					
+		addInitialSolution(initial_solution);
 		
 		solveModel();
     	obtainSolution();
@@ -236,6 +241,29 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 			objective.addTerm(len[j][t], 1);
 		}
 		model.minimize(objective);
+	}
+	
+	private void addInitialSolution(Solution solution) throws Exception
+	{
+    	ArrayList<Cluster> clusters = solution.getClusters();
+
+    	for(int i=0; i<p; ++i)			
+	    for(int j=0; j<n; ++j)
+	    {
+	    	// How to add hint to boolean?
+		}
+	    for(int j=0; j<n; ++j)
+    	for(int t=0; t<d; ++t) {
+    		if (j < clusters.size())
+    		{
+    			model.addHint(l[j][t], toLong(clusters.get(j).min(t)));
+    			model.addHint(r[j][t], toLong(clusters.get(j).max(t)));
+    		}
+    		else {
+    			model.addHint(l[j][t], toLong(_instance.getPoint(0).get(t)));
+    			model.addHint(r[j][t], toLong(_instance.getPoint(0).get(t)));
+    		}
+    	}
 	}
 
 	private void solveModel() throws Exception

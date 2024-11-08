@@ -119,8 +119,14 @@ public class RectangularModelCpsatBinary implements BlackBoxClusteringSolver {
 		return solve(_instance);
 	}
 
-	public Solution solve(Instance ins) throws Exception
+	public Solution solve(Instance ins) throws Exception {
+		Solution trivial_solution = Solution.withAllPoints(ins);
+		return solve(ins, trivial_solution);
+	}
+	
+	public Solution solve(Instance ins, Solution initial_solution) throws Exception
 	{
+		// NOTE: Adding solution not implemented yet.
 		init(ins);
 		
 		_clock = new Clock(_maxTime);

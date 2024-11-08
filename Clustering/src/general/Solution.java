@@ -88,4 +88,5 @@ public class Solution
 		ret.add(Cluster.withAllPoints(instance));
 		return ret;
 	}
+	
 }

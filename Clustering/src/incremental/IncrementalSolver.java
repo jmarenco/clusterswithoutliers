@@ -6,6 +6,7 @@ import java.util.Set;
 
 import general.Clock;
 import general.Cluster;
+import general.FeasibleSolutionHeuristic;
 import general.Instance;
 import general.Logger;
 import general.Point;
@@ -17,7 +18,6 @@ import incremental.IncrementalSolver.Metric;
 import interfaz.Viewer;
 import standardModel.RectangularModel;
 import standardModelCpsat.RectangularModelCpsat;
-import incremental.FeasibleSolutionHeuristic;
 
 public class IncrementalSolver 
 {
@@ -84,7 +84,7 @@ public class IncrementalSolver
 		int iter = 0;
 		while (!solved && !_clock.timeout())
 		{
-			solve_current();
+			solve_current(_best_incumbent);
 			
 			solved = check_solution();
 			
@@ -192,12 +192,12 @@ public class IncrementalSolver
 		add_points_to_current(_incrementalManager.getInitialPoints());
 	}
 
-	private void solve_current() throws IloException, Exception
+	private void solve_current(Solution best_incumbent) throws IloException, Exception
 	{
 		verb("Solving current instance of size " + _instance_cur.getPoints());
 		
 		_bbsolver.setMaxTime((int) Math.ceil(_clock.remaining()));
-		_last_solution = _bbsolver.solve(_instance_cur);
+		_last_solution = _bbsolver.solve(_instance_cur, best_incumbent);
 		_best_lb = Math.max(_best_lb, _bbsolver.getLastLB());
 	}
 
@@ -289,6 +289,9 @@ public class IncrementalSolver
 				}
 			}
 		}
+		
+		// Also apply an heuristic to extend borders of the last partial solution to cover all points.
+		
 		FeasibleSolutionHeuristic heuristic = new FeasibleSolutionHeuristic(_instance_base);
 		Solution fixed_sol = heuristic.MakeFeasible(_last_solution);
 		double fixed_obj = fixed_sol.calcObjVal();
@@ -296,16 +299,15 @@ public class IncrementalSolver
 		{
 			if (isFeasible(fixed_sol)) // Super! We found an improvement
 			{
-				System.out.println(" >>>>>> Incumbent improved with heuristic! [" + _best_ub + " -> " + fixed_obj  + "]");
+				System.out.println(" >>>>>> Incumbent improved by heuristic! [" + _best_ub + " -> " + fixed_obj  + "]");
 				
 				_best_ub = fixed_obj;
 				_best_incumbent = fixed_sol;
 
-				// We stop here because all subsequent solutions are worst or equal
 			}
-			else
+			else  // Redundant, because it must be feasible. Added for detecting this case if happens.
 			{
-				System.out.println(" >>>>>> ERROR?: Fixed solution is not feasible?");
+				System.out.println(" >>>>>> ERROR!. This should not happens! Fixed solution must be feasible!");
 			}
 		}
 	}

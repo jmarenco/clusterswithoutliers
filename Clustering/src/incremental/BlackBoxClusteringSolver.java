@@ -24,6 +24,12 @@ public interface BlackBoxClusteringSolver
 	Solution solve(Instance ins) throws Exception;
 
 	/**
+	 * Solves the given instance and returns the best solution found (if any). Use given solution has hint.
+	 * @return
+	 */
+	Solution solve(Instance ins, Solution solution) throws Exception;
+	
+	/**
 	 * Returns the best lower bound obtained in the last execution.
 	 */
 	double getLastLB();

@@ -15,14 +15,23 @@ public class Wrapper implements BlackBoxClusteringSolver
 	}
 
 	@Override
-	public Solution solve(Instance ins) throws Exception
+	public Solution solve(Instance ins) throws Exception {
+		Solution trivial_solution = Solution.withAllPoints(ins);
+		return solve(ins, trivial_solution);
+	}
+
+	
+	@Override
+	public Solution solve(Instance ins, Solution initial_solution) throws Exception
 	{
 		_solver = new Solver(ins);
 		_solver.solve();
 
 		return new Solution(_solver.getSolution());
 	}
-
+	
+	
+	
 	@Override
 	public void closeSolver()
 	{

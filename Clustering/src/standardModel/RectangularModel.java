@@ -258,13 +258,24 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 
 	private void createOutliersConstraint() throws IloException
 	{
-		IloNumExpr lhsOut = cplex.linearIntExpr();
-		
-	    for(int i=0; i<p; ++i)
-		for(int j=0; j<n; ++j)
-		 	lhsOut = cplex.sum(lhsOut, z[i][j]);
-		    
-	    cplex.addGe(lhsOut, p-o, "out");
+		if (o > 0)
+		{
+			IloNumExpr lhsOut = cplex.linearIntExpr();
+			
+		    for(int i=0; i<p; ++i)
+			for(int j=0; j<n; ++j)
+			 	lhsOut = cplex.sum(lhsOut, z[i][j]);
+		 
+		    cplex.addGe(lhsOut, p-o, "out");
+		} else {			
+		    for(int i=0; i<p; ++i)
+		    {
+				IloNumExpr lhsOut = cplex.linearIntExpr();
+				for(int j=0; j<n; ++j)
+				 	lhsOut = cplex.sum(lhsOut, z[i][j]);
+			    cplex.addEq(lhsOut, 1.0, "out_" + i);
+		    }
+		}
 	}
 
 	private void createSymmetryBreakingConstraints() throws IloException

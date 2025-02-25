@@ -348,7 +348,7 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 		IloNumExpr fobj = createNonLinearObjectiveExpression();
 
 		cplex.addMinimize(fobj);
-//		cplex.setParam(IntParam.SolutionTarget, 3);
+		cplex.setParam(IloCplex.Param.OptimalityTarget, 3);
 	}
 
 	private IloNumExpr createNonLinearObjectiveExpression() throws IloException 

@@ -85,7 +85,7 @@ public class KMeansSolver
 	            break; 
 	        }
 	        
-//		    recoverSolution(clusterOf, true);
+		    recoverSolution(clusterOf, true);
 
 		    // at the end of each iteration we should relocate the centroids
 	        relocateCentroids(centroids, clusterOf);

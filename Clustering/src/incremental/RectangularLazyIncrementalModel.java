@@ -18,6 +18,7 @@ import ilog.cplex.IloCplex.UnknownObjectException;
 import standardModel.LinearSeparator;
 import standardModel.LinearSeparatorRestricted;
 import standardModel.LinearSeparatorSparse;
+import standardModel.RectangularModel;
 import standardModel.RectangularModelInterface;
 import standardModel.Separator;
 
@@ -486,6 +487,7 @@ public class RectangularLazyIncrementalModel implements RectangularModelInterfac
 	public static void setObjective(Objective objective)
 	{
 		_objective = objective;
+		RectangularModel.setObjective(objective == Objective.Area ? RectangularModel.Objective.Area : RectangularModel.Objective.Span);
 	}
 
 	public void setInitialSetOfPointsToBeCovered(Set<Point> initial_points) 

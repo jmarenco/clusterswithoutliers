@@ -7,6 +7,7 @@ import branchandprice.PricingZLRModel;
 import branchandprice.Solver;
 import colgen.Algorithm;
 import colgen.HalfRelaxedAlgorithm;
+import flowModel.FlowModel;
 import general.Instance;
 import general.Point;
 import general.RandomInstance;
@@ -52,6 +53,8 @@ public class Test
 			solveStandard(args);
 		else if(model.equals("pop"))
 			solvePop(args);
+		else if(model.equals("fm"))
+			solveFlow(args);
 		else if(model.equals("cg"))
 			solveColGen(args);
 		else if(model.equals("rep"))
@@ -134,6 +137,19 @@ public class Test
 		POPModel model = new POPModel(instance);
 		
 		model.setMaxTime(maxTime);
+		model.solve();
+	}
+	
+	private static void solveFlow(String[] args) throws Exception
+	{
+		ArgMap argmap = new ArgMap(args);
+		Instance instance = constructInstance(args);
+
+		FlowModel.setVerbose(argmap.containsArg("-verbose"));
+		FlowModel.showSummary(true);
+		
+		FlowModel model = new FlowModel(instance);
+		model.setMaxTime(argmap.intArg("-tl", 300));
 		model.solve();
 	}
 	
@@ -331,7 +347,7 @@ public class Test
 	private static void showUsage()
 	{
 		System.out.println("Available configuration options: ");
-		System.out.println("    -m [sm|pop|cg|rep|bap]                 Model to use [def:sm]");
+		System.out.println("    -m [sm|pop|cg|rep|bap|fm]              Model to use [def:sm]");
 		System.out.println("    -d <n>                                 Dimension for the instance [def: 2]");
 		System.out.println("    -n <n>                                 Number of points [def: 10]");
 		System.out.println("    -c <n>                                 Number of clusters [def: 3]");

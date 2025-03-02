@@ -11,8 +11,6 @@ import com.google.ortools.sat.IntVar;
 import com.google.ortools.sat.IntervalVar;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
-//import com.google.ortools.sat.DoubleLinearExpr;
-//import com.google.ortools.sat.Literal;
 import com.google.ortools.util.Domain;
 
 import general.Clock;
@@ -251,21 +249,25 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
     	for(int i=0; i<p; ++i)			
 	    for(int j=0; j<n; ++j)
 	    {
-	    	// How to add hint to boolean?
-		}
+		    if ((j < clusters.size()) && clusters.get(j).contains(_instance.getPoint(i)))
+			    model.addHint(z[i][j], 1);
+		    else
+			    model.addHint(z[i][j], 0);
+	    }
 	    for(int j=0; j<n; ++j)
-    	for(int t=0; t<d; ++t) {
-    		if (j < clusters.size())
-    		{
-    			model.addHint(l[j][t], toLong(clusters.get(j).min(t)));
-    			model.addHint(r[j][t], toLong(clusters.get(j).max(t)));
-    		}
-    		else {
-    			model.addHint(l[j][t], toLong(_instance.getPoint(0).get(t)));
-    			model.addHint(r[j][t], toLong(_instance.getPoint(0).get(t)));
-    			model.addHint(len[j][t], 0);
-    		}
-    	}
+		    for(int t=0; t<d; ++t) {
+			    if (j < clusters.size())
+			    {
+				    model.addHint(l[j][t], toLong(clusters.get(j).min(t)));
+				    model.addHint(r[j][t], toLong(clusters.get(j).max(t)));
+				    model.addHint(len[j][t], toLong(clusters.get(j).max(t))-toLong(clusters.get(j).min(t)));
+			    }
+			    else {
+				    model.addHint(l[j][t], toLong(_instance.getPoint(0).get(t)));
+				    model.addHint(r[j][t], toLong(_instance.getPoint(0).get(t)));
+				    model.addHint(len[j][t], 0);
+			    }
+		    }
 	}
 
 	private void solveModel() throws Exception

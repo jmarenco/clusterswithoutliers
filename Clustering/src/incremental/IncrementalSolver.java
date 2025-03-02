@@ -291,7 +291,6 @@ public class IncrementalSolver
 		}
 		
 		// Also apply an heuristic to extend borders of the last partial solution to cover all points.
-		
 		FeasibleSolutionHeuristic heuristic = new FeasibleSolutionHeuristic(_instance_base);
 		Solution fixed_sol = heuristic.MakeFeasible(_last_solution);
 		double fixed_obj = fixed_sol.calcObjVal();

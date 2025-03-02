@@ -99,6 +99,12 @@ public class FlowModel implements BlackBoxClusteringSolver
 	
 	public Solution solve(Instance ins) throws Exception
 	{
+		Solution trivial_solution = Solution.withAllPoints(ins);
+		return solve(ins, trivial_solution);
+	}
+
+	public Solution solve(Instance ins, Solution initial_solution) throws Exception
+	{
 		init(ins);
 		
 		_clock = new Clock(_maxTime);
@@ -111,7 +117,8 @@ public class FlowModel implements BlackBoxClusteringSolver
 	    createBindingConstraints();
 	    createOrderingConstraints();
 		createObjective();
-		
+		addInitialSolution(initial_solution);
+
 		solveModel();
     	obtainSolution();
 	    closeSolver();
@@ -256,6 +263,12 @@ public class FlowModel implements BlackBoxClusteringSolver
 		
 		cplex.addMinimize(fobj);
 	}
+	private void addInitialSolution(Solution solution) throws IloException
+	{
+		// Not implemented yet.
+	}
+
+	
 
 	private void solveModel() throws IloException
 	{

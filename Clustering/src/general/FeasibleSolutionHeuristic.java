@@ -1,4 +1,4 @@
-package incremental;
+package general;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
@@ -6,9 +6,6 @@ import java.util.Set;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
-import general.Instance;
-import general.Point;
-import general.RectangularCluster;
 
 public class FeasibleSolutionHeuristic {
 	
@@ -24,12 +21,14 @@ public class FeasibleSolutionHeuristic {
 		_ins = ins;
 		_ndim = _ins.getDimension();
 		_npoints = ins.getPoints();
+		_minDistanceToCluster = new double[_npoints];
+		_closest_cluster = new int[_npoints];
 	}
 	
 	
-	public ArrayList<RectangularCluster> MakeFeasible(ArrayList<RectangularCluster> original_clusters)
+	public Solution MakeFeasible(Solution original_solution)
 	{
-		ArrayList<RectangularCluster> clusters = original_clusters;
+		ArrayList<Cluster> clusters = original_solution.getClusters();
 		// Create a priority queue w.r.t minimum distance to clusters.
 		ComputeDistanceToClusters(clusters);
         PriorityQueue<Integer> pq = new PriorityQueue<Integer>(_npoints, new Comparator<Integer>() {
@@ -50,19 +49,9 @@ public class FeasibleSolutionHeuristic {
 			int point_to_include = pq.poll();
 			int closest_cluster = _closest_cluster[point_to_include];
 			Point point = _ins.getPoint(point_to_include);
-			
-			// Change limits of the cluster;
-			for (int t=0; t<_ndim; t++)
-			{
-				if (point.get(t) > clusters.get(closest_cluster).getMax(t)) {
-					clusters.get(closest_cluster).setMax(t, point.get(t));
-				} else if (point.get(t) < clusters.get(closest_cluster).getMin(t)) {
-					clusters.get(closest_cluster).setMin(t, point.get(t));
-				}
-			}
 			_closest_cluster[point_to_include] = closest_cluster;
 			_minDistanceToCluster[point_to_include] = 0.0;
-			clusters.get(closest_cluster).add(_ins.getPoint(point_to_include));
+			clusters.get(closest_cluster).add(point);
 			// Update distance of remaining points.
 			Iterator<Integer> iterator = in_queue.iterator();
 			while (iterator.hasNext()) {
@@ -81,20 +70,20 @@ public class FeasibleSolutionHeuristic {
 			    }
 			}
 		}
-		return clusters;
+		return new Solution(clusters);
 	}
 	
-	private double DistanceToCluster(Point p, RectangularCluster c) {
+	private double DistanceToCluster(Point p, Cluster c) {
 		double distance = 0.0;
 		for (int t=0; t<_ndim; t++)
 		{
-			distance += Math.max(p.get(t) - c.getMax(t), 0.0);
-			distance += Math.max(c.getMin(t) - p.get(t), 0.0);
+			distance += Math.max(p.get(t) - c.max(t), 0.0);
+			distance += Math.max(c.min(t) - p.get(t), 0.0);
 		}
 		return distance;
 	}
 	
-	private void ComputeDistanceToClusters(ArrayList<RectangularCluster> clusters) {
+	private void ComputeDistanceToClusters(ArrayList<Cluster> clusters) {
 		for (int i=0; i< _npoints; i++) {
 			_minDistanceToCluster[i] = DistanceToCluster(_ins.getPoint(i), clusters.get(0));
 			_closest_cluster[i] = 0;

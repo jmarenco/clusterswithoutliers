@@ -107,7 +107,12 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 		return solve(_instance);
 	}
 	
-	public Solution solve(Instance ins) throws Exception
+	public Solution solve(Instance ins) throws Exception {
+		Solution trivial_solution = Solution.withAllPoints(ins);
+		return solve(ins, trivial_solution);
+	}
+	
+	public Solution solve(Instance ins, Solution initial_solution) throws Exception
 	{
 		init(ins);
 		
@@ -125,7 +130,8 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 		
 		if (_objLB > 0.0)
 			createObjectiveConstraint();
-			
+		
+		addInitialSolution(initial_solution);
 		
 		solveModel();
     	obtainSolution();
@@ -252,13 +258,24 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 
 	private void createOutliersConstraint() throws IloException
 	{
-		IloNumExpr lhsOut = cplex.linearIntExpr();
-		
-	    for(int i=0; i<p; ++i)
-		for(int j=0; j<n; ++j)
-		 	lhsOut = cplex.sum(lhsOut, z[i][j]);
-		    
-	    cplex.addGe(lhsOut, p-o, "out");
+		if (o > 0)
+		{
+			IloNumExpr lhsOut = cplex.linearIntExpr();
+			
+		    for(int i=0; i<p; ++i)
+			for(int j=0; j<n; ++j)
+			 	lhsOut = cplex.sum(lhsOut, z[i][j]);
+		 
+		    cplex.addGe(lhsOut, p-o, "out");
+		} else {			
+		    for(int i=0; i<p; ++i)
+		    {
+				IloNumExpr lhsOut = cplex.linearIntExpr();
+				for(int j=0; j<n; ++j)
+				 	lhsOut = cplex.sum(lhsOut, z[i][j]);
+			    cplex.addEq(lhsOut, 1.0, "out_" + i);
+		    }
+		}
 	}
 
 	private void createSymmetryBreakingConstraints() throws IloException
@@ -397,6 +414,44 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 		IloNumExpr fobj = createNonLinearObjectiveExpression();
 
 		cplex.addGe(fobj, _objLB, "obj_lb");
+	}
+	
+	private void addInitialSolution(Solution solution) throws IloException
+	{
+		double[] startVal = new double[p*n+n*d+n*d];
+		IloNumVar[] startVar = new IloNumVar[p*n+n*d+n*d];
+		int pos = 0;
+		ArrayList<Cluster> clusters = solution.getClusters();
+
+		for(int i=0; i<p; ++i)			
+			for(int j=0; j<n; ++j)
+			{
+				startVar[pos] = z[i][j];	    	
+				if ((j < clusters.size()) && clusters.get(j).contains(_instance.getPoint(i)))
+					startVal[pos] = 1.0;
+				else
+					startVal[pos] = 0.0;
+				pos++;
+			}
+		for(int j=0; j<n; ++j)
+			for(int t=0; t<d; ++t)
+			{
+				startVar[pos] = l[j][t];
+				startVar[pos+1] = r[j][t];
+				if (j < clusters.size())
+				{
+					startVal[pos] = clusters.get(j).min(t);
+					startVal[pos+1] = clusters.get(j).max(t);
+				}
+				else {
+					startVal[pos] = _instance.min(t);
+					startVal[pos+1] = _instance.min(t);
+				}
+				pos = pos + 2;
+			}
+		cplex.addMIPStart(startVar, startVal);
+		startVar = null;
+		startVal = null;
 	}
 
 	private void solveModel() throws IloException

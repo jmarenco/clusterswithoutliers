@@ -6,12 +6,11 @@ import java.util.Arrays;
 import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.CpSolver;
 import com.google.ortools.sat.CpSolverStatus;
+import com.google.ortools.sat.BoolVar;
 import com.google.ortools.sat.IntVar;
 import com.google.ortools.sat.IntervalVar;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
-//import com.google.ortools.sat.DoubleLinearExpr;
-import com.google.ortools.sat.Literal;
 import com.google.ortools.util.Domain;
 
 import general.Clock;
@@ -52,7 +51,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	private CpSolverStatus status;
 
     // Variables
-	private Literal[][] z;
+	private BoolVar[][] z;
 	private IntVar[][] r;
 	private IntVar[][] l;
 	private IntVar[][] len;
@@ -133,7 +132,12 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		return solve(_instance);
 	}
 	
-	public Solution solve(Instance ins) throws Exception
+	public Solution solve(Instance ins) throws Exception {
+		Solution trivial_solution = Solution.withAllPoints(ins);
+		return solve(ins, trivial_solution);
+	}
+	
+	public Solution solve(Instance ins, Solution initial_solution) throws Exception
 	{
 		init(ins);
 		
@@ -146,7 +150,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 	    createBindingConstraints();
 		createOutliersConstraint();
 		createObjective();
-					
+		addInitialSolution(initial_solution);
 		
 		solveModel();
     	obtainSolution();
@@ -166,7 +170,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 
 	private void createVariables() throws Exception
 	{
-		z = new Literal[p][n];
+		z = new BoolVar[p][n];
 		r = new IntVar[n][d];
 		l = new IntVar[n][d];
 		len = new IntVar[n][d];
@@ -236,6 +240,34 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 			objective.addTerm(len[j][t], 1);
 		}
 		model.minimize(objective);
+	}
+	
+	private void addInitialSolution(Solution solution) throws Exception
+	{
+    	ArrayList<Cluster> clusters = solution.getClusters();
+
+    	for(int i=0; i<p; ++i)			
+	    for(int j=0; j<n; ++j)
+	    {
+		    if ((j < clusters.size()) && clusters.get(j).contains(_instance.getPoint(i)))
+			    model.addHint(z[i][j], 1);
+		    else
+			    model.addHint(z[i][j], 0);
+	    }
+	    for(int j=0; j<n; ++j)
+		    for(int t=0; t<d; ++t) {
+			    if (j < clusters.size())
+			    {
+				    model.addHint(l[j][t], toLong(clusters.get(j).min(t)));
+				    model.addHint(r[j][t], toLong(clusters.get(j).max(t)));
+				    model.addHint(len[j][t], toLong(clusters.get(j).max(t))-toLong(clusters.get(j).min(t)));
+			    }
+			    else {
+				    model.addHint(l[j][t], toLong(_instance.getPoint(0).get(t)));
+				    model.addHint(r[j][t], toLong(_instance.getPoint(0).get(t)));
+				    model.addHint(len[j][t], 0);
+			    }
+		    }
 	}
 
 	private void solveModel() throws Exception
@@ -334,7 +366,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		return _instance;
 	}
 	
-	public Literal zVar(int point, int cluster)
+	public BoolVar zVar(int point, int cluster)
 	{
 		return z[point][cluster];
 	}

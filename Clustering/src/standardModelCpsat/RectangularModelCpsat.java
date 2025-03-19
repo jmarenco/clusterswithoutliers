@@ -280,6 +280,7 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		if ((status == CpSolverStatus.OPTIMAL || status == CpSolverStatus.FEASIBLE)) {
 			gap = (solver.objectiveValue() - solver.bestObjectiveBound())/(solver.bestObjectiveBound()+1e-6);
 		}
+		String status_str = (status == CpSolverStatus.OPTIMAL) ? "OPTIMAL" : ((status == CpSolverStatus.FEASIBLE) ? "FEASIBLE" : "OTHER");
 		
 
 		_last_lb = (double)solver.bestObjectiveBound()/round_factor;
@@ -295,27 +296,14 @@ public class RectangularModelCpsat implements BlackBoxClusteringSolver {
 		}
 		else
 		{
-			System.out.println("Status: " + status.getNumber());
-			System.out.println("Objective: " + String.format("%6.4f", (double)solver.objectiveValue()/round_factor));
-			System.out.println("Time: " + String.format("%6.2f", _clock.elapsed()));
-			System.out.println("Nodes: " + solver.numBranches());
-			System.out.println("Gap: " + ((gap >= 0.0)? String.format("%6.2f", 100 * gap) : "  ****"));
-//			System.out.print(_instance.getName() + " | Std | ");
-//			System.out.print(cplex.getStatus() + " | ");
-//			System.out.print("Obj: " + String.format("%6.4f", cplex.getObjValue()) + " | ");
-//			System.out.print(String.format("%6.2f", _clock.elapsed()) + " sec. | ");
-//			System.out.print(cplex.getNnodes() + " nodes | ");
-//			System.out.print(((cplex.getStatus() == Status.Optimal || cplex.getStatus() == Status.Feasible) && cplex.getMIPRelativeGap() < 1e30 ? String.format("%6.2f", 100 * cplex.getMIPRelativeGap()) + " % | " : "  **** | "));
-//			System.out.print(cplex.getNcuts(IloCplex.CutType.User) + " cuts | ");
-//			System.out.print("MR: " + Separator.getMaxRounds() + " | ");
-//			System.out.print("SF: " + Separator.getSkipFactor() + " | ");
-//			System.out.print("Cut execs: " + separator.getExecutions() + " | ");
-//			System.out.print(Separator.getCutAndBranch() ? "C&B | " : "    | ");
-//			System.out.print("MT: " + _maxTime + " | ");
-//			System.out.print("SB: " + (_symmetryBreaking == SymmetryBreaking.Size ? "Size" : (_symmetryBreaking == SymmetryBreaking.IndexSum ? "Idx " : (_symmetryBreaking == SymmetryBreaking.OrderedStart ? "OrSt" : "    "))) + " | "); 
-//			System.out.print("Thr: " + (Separator.getStrategy() == 0 ? LinearSeparator.getThreshold() : (Separator.getStrategy() == 1 ? LinearSeparatorSparse.getThreshold() : LinearSeparatorRestricted.getThreshold())) + " | ");
-//			System.out.print("Ss: " + Separator.getStrategy() + (Separator.getStrategy() == 4 ? " : " + SquareSeparator.getSparsingRatio() : "" ) + " | ");
-//			System.out.println();
+			System.out.print(_instance.getName() + " | CPSAT | ");
+			System.out.print( status_str + " | ");
+			System.out.print("Obj: " + String.format("%6.4f", (double)solver.objectiveValue()/round_factor) + " | ");
+			System.out.print(String.format("%6.2f", _clock.elapsed()) + " sec. | ");
+			System.out.print(solver.numBranches() + " nodes | ");
+			System.out.print((gap >= 0) ? String.format("%6.2f", 100 * gap) + " % | " : "  **** | ");
+			System.out.print("MT: " + _maxTime + " | ");
+			System.out.println();
 		}
 	}
 

@@ -298,6 +298,10 @@ public class Test
 
 		int maxTime = argmap.intArg("-tl", 300);
 		solver.setMaxTime(maxTime);
+		
+		int maxTimeForSubproblems = argmap.intArg("-tlsubs", maxTime);
+		solver.setMaxTimeForSubproblems(maxTimeForSubproblems);
+
 		solver.solve();
 	}
 	
@@ -363,6 +367,7 @@ public class Test
 		System.out.println("    -llim <n>                              Lower limit for sparse separation in sm model [def: 0.1]");
 		System.out.println("    -ulim <n>                              Upper limit for sparse separation in sm model [def: 0.9]");
 		System.out.println("    -tl <n>                                Timelimit [def: 300]");
+		System.out.println("    -tlsubs <n>                            Timelimit for incremental subproblems [def: 300]");
 		System.out.println("    -symm <n>                              Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -thr <f>                               Threshold for adding cuts [def: 0.5]");
 		System.out.println("    -pr [0|1|2]                            Pricing strategy in bap model [def: 0]");

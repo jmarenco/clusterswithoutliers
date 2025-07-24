@@ -32,6 +32,7 @@ public class IncrementalSolver
 	private HashSet<Integer> _covered_by_last_solution;
 	
 	private Clock _clock;
+	private int _time_limit_for_subproblem = Integer.MAX_VALUE;
 	
 	private IncrementalManager _incrementalManager;
 //	private RectangularModel _model;
@@ -43,6 +44,7 @@ public class IncrementalSolver
 	private static boolean _summary = true;
 	private static boolean _show_intermediate_solutions = false;
 	private double myEpsilon = 0.000001;
+	private double gapTolerance = 0.0001;
 	
 	public static enum Metric { None, Random, Eccentricity, DistanceEccentricity, BorderPoints }; 
 	public static Metric incrementalMetric = Metric.DistanceEccentricity;
@@ -63,6 +65,11 @@ public class IncrementalSolver
 	public void setMaxTime(int maxTime) 
 	{
 		_clock.setTimelimit(maxTime);
+	}
+
+	public void setMaxTimeForSubproblems(int tl) 
+	{
+		_time_limit_for_subproblem = tl;
 	}
 
 	public static void setShowIntermediateSolutions(boolean show) 
@@ -87,16 +94,19 @@ public class IncrementalSolver
 		{
 			solve_current(_best_incumbent);
 			
-			solved = check_solution();
+			boolean feasible_for_global = check_solution();
 			
-			if (!solved)
+			if (!feasible_for_global || currentGap() > gapTolerance) // maybe is feasible for global but not optimal (due to time limit on subproblem)
 			{
 				try_to_improve_incumbent();
-				
-				if (currentGap() < myEpsilon) // gap is 0!
-					solved = true;
-				else
-					add_points_to_current(_incrementalManager.getNextSetOfPoints(_covered_by_last_solution));
+			}
+			
+			if (currentGap() <= gapTolerance) // gap is 0!
+				solved = true;
+			else
+			{
+				System.out.println("Current gap is: " + currentGap());
+				add_points_to_current(_incrementalManager.getNextSetOfPoints(_covered_by_last_solution));
 			}
 
 			iter++;
@@ -118,7 +128,7 @@ public class IncrementalSolver
 		}
 		
 		// Log the solution
-		Results.Status stat = _best_incumbent == null? Status.NOSOLUTION : (currentGap() < myEpsilon? Status.OPTIMAL : Status.FEASIBLE);
+		Results.Status stat = _best_incumbent == null? Status.NOSOLUTION : (currentGap() < gapTolerance? Status.OPTIMAL : Status.FEASIBLE);
 		Logger.log(_instance_base, method(), new Results(_last_solution, stat, _best_lb, _best_ub, _clock.elapsed(), -1, iter, _instance_cur.getPoints()));
 	}
 
@@ -196,7 +206,9 @@ public class IncrementalSolver
 	{
 		verb("Solving current instance of size " + _instance_cur.getPoints());
 		
-		_bbsolver.setMaxTime((int) Math.ceil(_clock.remaining()));
+		
+		int time_limit = Math.min((int) Math.ceil(_clock.remaining()), _time_limit_for_subproblem);
+		_bbsolver.setMaxTime(time_limit);
 		_last_solution = _bbsolver.solve(_instance_cur, best_incumbent);
 		_best_lb = Math.max(_best_lb, _bbsolver.getLastLB());
 	}
@@ -241,7 +253,7 @@ public class IncrementalSolver
 		
 		boolean feasible = ncovered >= (_instance_base.getPoints() - _instance_base.getOutliers());
 		
-		if (feasible) // Then we know it is optimal for the global instance! 
+		if (feasible) // if _last_solution_optimal == true, then the solution is optimal for the original problem 
 		{
 			double ub = _last_solution.calcObjVal();
 			
@@ -306,7 +318,7 @@ public class IncrementalSolver
 			}
 			else  // Redundant, because it must be feasible. Added for detecting this case if happens.
 			{
-				System.out.println(" >>>>>> ERROR!. This should not happens! Fixed solution must be feasible!");
+				System.out.println(" >>>>>> ERROR!. This should not happen! Fixed solution must be feasible!");
 			}
 		}
 	}

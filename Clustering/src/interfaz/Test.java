@@ -93,6 +93,7 @@ public class Test
 
 		RectangularModel.setVerbose(argmap.containsArg("-verbose"));
 		RectangularModel.showSummary(true);
+		RectangularModel.setCallback(!argmap.containsArg("-nocallback"));
 		RectangularModel.setObjective(objective == 1 ? RectangularModel.Objective.Area : RectangularModel.Objective.Span);
 		
 		Separator.setActive(cutRounds > 0);
@@ -241,7 +242,6 @@ public class Test
 		BorderPointsManager.setIncrementStep(argmap.intArg("-incstep", 20));
 		BorderPointsManager.setMaxDistanceToNeighbour(argmap.doubleArg("-maxdist", 0.2));
 
-		
 		if (IncrementalSolver.solverModel == IncrementalSolver.Solver.CompactModel)
 		{
 			int cutRounds = argmap.intArg("-cr", 0);
@@ -256,6 +256,7 @@ public class Test
 
 			RectangularLazyIncrementalModel.setVerbose(argmap.containsArg("-verbose"));
 			RectangularLazyIncrementalModel.showSummary(!argmap.containsArg("-verbose"));
+			RectangularLazyIncrementalModel.setCallback(!argmap.containsArg("-nocallback"));
 			RectangularLazyIncrementalModel.setObjective(objective == 1 ? RectangularLazyIncrementalModel.Objective.Area : RectangularLazyIncrementalModel.Objective.Span);
 			
 			Separator.setActive(cutRounds > 0);
@@ -384,6 +385,7 @@ public class Test
 		System.out.println("    -eccmode [max|sum]                     Eccentricty mode for global eccentricity [def: MAX]");
 		System.out.println("    -incstep <n>                           Max number of points to add on each incremental iteration [def: 20]");
 		System.out.println("    -maxdist <f>                           Max distance to neighbours (for incremental resolution) [def: 0.2]");
+		System.out.println("    -nocallback                            Does not register any callbacks in Cplex");
 		System.out.println("    -verbose                               Verbose output");
 		System.out.println("    -writeonly <s>                         Does not solve, only writes instance to file <s>");
 		System.out.println("    -showonly                              Does not solve, only show a plot with the instance");

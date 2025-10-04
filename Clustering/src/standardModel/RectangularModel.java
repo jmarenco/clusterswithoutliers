@@ -35,6 +35,7 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 	
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
+	private static boolean _callback = true;
 	private static SymmetryBreaking _symmetryBreaking = SymmetryBreaking.None;
 	private static Objective _objective = Objective.Span;
 	
@@ -107,7 +108,8 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 		return solve(_instance);
 	}
 	
-	public Solution solve(Instance ins) throws Exception {
+	public Solution solve(Instance ins) throws Exception
+	{
 		Solution trivial_solution = Solution.withAllPoints(ins);
 		return solve(ins, trivial_solution);
 	}
@@ -462,11 +464,12 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 //		cplex.setParam(IntParam.Threads, 1);
 //		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
 
-		cplex.use(separator);
+		if( _callback == true )
+			cplex.use(separator);
 
 		cplex.setParam(IntParam.TimeLimit, _clock.remaining());
-		
 		cplex.solve();
+
 		_last_lb = cplex.getBestObjValue();
 		
 		if( _summary == false )
@@ -589,6 +592,11 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 	public static void showSummary(boolean summary)
 	{
 		_summary = summary;
+	}
+	
+	public static void setCallback(boolean value)
+	{
+		_callback = value;
 	}
 	
 	public static void setSymmetryBreaking(SymmetryBreaking value)

@@ -46,6 +46,7 @@ public class RectangularLazyIncrementalModel implements RectangularModelInterfac
 	
 	private static boolean _verbose = true;
 	private static boolean _summary = false;
+	private static boolean _callback = true;
 	private static SymmetryBreaking _symmetryBreaking = SymmetryBreaking.None;
 	private static Objective _objective = Objective.Span;
 	
@@ -137,7 +138,9 @@ public class RectangularLazyIncrementalModel implements RectangularModelInterfac
 //		cplex.setParam(IntParam.Threads, 1);
 //		cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Primal);
 
-		cplex.use(separator);
+		if( _callback == true )
+			cplex.use(separator);
+		
 		useLazyConstraints = IncrementalSolver.incrementalMetric != IncrementalSolver.Metric.None;
 		if (useLazyConstraints)
 			cplex.use(lazySeparator);
@@ -477,6 +480,11 @@ public class RectangularLazyIncrementalModel implements RectangularModelInterfac
 	public static void showSummary(boolean summary)
 	{
 		_summary = summary;
+	}
+	
+	public static void setCallback(boolean value)
+	{
+		_callback = value;
 	}
 	
 	public static void setSymmetryBreaking(SymmetryBreaking value)

@@ -466,8 +466,10 @@ public class RectangularModel implements RectangularModelInterface, BlackBoxClus
 
 		if( _callback == true )
 			cplex.use(separator);
+		else if( Separator.isActive() )
+			throw new RuntimeException("Conflicting parameters: separator is active but no callbacks allowed!");
 
-		cplex.setParam(IntParam.TimeLimit, _clock.remaining());
+ 		cplex.setParam(IntParam.TimeLimit, _clock.remaining());
 		cplex.solve();
 
 		_last_lb = cplex.getBestObjValue();

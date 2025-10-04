@@ -150,6 +150,11 @@ public class Separator extends IloCplex.UserCutCallback
 		_active = active;
 	}
 	
+	public static boolean isActive()
+	{
+		return _active;
+	}
+
 	public static void setCutAndBranch(boolean cutAndBranch)
 	{
 		_cutAndBranch = cutAndBranch;

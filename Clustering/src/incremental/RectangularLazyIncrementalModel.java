@@ -140,6 +140,8 @@ public class RectangularLazyIncrementalModel implements RectangularModelInterfac
 
 		if( _callback == true )
 			cplex.use(separator);
+		else if( Separator.isActive() )
+			throw new RuntimeException("Conflicting parameters: separator is active but no callbacks allowed!");
 		
 		useLazyConstraints = IncrementalSolver.incrementalMetric != IncrementalSolver.Metric.None;
 		if (useLazyConstraints)

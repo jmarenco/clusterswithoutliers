@@ -256,6 +256,7 @@ public class Test
 
 			RectangularLazyIncrementalModel.setVerbose(argmap.containsArg("-verbose"));
 			RectangularLazyIncrementalModel.showSummary(!argmap.containsArg("-verbose"));
+			RectangularModel.setCallback(!argmap.containsArg("-nocallback"));
 			RectangularLazyIncrementalModel.setCallback(!argmap.containsArg("-nocallback"));
 			RectangularLazyIncrementalModel.setObjective(objective == 1 ? RectangularLazyIncrementalModel.Objective.Area : RectangularLazyIncrementalModel.Objective.Span);
 			

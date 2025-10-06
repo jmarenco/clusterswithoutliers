@@ -17,7 +17,7 @@ public class EccentricityManager extends IncrementalManager
 	
 	private static double _max_distance_to_neighbour = 0.2;
 	private static int _increment_step = 20;
-	private static boolean _initial_different_calc = true;
+	private static boolean _initial_different_calc = false;
 	private static boolean _sum_over_dimensions = false;
 
 	public EccentricityManager(Instance ins) 

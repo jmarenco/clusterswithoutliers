@@ -258,6 +258,8 @@ public class Test
 			RectangularLazyIncrementalModel.showSummary(!argmap.containsArg("-verbose"));
 			RectangularLazyIncrementalModel.setCallback(!argmap.containsArg("-nocallback"));
 			RectangularLazyIncrementalModel.setObjective(objective == 1 ? RectangularLazyIncrementalModel.Objective.Area : RectangularLazyIncrementalModel.Objective.Span);
+
+			RectangularModel.setCallback(!argmap.containsArg("-nocallback"));
 			
 			Separator.setActive(cutRounds > 0);
 			Separator.setMaxRounds(cutRounds);

@@ -26,6 +26,11 @@ public class Logger
 		{
 			e.printStackTrace();
 		}
+		System.out.print("MyLog\t");
+		System.out.print(ins.log_details(tab));
+		System.out.print(tab + method);
+		System.out.print(tab + res.log_details(tab));
+		System.out.print("\n");
 	}
 
 	public static void setLogFile(String nfile) 

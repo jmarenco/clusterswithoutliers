@@ -16,6 +16,7 @@ public class BorderPointsManager extends IncrementalManager
 	private HashMap<Integer, HashSet<Integer>> _neighbours;
 	private int[] _neighbourcount;
 	
+	private static boolean _initial_different_calc = false;
 	private static double _max_distance_to_neighbour = 0.2;
 	private static double _min_neighbours_for_being_core = 5;
 	private static int _increment_step = 20;
@@ -68,39 +69,48 @@ public class BorderPointsManager extends IncrementalManager
 	protected Set<Point> getInitialPoints() 
 	{
 		_unused_points = new HashSet<Point>();
-		
-		HashSet<Point> initial_points = new HashSet<>();
 
-		ArrayList<Point> candidates = new ArrayList<>(_instance_base.getPoints());
-		for (int i = 0; i < _instance_base.getPoints(); i++)
-			candidates.add(_instance_base.getPoint(i));
+		if (_initial_different_calc)
+		{
+			HashSet<Point> initial_points = new HashSet<>();
 
-		// From these we take the all points with few neighbours
-		// First we sort the list by number of neighbouts
-		Collections.sort(candidates, (p1, p2) -> (int) Math.signum(_neighbourcount[p1.getId()-1] - _neighbourcount[p2.getId()-1]));
-		
-		for (Point p : candidates)
-		{
-			System.out.println("Point " + p.getId() + " " + p.toString() + " --> " + _neighbourcount[p.getId()-1]);
-		}
-		
-		// We now take the first points on this sorted list
-		double best = _neighbourcount[candidates.get(0).getId()-1];
-		for (int i = 0; i < candidates.size(); i++)
-		{
-			Point p = candidates.get(i);
-			if (_neighbourcount[p.getId()-1] <= best * 1.2)
+			ArrayList<Point> candidates = new ArrayList<>(_instance_base.getPoints());
+			for (int i = 0; i < _instance_base.getPoints(); i++)
+				candidates.add(_instance_base.getPoint(i));
+
+			// From these we take the all points with few neighbours
+			// First we sort the list by number of neighbouts
+			Collections.sort(candidates, (p1, p2) -> (int) Math.signum(_neighbourcount[p1.getId()-1] - _neighbourcount[p2.getId()-1]));
+
+			for (Point p : candidates)
 			{
-				initial_points.add(p);
+				System.out.println("Point " + p.getId() + " " + p.toString() + " --> " + _neighbourcount[p.getId()-1]);
 			}
-			else
-				_unused_points.add(p);
+
+			// We now take the first points on this sorted list
+			double best = _neighbourcount[candidates.get(0).getId()-1];
+			for (int i = 0; i < candidates.size(); i++)
+			{
+				Point p = candidates.get(i);
+				if (_neighbourcount[p.getId()-1] <= best * 1.2)
+				{
+					initial_points.add(p);
+				}
+				else
+					_unused_points.add(p);
+			}
+
+			// We update the neighbourhood counts
+			update_count(initial_points);
+			return initial_points;
 		}
-		
-		// We update the neighbourhood counts
-		update_count(initial_points);
-		
-		return initial_points;
+		else
+		{
+			for (int i = 0; i < _instance_base.getPoints(); i++)
+				_unused_points.add(_instance_base.getPoint(i));
+			
+			return getNextSetOfPoints(new HashSet<Integer>());
+		}
 	}
 
 	/**

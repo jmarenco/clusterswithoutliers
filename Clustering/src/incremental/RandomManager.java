@@ -14,9 +14,9 @@ public class RandomManager extends IncrementalManager
 	private Instance _instance_base;
 	private Random _random;
 
-	public static int increment_step = 20;
-	private double _random_threshold = 0.1;
-	private int _random_seed = 0;
+	private static int _increment_step = 20;
+	private static double _random_threshold = 0.1;
+	private static int _random_seed = 0;
 
 	public RandomManager(Instance ins) 
 	{
@@ -26,7 +26,7 @@ public class RandomManager extends IncrementalManager
 	@Override
 	protected String method() 
 	{
-		return "RAND_" + _random_threshold + "_" + increment_step;
+		return "RAND_" + _random_threshold + "_" + _increment_step;
 	}
 
 	@Override
@@ -39,22 +39,27 @@ public class RandomManager extends IncrementalManager
 	@Override
 	protected Set<Point> getInitialPoints() 
 	{
-		HashSet<Point> initial_points = new HashSet<>();
-		
-		// We take random points with the given threshold
+//		HashSet<Point> initial_points = new HashSet<>();
+//		
+//		// We take random points with the given threshold
+//		for (int i = 0; i < _instance_base.getPoints(); i++)
+//		{
+//			Point p = _instance_base.getPoint(i);
+//			if (_random.nextDouble() < _random_threshold)
+//			{
+//				initial_points.add(p);
+////				verb("      ++ Point " + (p.getId()-1) + " [id=" + p.getId() + "]");
+//			}
+//			else
+//				_unused_points.add(p);
+//		}
+//		
+//		return initial_points;
+
 		for (int i = 0; i < _instance_base.getPoints(); i++)
-		{
-			Point p = _instance_base.getPoint(i);
-			if (_random.nextDouble() < _random_threshold)
-			{
-				initial_points.add(p);
-//				verb("      ++ Point " + (p.getId()-1) + " [id=" + p.getId() + "]");
-			}
-			else
-				_unused_points.add(p);
-		}
+			_unused_points.add(_instance_base.getPoint(i));
 		
-		return initial_points;
+		return getNextSetOfPoints(new HashSet<Integer>());
 	}
 
 	@Override
@@ -69,7 +74,7 @@ public class RandomManager extends IncrementalManager
 
 		// We take randomly up to _increment_step points (but at least one!)
 		int count = 0;
-		for (int i = 0; count < increment_step && i < candidates.size(); i++) 
+		for (int i = 0; count < _increment_step && i < candidates.size(); i++) 
 			if (_random.nextDouble() < _random_threshold)
 			{
 				Point p = candidates.get(i);
@@ -89,5 +94,23 @@ public class RandomManager extends IncrementalManager
 		}
 		
 		return new_points;
+	}
+	
+	public static void setIncrementStep(int inc_step) 
+	{
+		_increment_step = inc_step;
+	}
+	
+	public static void setAddingProbability(double add_prob) 
+	{
+		if (add_prob < 0 || add_prob > 1)
+			throw new RuntimeException("Probability for the random incremental must be in [0,1]!");
+			
+		_random_threshold = add_prob;
+	}
+
+	public static void setSeed(int seed) 
+	{
+		_random_seed = seed;
 	}
 }

@@ -16,6 +16,7 @@ import ilog.concert.IloException;
 import incremental.BorderPointsManager;
 import incremental.EccentricityManager;
 import incremental.IncrementalSolver;
+import incremental.RandomManager;
 import incremental.RectangularLazyIncrementalModel;
 import kmeans.KMeansSolver;
 import popModel.POPModel;
@@ -242,6 +243,12 @@ public class Test
 		BorderPointsManager.setIncrementStep(argmap.intArg("-incstep", 20));
 		BorderPointsManager.setMaxDistanceToNeighbour(argmap.doubleArg("-maxdist", 0.2));
 
+		RandomManager.setIncrementStep(argmap.intArg("-incstep", 20));
+		RandomManager.setAddingProbability(argmap.doubleArg("-addingprob", 0.1));
+		if (argmap.containsArg("-incrandseed"))
+			RandomManager.setSeed(argmap.intArg("-incrandseed", 0));
+
+
 		if (IncrementalSolver.solverModel == IncrementalSolver.Solver.CompactModel)
 		{
 			int cutRounds = argmap.intArg("-cr", 0);
@@ -354,7 +361,7 @@ public class Test
 	
 	private static void showUsage()
 	{
-		System.out.println("Available configuration options: ");
+		System.out.println("General configuration options: ");
 		System.out.println("    -m [sm|pop|cg|rep|bap|fm]              Model to use [def:sm]");
 		System.out.println("    -d <n>                                 Dimension for the instance [def: 2]");
 		System.out.println("    -n <n>                                 Number of points [def: 10]");
@@ -371,7 +378,6 @@ public class Test
 		System.out.println("    -llim <n>                              Lower limit for sparse separation in sm model [def: 0.1]");
 		System.out.println("    -ulim <n>                              Upper limit for sparse separation in sm model [def: 0.9]");
 		System.out.println("    -tl <n>                                Timelimit [def: 300]");
-		System.out.println("    -tlsubs <n>                            Timelimit for incremental subproblems [def: 300]");
 		System.out.println("    -symm <n>                              Symmetry-breaking constraints [def: 0]");
 		System.out.println("    -thr <f>                               Threshold for adding cuts [def: 0.5]");
 		System.out.println("    -pr [0|1|2]                            Pricing strategy in bap model [def: 0]");
@@ -382,20 +388,25 @@ public class Test
 		System.out.println("    -relaxation                            Solve the linear relaxation at the root node (cg model only)");
 		System.out.println("    -partialrelaxation                     Solve the partial linear relaxation at the root node (cg model only)");
 		System.out.println("    -initialsingletons                     Add singleton columns (bap model only)");
-		System.out.println("    -incmetric [none|rand|ecc|dist|bord]   Pricing strategy in bap model [def: dist]");
-		System.out.println("    -incbbsolver [sm|cpsat|bap]            Black Box solver for subproblems [def: sm]");
-		System.out.println("    -incshow                               Shows a plot displaying each intermadiate solution of the incremental solver");
-		System.out.println("    -eccmode [max|sum]                     Eccentricty mode for global eccentricity [def: MAX]");
-		System.out.println("    -incstep <n>                           Max number of points to add on each incremental iteration [def: 20]");
-		System.out.println("    -maxdist <f>                           Max distance to neighbours (for incremental resolution) [def: 0.2]");
 		System.out.println("    -nocallback                            Does not register any callbacks in Cplex");
 		System.out.println("    -verbose                               Verbose output");
 		System.out.println("    -writeonly <s>                         Does not solve, only writes instance to file <s>");
 		System.out.println("    -showonly                              Does not solve, only show a plot with the instance");
 		System.out.println("    -ins <s>                               Read the instance from <s>");
 		System.out.println("    -?                                     Displays this help");
+		System.out.println("");
+		System.out.println("Incremental configuration options: ");
+		System.out.println("    -tlsubs <n>                            Timelimit for incremental subproblems [def: 300]");
+		System.out.println("    -incmetric [none|rand|ecc|dist|bord]   Pricing strategy in bap model [def: dist]");
+		System.out.println("    -incbbsolver [sm|cpsat|bap]            Black Box solver for subproblems [def: sm]");
+		System.out.println("    -incshow                               Shows a plot displaying each intermadiate solution of the incremental solver");
+		System.out.println("    -incstep <n>                           Max number of points to add on each incremental iteration [def: 20]");
+		System.out.println("    -eccmode [max|sum]                     Eccentricty mode for global eccentricity [def: MAX]");
+		System.out.println("    -maxdist <f>                           Max distance to neighbours (for incremental resolution) [def: 0.2]");
+		System.out.println("    -addingprob <f>                        Random incremental, chance to add a point [def: 0.1]");
+		System.out.println("    -incrandseed <n>                       Random incremental, seed for random generator [def: 0]");
 		System.out.println();
-}
+	}
 	
 	private static Instance constructInstance(String[] args)
 	{

@@ -15,7 +15,7 @@ public class RandomManager extends IncrementalManager
 	private Random _random;
 
 	private static int _increment_step = 20;
-	private static double _random_threshold = 0.1;
+	private static double _probability_to_add = 0.1;
 	private static int _random_seed = 0;
 
 	public RandomManager(Instance ins) 
@@ -26,7 +26,7 @@ public class RandomManager extends IncrementalManager
 	@Override
 	protected String method() 
 	{
-		return "RAND_" + _random_threshold + "_" + _increment_step;
+		return "RAND_" + _probability_to_add + "_" + _increment_step;
 	}
 
 	@Override
@@ -74,8 +74,9 @@ public class RandomManager extends IncrementalManager
 
 		// We take randomly up to _increment_step points (but at least one!)
 		int count = 0;
+		double chance = Math.max(_probability_to_add, (double)_increment_step/(double)candidates.size()); // so in average we add inc_step
 		for (int i = 0; count < _increment_step && i < candidates.size(); i++) 
-			if (_random.nextDouble() < _random_threshold)
+			if (_random.nextDouble() < chance)
 			{
 				Point p = candidates.get(i);
 				_unused_points.remove(p);
@@ -106,7 +107,7 @@ public class RandomManager extends IncrementalManager
 		if (add_prob < 0 || add_prob > 1)
 			throw new RuntimeException("Probability for the random incremental must be in [0,1]!");
 			
-		_random_threshold = add_prob;
+		_probability_to_add = add_prob;
 	}
 
 	public static void setSeed(int seed) 

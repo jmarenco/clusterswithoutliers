@@ -1,10 +1,8 @@
 package incremental;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import branchandprice.Wrapper;
 import general.Clock;
 import general.Cluster;
 import general.FeasibleSolutionHeuristic;
@@ -15,7 +13,6 @@ import general.Results;
 import general.Results.Status;
 import general.Solution;
 import ilog.concert.IloException;
-import incremental.IncrementalSolver.Metric;
 import interfaz.Viewer;
 import standardModel.RectangularModel;
 import standardModelCpsat.RectangularModelCpsat;
@@ -106,7 +103,11 @@ public class IncrementalSolver
 			else
 			{
 				System.out.println("Current gap is: " + currentGap());
-				add_points_to_current(_incrementalManager.getNextSetOfPoints(_covered_by_last_solution));
+				if (!add_points_to_current(_incrementalManager.getNextSetOfPoints(_covered_by_last_solution)))
+				{
+					// No points were added... we must increase time limit and re-run the bbsolver
+					_time_limit_for_subproblem = (int) (1.5 * _time_limit_for_subproblem);
+				}
 			}
 
 			iter++;
@@ -350,12 +351,14 @@ public class IncrementalSolver
 		return ncovered >= (_instance_base.getPoints() - _instance_base.getOutliers());	
 	}
 
-	private void add_points_to_current(Set<Point> new_points) 
+	private boolean add_points_to_current(Set<Point> new_points) 
 	{
 		for (Point p : new_points)
 		{
 			_instance_cur.add(p);
 		}
+		
+		return !new_points.isEmpty();
 	}
 
 	public Set<Integer> covered_by_last_solution() 

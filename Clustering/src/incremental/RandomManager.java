@@ -85,7 +85,7 @@ public class RandomManager extends IncrementalManager
 				++count;
 			}
 		
-		if (count == 0) // We need to take at least 1 point!
+		if (count == 0 && !candidates.isEmpty()) // We need to take at least 1 point!
 		{
 			Point p = candidates.get(_random.nextInt(candidates.size()));
 			_unused_points.remove(p);
